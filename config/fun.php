@@ -4,6 +4,51 @@
 		
 		function __construct() {}
 
+		// Өлшем бірліктері: негізгі жиын және әртүрлі жазылуын біріктіру (шт/дана/pcs → шт, kg → кг …)
+		public static $units = ['кг', 'г', 'л', 'мл', 'шт'];
+		public static function unit_norm($u) {
+			$k = mb_strtolower(trim(str_replace('.', '', (string)$u)));
+			if ($k === '') return '';
+			$map = [
+				'шт' => ['шт', 'штук', 'штука', 'штуки', 'штк', 'дана', 'ед', 'единица', 'pcs', 'pc'],
+				'кг' => ['кг', 'kg', 'килограмм', 'килограм'],
+				'г'  => ['г', 'гр', 'gr', 'g', 'грамм', 'грам'],
+				'л'  => ['л', 'l', 'литр'],
+				'мл' => ['мл', 'ml', 'миллилитр'],
+			];
+			foreach ($map as $n => $list) if (in_array($k, $list, true)) return $n;
+			return mb_substr(trim((string)$u), 0, 20); // белгісіз өлшем сол күйінде қалады
+		}
+
+		// Тағам атауындағы рұқсат етілген белгілеу: <b>, <i>, <span>, класы тек cl_red / cl_green / cl_blue
+		public static $name_cls = ['cl_red', 'cl_green', 'cl_blue'];
+
+		// базаға жазар алдында: рұқсат етілмеген тег пен атрибуттың бәрін алып тастау
+		public static function name_save($s) {
+			$s = trim(strip_tags(html_entity_decode((string)$s, ENT_QUOTES, 'UTF-8'), '<b><i><span>'));
+			$s = preg_replace_callback('~<(b|i|span)\b([^>]*)>~iu', function ($m) {
+				$c = preg_match('~class\s*=\s*["\']?(cl_red|cl_green|cl_blue)~i', $m[2], $k) ? ' class="'.strtolower($k[1]).'"' : '';
+				return '<'.strtolower($m[1]).$c.'>';
+			}, $s);
+			$s = preg_replace('~</\s*(b|i|span)\s*>~iu', '</$1>', $s);
+			// ашылған/жабылған тег саны сәйкес келмесе — таза мәтін
+			foreach (['b', 'i', 'span'] as $t) if (preg_match_all("~<$t\b~", $s) != substr_count($s, "</$t>")) return trim(strip_tags($s));
+			return preg_replace('~<(b|i|span)[^>]*>\s*</\1>~', '', $s);
+		}
+
+		// экранға шығару: бәрін экрандап, тек рұқсат етілген тегтерді қайтарамыз
+		public static function name_html($s) {
+			$s = htmlspecialchars(self::name_save($s), ENT_QUOTES, 'UTF-8');
+			$s = preg_replace('~&lt;(b|i|span)( class=&quot;(cl_red|cl_green|cl_blue)&quot;)?&gt;~', '<$1 class="$3">', $s);
+			$s = str_replace(' class=""', '', $s);
+			return preg_replace('~&lt;/(b|i|span)&gt;~', '</$1>', $s);
+		}
+
+		// іздеу/сұрыптау үшін таза мәтін
+		public static function name_text($s) {
+			return trim(strip_tags(html_entity_decode((string)$s, ENT_QUOTES, 'UTF-8')));
+		}
+
 		// кестеде баған бар ма (SQL әлі қосылмаса, бет құламасын)
 		public static $cols = [];
 		public static function has_col($table, $col) {

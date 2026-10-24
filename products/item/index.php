@@ -21,16 +21,16 @@
 	// site setting
 	$menu_name = 'products';
 	$pod_menu_name = 'main';
-	$page_name = $product_d['name_ru'] ?: $product_d['name_kz'];
+	$page_name = fun::name_text($product_d['name_kz'] ?: $product_d['name_ru']);
 	$site_set['header'] = true;
 	$site_set['menu'] = true;
 	$site_set['atops'] = true;
 	$site_set['footer'] = false;
 	$site_set['utop_bk'] = 'products';
 	$site_set['utop_type'] = 'item';
-	$site_set['utop_nm'] = $product_d['name_ru'];
+	$site_set['utop_nm'] = $page_name;
 	$css = ['products/main', 'products/item'];
-	$js = ['products/main', 'products/item'];
+	$js = ['products/main', 'products/item', 'name_ed'];
 ?>
 <? include "../../block/header.php"; ?>
 
@@ -45,7 +45,7 @@
 				<div class="pcard_top">
 					<div class="pcard_clr" style="background:<?=htmlspecialchars(($catalog_d['color'] ?? '') ?: '#b3bac7')?>"><i class="fal fa-utensils"></i></div>
 					<div class="pcard_ttl">
-						<div class="pcard_name"><?=htmlspecialchars($product_d['name_kz'] ?: $product_d['name_ru'])?></div>
+						<div class="pcard_name"><?=fun::name_html($product_d['name_kz'] ?: $product_d['name_ru'])?></div>
 						<div class="pcard_sub">
 							<span><i class="fal fa-folder"></i> <?=($catalog_d ? htmlspecialchars($catalog_d['name_'.$lang] ?: $catalog_d['name_ru']) : t::w('No catalog', 'Каталогсыз'))?></span>
 							<span class="pcard_price"><?=number_format((int)$product_d['price'], 0, '', ' ')?> тг</span>
@@ -54,14 +54,22 @@
 					</div>
 				</div>
 				<div class="pcard_form">
-					<label class="pcard_f">
+					<div class="pcard_f">
 						<span class="pcard_l"><?=t::w('Name (kazakh)', 'Атауы (қазақша)')?></span>
-						<input type="text" class="pcard_in pc_name_kz" maxlength="255" value="<?=htmlspecialchars((string)$product_d['name_kz'])?>">
-					</label>
-					<label class="pcard_f">
+						<div class="nm_ed">
+							<div class="nm_tb"><button type="button" class="nm_red"><?=t::w('Bold red', 'Қалың қызыл')?></button><button type="button" class="nm_clr"><?=t::w('Clear', 'Тазалау')?></button></div>
+							<div class="nm_ce" contenteditable="true"><?=fun::name_html($product_d['name_kz'])?></div>
+							<input type="hidden" class="pc_name_kz" value="<?=htmlspecialchars(fun::name_save($product_d['name_kz']))?>">
+						</div>
+					</div>
+					<div class="pcard_f">
 						<span class="pcard_l"><?=t::w('Name (russian)', 'Атауы (орысша)')?></span>
-						<input type="text" class="pcard_in pc_name_ru" maxlength="255" value="<?=htmlspecialchars((string)$product_d['name_ru'])?>" placeholder="<?=t::w('If empty, kazakh name is used', 'Бос қалса, қазақшасы жазылады')?>">
-					</label>
+						<div class="nm_ed">
+							<div class="nm_tb"><button type="button" class="nm_red"><?=t::w('Bold red', 'Қалың қызыл')?></button><button type="button" class="nm_clr"><?=t::w('Clear', 'Тазалау')?></button></div>
+							<div class="nm_ce" contenteditable="true" data-ph="<?=t::w('If empty, kazakh name is used', 'Бос қалса, қазақшасы жазылады')?>"><?=fun::name_html($product_d['name_ru'])?></div>
+							<input type="hidden" class="pc_name_ru" value="<?=htmlspecialchars(fun::name_save($product_d['name_ru']))?>">
+						</div>
+					</div>
 					<div class="pcard_f pcard_f_wide">
 						<span class="pcard_l"><?=t::w('Catalog', 'Каталог')?></span>
 						<? $pc_sel = 0; $pc_html = ''; while ($pc = mysqli_fetch_assoc($pc_cats)) {
@@ -92,11 +100,11 @@
 				$comps = [];
 				$cq = db::query("select id, name_kz, name_ru, price".($cu ? ", unit" : "")." from product_comp where company_id = '$company' order by name_kz asc, id asc");
 				while ($c = mysqli_fetch_assoc($cq)) {
-					$u = mb_strtolower(trim((string)($c['unit'] ?? '')));
+					$u = fun::unit_norm($c['unit'] ?? '');
 					// кг/л бағасы 1 кг/л үшін, ал мөлшер г/мл-мен жазылады (÷1000)
-					$c['qu'] = ['кг' => 'г', 'л' => 'мл'][$u] ?? ($u !== '' ? $u : 'дана');
+					$c['qu'] = ['кг' => 'г', 'л' => 'мл'][$u] ?? ($u !== '' ? $u : 'шт');
 					$c['div'] = in_array($u, ['кг', 'л']) ? 1000 : 1;
-					$c['pu'] = $u !== '' ? $u : 'дана';
+					$c['pu'] = $u !== '' ? $u : 'шт';
 					$c['nm'] = $c['name_kz'] ?: $c['name_ru'];
 					$comps[$c['id']] = $c;
 				}
@@ -135,7 +143,7 @@
 								<div class="ci_n"><?=$i + 1?></div>
 								<div class="ci_nm"><?=($c ? htmlspecialchars($c['nm']) : '<m>'.t::w('Deleted item', 'Өшірілген құрам').'</m>')?>
 									<? if ($c): ?><small><?=$fmt($c['price'])?> тг / <?=htmlspecialchars($c['pu'])?></small><? endif ?></div>
-								<div class="ci_q"><b><?=(int)$r['quantity']?></b> <?=htmlspecialchars($c['qu'] ?? 'дана')?></div>
+								<div class="ci_q"><b><?=(int)$r['quantity']?></b> <?=htmlspecialchars($c['qu'] ?? 'шт')?></div>
 								<div class="ci_cost"><?=$fmt($r['cost'])?> тг</div>
 								<div class="ci_btns">
 									<? if ($c): ?><div class="ctg_b ci_edit" title="<?=t::w('Edit', 'Өзгерту')?>"><i class="fal fa-pen"></i></div><? endif ?>
@@ -179,7 +187,7 @@
          card.querySelector('.pc_price').addEventListener('input', function () { this.value = this.value.replace(/\D+/g, ''); });
          card.querySelector('.pc_save').addEventListener('click', function () {
             if (busy) return;
-            if (!val('.pc_name_kz').trim() && !val('.pc_name_ru').trim()) { msg(<?=json_encode(t::w('Enter name', 'Атауын жазыңыз'), JSON_UNESCAPED_UNICODE)?>); return; }
+            if (!nameEd.text(val('.pc_name_kz')) && !nameEd.text(val('.pc_name_ru'))) { msg(<?=json_encode(t::w('Enter name', 'Атауын жазыңыз'), JSON_UNESCAPED_UNICODE)?>); return; }
             var fd = new FormData();
             fd.append('card', 1);
             fd.append('id', card.dataset.id);
@@ -239,7 +247,7 @@
                      <div class="form_span"><?=t::w('Quantity', 'Саны')?>:</div>
                      <div class="ci_q_w">
                         <input type="text" class="form_txt ci_qty" inputmode="numeric" placeholder="0">
-                        <span class="ci_sfx">дана</span>
+                        <span class="ci_sfx">шт</span>
                      </div>
                   </div>
                   <div class="form_im">
@@ -276,7 +284,7 @@
             comp = 0;
             pop.querySelectorAll('.ci_opt').forEach(function (o) {
                var on = o.dataset.id == id; o.classList.toggle('ci_opt_act', on);
-               if (on) { comp = +id; f('.ci_sfx').textContent = o.dataset.qu || 'дана'; }
+               if (on) { comp = +id; f('.ci_sfx').textContent = o.dataset.qu || 'шт'; }
             });
          }
          function open(row) {
@@ -285,7 +293,7 @@
             f('.ci_save_t').textContent = row ? T.save_b : T.add_b;
             f('.ci_pick_w').style.display = row ? 'none' : '';
             f('.ci_qty').value = row ? row.dataset.qty : '';
-            f('.ci_sfx').textContent = 'дана';
+            f('.ci_sfx').textContent = 'шт';
             select(row ? row.dataset.comp : 0);
             pop.classList.add('pop_bl_act');
             setTimeout(function () { (row ? f('.ci_qty') : (f('.ci_find') || f('.ci_qty'))).focus(); }, 50);

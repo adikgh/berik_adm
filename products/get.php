@@ -17,7 +17,7 @@
 			if (mysqli_num_rows(db::query("select id from $tbl where company_id = '$cmp' and (name_kz = '$name' or name_ru = '$name')".($upd ? " and id <> '$id'" : "")." limit 1"))) exit('exists');
 			$unit = null;
 			if (fun::has_col($tbl, 'unit')) {
-				$u = mysqli_real_escape_string(db::$connect, mb_substr(trim(strip_tags((string)@$_POST['unit'])), 0, 20));
+				$u = mysqli_real_escape_string(db::$connect, fun::unit_norm(strip_tags((string)@$_POST['unit'])));
 				$unit = $u !== '' ? "'$u'" : "NULL";
 			}
 			if ($upd) $q = db::query("update $tbl set name_kz = '$name', name_ru = '$name', price = '$price'".($unit !== null ? ", unit = $unit" : "").", ubd_dt = NOW() where id = '$id' and company_id = '$cmp'");

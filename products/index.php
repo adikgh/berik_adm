@@ -17,6 +17,12 @@
 		else $no_catalog['items'][] = $pr_d;
 	}
 	if ($no_catalog['items']) $catalogs[0] = $no_catalog;
+	$coll = class_exists('Collator') ? new Collator('kk_KZ') : null;
+	foreach ($catalogs as &$cat) usort($cat['items'], function ($a, $b) use ($coll) {
+		$x = mb_strtolower(fun::name_text($a['name_kz'] ?: $a['name_ru'])); $y = mb_strtolower(fun::name_text($b['name_kz'] ?: $b['name_ru']));
+		return $coll ? $coll->compare($x, $y) : strcmp($x, $y);
+	});
+	unset($cat);
 
 
 	// site setting
@@ -25,7 +31,7 @@
 	$page_name = 'Тағамдар';
 	$page_key = 'Dishes';
 	$css = ['products/main', 'products/catalog'];
-	$js = ['products/main'];
+	$js = ['products/main', 'name_ed'];
 ?>
 <? include "../block/header.php"; ?>
 
@@ -69,16 +75,16 @@
 					<div class="ctg_list">
 						<? foreach ($cat['items'] as $pr_d): $number++; ?>
 							<div class="ctg_i pr_row" data-id="<?=$pr_d['id']?>" data-cat="<?=$cat['id']?>"
-								data-name="<?=htmlspecialchars(mb_strtolower($pr_d['name_kz'].' '.$pr_d['name_ru']))?>"
-								data-name-kz="<?=htmlspecialchars((string)$pr_d['name_kz'])?>"
-								data-name-ru="<?=htmlspecialchars((string)$pr_d['name_ru'])?>"
+								data-name="<?=htmlspecialchars(mb_strtolower(fun::name_text($pr_d['name_kz']).' '.fun::name_text($pr_d['name_ru'])))?>"
+								data-name-kz="<?=htmlspecialchars(fun::name_save($pr_d['name_kz']))?>"
+								data-name-ru="<?=htmlspecialchars(fun::name_save($pr_d['name_ru']))?>"
 								data-catalog="<?=(int)$pr_d['catalog_id']?>"
 								data-price="<?=(int)$pr_d['price']?>">
 								<div class="ctg_num"><?=$number?></div>
 								<div class="ctg_clr" style="background:<?=htmlspecialchars($clr)?>"></div>
 								<a class="ctg_name" href="item/?id=<?=$pr_d['id']?>">
-									<div class="ctg_name_kz pr_nm_kz"><?=htmlspecialchars($pr_d['name_kz'] ?: $pr_d['name_ru'])?></div>
-									<div class="ctg_name_ru pr_nm_ru"><?=($pr_d['name_ru'] && $pr_d['name_ru'] != $pr_d['name_kz'] ? htmlspecialchars($pr_d['name_ru']) : '')?></div>
+									<div class="ctg_name_kz pr_nm_kz"><?=fun::name_html($pr_d['name_kz'] ?: $pr_d['name_ru'])?></div>
+									<div class="ctg_name_ru pr_nm_ru"><?=($pr_d['name_ru'] && fun::name_text($pr_d['name_ru']) != fun::name_text($pr_d['name_kz']) ? fun::name_html($pr_d['name_ru']) : '')?></div>
 								</a>
 								<div class="ctg_cnt pr_pr"><?=((int)$pr_d['price'] ? number_format((int)$pr_d['price'], 0, '', ' ').' тг' : '<m>'.t::w('No price', 'Бағасы жоқ').'</m>')?></div>
 								<div class="ctg_btns">
@@ -110,13 +116,19 @@
 				<div class="form_c">
 					<div class="form_im">
 						<div class="form_span"><?=t::w('Name (kazakh)', 'Атауы (қазақша)')?>:</div>
-						<input type="text" class="form_txt pre_kz" maxlength="255">
-						<i class="fal fa-text form_icon"></i>
+						<div class="nm_ed">
+							<div class="nm_tb"><button type="button" class="nm_red"><?=t::w('Bold red', 'Қалың қызыл')?></button><button type="button" class="nm_clr"><?=t::w('Clear', 'Тазалау')?></button></div>
+							<div class="nm_ce" contenteditable="true"></div>
+							<input type="hidden" class="pre_kz" value="">
+						</div>
 					</div>
 					<div class="form_im">
 						<div class="form_span"><?=t::w('Name (russian)', 'Атауы (орысша)')?>:</div>
-						<input type="text" class="form_txt pre_ru" maxlength="255" placeholder="<?=t::w('If empty, kazakh name is used', 'Бос қалса, қазақшасы жазылады')?>">
-						<i class="fal fa-text form_icon"></i>
+						<div class="nm_ed">
+							<div class="nm_tb"><button type="button" class="nm_red"><?=t::w('Bold red', 'Қалың қызыл')?></button><button type="button" class="nm_clr"><?=t::w('Clear', 'Тазалау')?></button></div>
+							<div class="nm_ce" contenteditable="true" data-ph="<?=t::w('If empty, kazakh name is used', 'Бос қалса, қазақшасы жазылады')?>"></div>
+							<input type="hidden" class="pre_ru" value="">
+						</div>
 					</div>
 					<div class="form_im">
 						<div class="form_span"><?=t::w('Catalog', 'Каталог')?>:</div>
@@ -223,19 +235,19 @@
 			document.querySelectorAll('.pr_edit').forEach(function (b) {
 				b.addEventListener('click', function () {
 					row = b.closest('.pr_row');
-					f('.pre_kz').value = row.dataset.nameKz;
-					f('.pre_ru').value = row.dataset.nameRu;
+					nameEd.set(f('.pre_kz').parentNode, row.dataset.nameKz);
+					nameEd.set(f('.pre_ru').parentNode, row.dataset.nameRu);
 					pick(pop.querySelector('.cat_pick'), row.dataset.catalog);
 					f('.pre_price').value = row.dataset.price;
 					pop.classList.add('pop_bl_act');
-					f('.pre_kz').focus();
+					f('.pre_kz').parentNode.querySelector('.nm_ce').focus();
 				});
 			});
 			pop.querySelectorAll('.pre_back').forEach(function (b) { b.addEventListener('click', function () { pop.classList.remove('pop_bl_act'); }); });
 			f('.pre_price').addEventListener('input', function () { this.value = this.value.replace(/\D+/g, ''); });
 			f('.pre_save').addEventListener('click', function () {
 				if (busy || !row) return;
-				if (!f('.pre_kz').value.trim() && !f('.pre_ru').value.trim()) { msg(T.name); return; }
+				if (!nameEd.text(f('.pre_kz').value) && !nameEd.text(f('.pre_ru').value)) { msg(T.name); return; }
 				var fd = new FormData();
 				fd.append('card', 1);
 				fd.append('id', row.dataset.id);
@@ -253,13 +265,13 @@
 						pop.classList.remove('pop_bl_act');
 						// каталог ауысса, топтау өзгереді — бетті жаңартамыз
 						if (f('.pre_cat').value != row.dataset.catalog) { setTimeout(function () { location.reload(); }, 400); return; }
-						var kz = f('.pre_kz').value.trim(), ru = f('.pre_ru').value.trim();
-						if (!kz) kz = ru; if (!ru) ru = kz;
+						var kz = nameEd.clean(f('.pre_kz').value), ru = nameEd.clean(f('.pre_ru').value);
+						if (!nameEd.text(kz)) kz = ru; if (!nameEd.text(ru)) ru = kz;
 						var p = parseInt(f('.pre_price').value || '0', 10);
 						row.dataset.nameKz = kz; row.dataset.nameRu = ru; row.dataset.price = p;
-						row.dataset.name = (kz + ' ' + ru).toLowerCase();
-						row.querySelector('.pr_nm_kz').textContent = kz;
-						row.querySelector('.pr_nm_ru').textContent = ru != kz ? ru : '';
+						row.dataset.name = (nameEd.text(kz) + ' ' + nameEd.text(ru)).toLowerCase();
+						row.querySelector('.pr_nm_kz').innerHTML = kz; // clean() тек рұқсат етілген тегтерді қалдырады
+						row.querySelector('.pr_nm_ru').innerHTML = nameEd.text(ru) != nameEd.text(kz) ? ru : '';
 						row.querySelector('.pr_pr').textContent = p ? p.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' тг' : '—';
 					})
 					.catch(function () { busy = false; msg(T.err); });

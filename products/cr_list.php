@@ -6,8 +6,8 @@
 	$cmp = (int)$company;
 	$cr_raw = $cr['kind'] == 'raw';
 	$cr_unit = fun::has_col($cr['table'], 'unit'); // product_comp-та unit жоқ
-	$units = ['кг', 'г', 'л', 'мл', 'дана'];
-	$unit_def = $cr_raw ? 'кг' : 'дана';
+	$units = fun::$units; // кг, г, л, мл, шт
+	$unit_def = $cr_raw ? 'кг' : 'шт';
 	$list = db::query("select * from {$cr['table']} where company_id = '$cmp' order by name_kz asc, id asc");
 	$page_result = $list ? mysqli_num_rows($list) : 0;
 
@@ -55,7 +55,7 @@
 					<i class="fal fa-search form_icon"></i>
 				</div>
 				<div class="ctg_list">
-					<? $number = 0; while ($r = mysqli_fetch_assoc($list)): $number++; $nm = $r['name_kz'] ?: $r['name_ru']; $un = $cr_unit ? (string)$r['unit'] : ''; ?>
+					<? $number = 0; while ($r = mysqli_fetch_assoc($list)): $number++; $nm = $r['name_kz'] ?: $r['name_ru']; $un = $cr_unit ? fun::unit_norm($r['unit']) : ''; ?>
 						<div class="ctg_i cr_row" data-id="<?=$r['id']?>" data-nm="<?=htmlspecialchars($nm)?>" data-unit="<?=htmlspecialchars($un)?>" data-price="<?=(int)$r['price']?>"
 							data-name="<?=htmlspecialchars(mb_strtolower($r['name_kz'].' '.$r['name_ru']))?>">
 							<div class="ctg_num"><?=$number?></div>
@@ -151,7 +151,11 @@
 
 			function setUnit(u) {
 				if (!units) return;
-				var b = units.querySelector('.cp_i[data-id="' + u + '"]') || units.querySelector('.cp_i[data-id="' + DEF + '"]');
+				units.querySelectorAll('.cp_x').forEach(function (x) { if (x.dataset.id !== u) x.remove(); });
+				var b = Array.prototype.find.call(units.querySelectorAll('.cp_i'), function (x) { return x.dataset.id === u; });
+				// базада белгісіз өлшем болса, кг-ға ауыстырмай, қосымша чип етіп көрсетеміз
+				if (!b && u) { b = document.createElement('button'); b.type = 'button'; b.className = 'k_br_i cp_i cp_x'; b.dataset.id = u; b.appendChild(document.createElement('span')).textContent = u; units.appendChild(b); }
+				if (!b) b = units.querySelector('.cp_i[data-id="' + DEF + '"]');
 				units.querySelectorAll('.cp_i').forEach(function (x) { x.classList.toggle('k_br_act', x === b); });
 				f('.cr_hint_u').textContent = b.dataset.id;
 			}

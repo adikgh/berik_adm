@@ -254,3 +254,18 @@ tr.k_cr_det > td{ height: auto; padding: 10px 20px 16px; background: #fafbfc; }
 	.head_rk select{ min-width: 0; }
 	.tg1_topi{ height: 44px; padding: 0 14px; font-size: 13px; }
 }
+
+/* тағам атауындағы белгілеу */
+.cl_red{color:#B90000 !important}
+.cl_green{color:#0EA768 !important}
+.cl_blue{color:#1f75a8 !important}
+
+/* тағам атауының редакторы */
+.nm_ed{position:relative}
+.nm_tb{display:flex;gap:6px;margin-bottom:6px}
+.nm_tb button{height:30px;padding:0 10px;border:1px solid var(--bp-line,#e6e9ef);border-radius:8px;background:#fff;font:inherit;font-size:13px;cursor:pointer}
+.nm_tb .nm_red{color:#B90000;font-weight:800}
+.nm_tb button:hover{border-color:#cfd6e0}
+.nm_ce{min-height:46px;display:flex;align-items:center;flex-wrap:wrap;white-space:pre-wrap;outline:none;cursor:text;border:1px solid var(--bp-line,#e6e9ef);border-radius:10px;padding:10px 12px;background:#fff;font-size:15px;line-height:1.4}
+.nm_ce:focus{border-color:#1f75a8;box-shadow:0 0 0 3px rgba(31,117,168,.12)}
+.nm_ce:empty:before{content:attr(data-ph);color:#a3abb9}

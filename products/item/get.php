@@ -135,7 +135,12 @@
 		// тағам карточкасынан сақтау (атау kz/ru, каталог, баға)
 		if (isset($_POST['card'])) {
 			$id = intval(@$_POST['id']); $cmp = (int)$company;
-			$esc = function ($v) { return mysqli_real_escape_string(db::$connect, mb_substr(trim(strip_tags((string)$v)), 0, 255)); };
+			$esc = function ($v) {
+				$h = fun::name_save($v);
+				if (fun::name_text($h) === '') return '';
+				if (mb_strlen($h) > 255) $h = fun::name_save(mb_substr($h, 0, 255));
+				return mysqli_real_escape_string(db::$connect, $h);
+			};
 			$nkz = $esc(@$_POST['name_kz']); $nru = $esc(@$_POST['name_ru']);
 			if ($nkz === '' && $nru === '') exit('empty');
 			if ($nkz === '') $nkz = $nru;
