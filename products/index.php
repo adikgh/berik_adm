@@ -1,0 +1,120 @@
+<? include "../config/core.php";
+
+	// 
+	if (!$user_id) { header('location: /'); exit(); }
+
+
+	// тағамдар каталог бойынша топталады, каталогтар өз ретімен (number)
+	$catalogs = [];
+	$cq = db::query("select * from product_catalog where company_id = '$company' and (arh is null or arh = 0) order by number asc, id asc");
+	while ($c = mysqli_fetch_assoc($cq)) { $c['items'] = []; $catalogs[$c['id']] = $c; }
+	$no_catalog = ['id' => 0, 'name_kz' => 'Каталогсыз', 'name_ru' => 'Каталогсыз', 'color' => '#b3bac7', 'items' => []];
+	$product = db::query("select * from product where company_id = '$company' and arh = 0 order by name_ru asc");
+	$page_result = mysqli_num_rows($product);
+	while ($pr_d = mysqli_fetch_assoc($product)) {
+		if ($pr_d['catalog_id'] && isset($catalogs[$pr_d['catalog_id']])) $catalogs[$pr_d['catalog_id']]['items'][] = $pr_d;
+		else $no_catalog['items'][] = $pr_d;
+	}
+	if ($no_catalog['items']) $catalogs[0] = $no_catalog;
+
+
+	// site setting
+	$menu_name = 'products';
+	$pod_menu_name = 'main';
+	$page_name = 'Тағамдар';
+	$page_key = 'Dishes';
+	// $site_set['footer'] = false;
+	$css = ['products/main'];
+	$js = ['products/main'];
+?>
+<? include "../block/header.php"; ?>
+
+	<div class="bl_c">
+
+
+		<!--  -->
+		<div class="ucours_t">
+			<div class="ucours_tl">
+				<div class="ucours_tm">
+					<div class="btn btn_cl product_add_pop">
+					<i class="fal fa-plus"></i>
+					<span>Тағам қосу</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+      	<!-- a header -->
+		<? include "aheader.php"; ?>
+
+		<? if ($page_result): ?>
+			
+			<div class="uc_u">
+				<div class="uc_us">
+					<div class="form_im uc_usn">
+						<input type="text" placeholder="Тағам іздеу" class="product_search">
+						<i class="fal fa-search form_icon"></i>
+					</div>
+				</div>
+
+				<div class="tscroll">
+					<div class="uc_u2q uc_uc">
+						<div class="uc_uh">
+							<div class="uc_uhn">
+								<div class="uc_uh_number">#</div>
+								<div class="uc_uh_other">Атауы</div>
+								<div class="uc_uh_other">Каталог</div>
+								<div class="uc_uh_other">Бағасы</div>
+							</div>
+							<div class="uc_uh_cn"></div>
+						</div>
+						<div class="uc_uc">
+							<? $number = 0; foreach ($catalogs as $cat): if (!$cat['items']) continue; ?>
+								<div class="pr_grp">
+									<span class="pr_grp_clr" style="background:<?=htmlspecialchars($cat['color'] ?: '#666')?>"></span>
+									<span class="pr_grp_name"><?=htmlspecialchars($cat['name_'.$lang] ?: $cat['name_ru'])?></span>
+									<span class="pr_grp_cnt"><?=count($cat['items'])?></span>
+								</div>
+								<? foreach ($cat['items'] as $pr_d): $number++; ?>
+								
+									<div class="uc_ui uc_ui2">
+										<div class="uc_uil">
+											<div class="uc_ui_number"><?=$number?></div>
+											<a class="uc_uin_other" href="item/?id=<?=$pr_d['id']?>"><?=$pr_d['name_ru']?></a>
+											<div class="uc_uin_other"><? if ($pr_d['catalog_id']): ?> <div><?=product::pr_catalog_name($pr_d['catalog_id'], $lang)?></div> <? endif ?></div>
+											<div class="uc_uin_other"><?=($pr_d['price']==0?'<m>Бағасы жоқ</m>':$pr_d['price'].' тг')?></div>
+										</div>
+										<div class="uc_uib">
+											<div class="uc_uibo"><i class="fal fa-ellipsis-v"></i></div>
+											<div class="menu_c uc_uibs">
+												<a class="menu_ci" target="_blank" href="/products/item/?id=<?=$pr_d['id']?>">
+													<div class="menu_cin"><i class="fal fa-external-link"></i></div>
+													<div class="menu_cih">Ашу</div>
+												</a>
+												<div class="menu_ci product2_add_pop" data-id="<?=$pr_d['id']?>">
+													<div class="menu_cin"><i class="fal fa-clone"></i></div>
+													<div class="menu_cih">Көшірме жасау</div>
+												</div>
+												<div class="menu_ci uc_uib_del pr_btn_delete" data-title2="Архивке" data-id="<?=$pr_d['id']?>">
+													<div class="menu_cin"><i class="fal fa-archive"></i></div>
+													<div class="menu_cih">Архивке жіберу</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								<? endforeach ?>
+							<? endforeach ?>
+						</div>
+					</div>
+				</div>
+				<div class="uc_u2qm  uc_uc dsp_n"></div>
+			</div>
+
+
+		<? else: ?> <div class="ds_nr"><i class="fal fa-ghost"></i><p>Тағам әлі жоқ</p></div> <? endif ?>
+
+	</div>
+
+<? include "../block/footer.php"; ?>
+
+	<? include "pop_add.php"; ?>

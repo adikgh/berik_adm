@@ -1,0 +1,108 @@
+/* Статистика беті. Түстер berik_admin.css ішіндегі --bp-* айнымалыларынан алынады. */
+.st_page{ --st-card: #fff; --st-line: var(--bp-line, #e7e7e7); --st-muted: var(--bp-muted, #8a8f98); --st-text: var(--bp-text, #222); --st-green: var(--bp-green, #0EA768); --st-blue: var(--bp-blue, #1f75a8); --st-shadow: var(--bp-shadow, 0 6px 20px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04)); color: var(--st-text); }
+.st_page a{ color: inherit; text-decoration: none; }
+
+/* ---------- Сүзгілер ---------- */
+.st_bar{ display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 8px 0 16px; }
+.st_seg{ display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 5px; background: var(--st-card); border-radius: 14px; box-shadow: var(--st-shadow); }
+.st_seg_i{ height: 46px; display: flex; align-items: center; padding: 0 20px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: .15s; user-select: none; }
+.st_seg_i:hover{ background: var(--bp-pill, #f5f5f5); }
+.st_seg_act, .st_seg_act:hover{ background: #e3f5ec; color: var(--st-green) !important; font-weight: 700; }
+.st_nav{ display: inline-flex; align-items: center; gap: 4px; padding: 5px; background: var(--st-card); border-radius: 14px; box-shadow: var(--st-shadow); }
+.st_nav_b{ width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 15px; transition: .15s; }
+.st_nav_b:hover{ background: var(--bp-pill, #f5f5f5); }
+.st_nav_t{ min-width: 150px; text-align: center; font-size: 16px; font-weight: 700; }
+
+/* ---------- Карточкалар ---------- */
+.st_kpis{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+.st_kpi{ padding: 18px 20px; background: var(--st-card); border-radius: 14px; box-shadow: var(--st-shadow); min-width: 0; }
+.st_kpi_h{ display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--st-muted); text-transform: uppercase; letter-spacing: .3px; }
+.st_kpi_h i{ font-size: 16px; }
+.st_kpi_v{ display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 10px 0 6px; font-size: 26px; font-weight: 800; line-height: 1.15; }
+.st_kpi_vs{ font-size: 15px; font-weight: 600; color: var(--st-muted); }
+.st_kpi_s{ font-size: 13px; color: var(--st-muted); }
+.st_kpi_main{ background: var(--st-green); color: #fff; }
+.st_kpi_main .st_kpi_h, .st_kpi_main .st_kpi_s{ color: rgba(255,255,255,.85); }
+.st_kpi_main .st_delta{ background: rgba(255,255,255,.2); color: #fff; }
+
+.st_delta{ display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 8px; font-size: 13px; font-weight: 700; }
+.st_delta i{ font-size: 11px; }
+.st_up{ background: #e3f5ec; color: var(--st-green); }
+.st_down{ background: #fdecec; color: #e5484d; }
+.st_eq{ background: #f1f1f1; color: var(--st-muted); }
+
+.st_note{ display: block; line-height: 1.5; padding: 12px 16px; margin-bottom: 12px; background: #fff8e6; border-radius: 12px; font-size: 14px; }
+.st_note i{ color: #e9a100; font-size: 16px; margin-right: 8px; }
+.st_note_l{ padding: 0 4px; background: none; font-size: 12px; color: var(--st-muted); margin-top: -4px; }
+
+/* ---------- Блок ---------- */
+.st_card{ padding: 18px 20px; margin-bottom: 12px; background: var(--st-card); border-radius: 14px; box-shadow: var(--st-shadow); min-width: 0; }
+.st_card_h{ display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; font-size: 16px; font-weight: 700; }
+.st_card_hs{ font-size: 13px; font-weight: 600; color: var(--st-muted); }
+.st_empty{ padding: 24px 0; text-align: center; color: var(--st-muted); font-size: 15px; }
+.st_card.st_empty{ padding: 40px 20px; }
+.st_grid{ display: grid; grid-template-columns: repeat(2, 1fr); align-items: start; gap: 12px; }
+.st_grid .st_card{ margin-bottom: 0; }
+.st_grid + .st_card{ margin-top: 12px; }
+
+/* ---------- График ---------- */
+.st_chart{ height: 240px; overflow-x: auto; overflow-y: hidden; padding-top: 10px; }
+.st_chart_in{ position: relative; display: flex; align-items: stretch; gap: 4px; height: 100%; }
+/* тренд сызығы: бағандардың үстінде, 75% мөлдір */
+.st_trend{ position: absolute; left: 0; top: 0; width: 100%; height: calc(100% - 17px); z-index: 2; pointer-events: none; overflow: visible; }
+.st_chart_y .st_trend{ height: calc(100% - 18px); }
+.st_trend line{ stroke: #222; stroke-opacity: .25; stroke-width: 3; stroke-linecap: round; }
+.st_card_hr{ display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.st_trend_lg{ display: flex; align-items: center; gap: 6px; }
+.st_trend_lg span{ width: 18px; height: 3px; border-radius: 2px; background: rgba(34,34,34,.25); }
+.st_col{ position: relative; flex: 1 1 0; min-width: 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+.st_chart_y .st_col{ min-width: 40px; }
+.st_col_bar{ flex: 1; width: 100%; display: flex; align-items: flex-end; border-radius: 6px; background: #f4f5f6; overflow: hidden; }
+.st_col_f{ width: 100%; background: var(--st-blue); border-radius: 6px 6px 0 0; transition: .15s; }
+.st_col:hover .st_col_f{ background: var(--bp-blue-h, #18618b); }
+.st_col_today .st_col_f{ background: var(--st-green); }
+.st_col_l{ font-size: 11px; font-weight: 600; color: var(--st-muted); line-height: 1; }
+.st_chart_y .st_col_l{ font-size: 12px; }
+.st_col_wk .st_col_l{ color: #e5484d; }
+.st_col_today .st_col_l{ color: var(--st-green); font-weight: 800; }
+.st_tip{ display: none; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 5; padding: 8px 10px; background: #222; color: #fff; border-radius: 8px; font-size: 12px; white-space: nowrap; flex-direction: column; gap: 2px; pointer-events: none; }
+.st_tip b{ font-weight: 700; }
+.st_col:hover .st_tip{ display: flex; }
+.st_col:first-of-type .st_tip, .st_col:nth-of-type(2) .st_tip{ left: 0; transform: none; }
+.st_col:last-of-type .st_tip, .st_col:nth-last-of-type(2) .st_tip{ left: auto; right: 0; transform: none; }
+
+/* ---------- Тізімдер ---------- */
+.st_stack{ display: flex; height: 12px; margin-bottom: 14px; border-radius: 6px; overflow: hidden; background: #f1f1f1; }
+.st_list{ display: flex; flex-direction: column; }
+.st_li{ display: grid; grid-template-columns: 1fr auto minmax(110px, auto); align-items: center; column-gap: 14px; padding: 10px 0; border-top: 1px solid var(--st-line); font-size: 15px; }
+.st_li:first-child{ border-top: 0; padding-top: 0; }
+a.st_li:hover .st_li_n{ color: var(--st-blue); }
+.st_li_n{ display: flex; align-items: center; gap: 10px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st_li_n i{ width: 18px; text-align: center; color: var(--st-muted); }
+.st_li_p{ font-size: 13px; font-weight: 600; color: var(--st-muted); text-align: right; }
+.st_li_v{ font-weight: 700; text-align: right; white-space: nowrap; }
+.st_li_sub{ color: var(--st-muted); }
+.st_li_sub .st_li_v{ color: var(--st-text); font-weight: 600; }
+.st_li_line{ grid-column: 1 / -1; height: 6px; margin-top: 8px; border-radius: 4px; background: #f1f1f1; overflow: hidden; }
+.st_li_line div{ height: 100%; background: var(--st-green); border-radius: 4px; }
+.st_li_line_b div{ background: var(--st-blue); }
+.st_dot{ width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.st_rank{ width: 26px; height: 26px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: var(--bp-pill, #f5f5f5); font-size: 13px; font-weight: 700; }
+
+@media (max-width: 1000px){
+	.st_kpis{ grid-template-columns: repeat(2, 1fr); }
+	.st_grid{ grid-template-columns: 1fr; }
+}
+@media (max-width: 768px){
+	.st_seg_i{ height: 40px; padding: 0 14px; font-size: 13px; }
+	.st_nav_b{ width: 40px; height: 40px; }
+	.st_nav_t{ min-width: 120px; font-size: 14px; }
+	.st_kpi{ padding: 14px; }
+	.st_kpi_v{ font-size: 20px; }
+	.st_card{ padding: 14px; }
+	.st_chart{ height: 200px; }
+	.st_li{ font-size: 14px; grid-template-columns: 1fr auto auto; }
+}
+@media (max-width: 480px){
+	.st_kpis{ grid-template-columns: 1fr; }
+}

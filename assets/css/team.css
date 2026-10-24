@@ -1,0 +1,17 @@
+/* жұмысшылар беті */
+.tm_c{margin-top:16px;display:flex;flex-direction:column;gap:22px}
+.tm_grp_h{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:#222;margin-bottom:10px}
+.tm_grp_h i{width:36px;height:36px;border-radius:10px;background:#eef3f8;color:#1f75a8;display:flex;align-items:center;justify-content:center}
+.tm_grp_h b{font-size:12px;color:#8a94a6;background:#fff;border:1px solid #e6e9ef;border-radius:20px;padding:2px 10px}
+.tm_list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.tm_i{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e6e9ef;border-radius:14px;padding:12px;min-height:72px}
+.tm_av{width:48px;height:48px;border-radius:12px;background:#e3f5ec center/cover no-repeat;color:#0EA768;font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tm_info{flex:1;min-width:0}
+.tm_name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm_meta{display:flex;flex-wrap:wrap;gap:10px;font-size:13px;color:#8a94a6;margin-top:3px}
+.tm_btns{display:flex;gap:6px}
+.tm_chips{display:flex;flex-wrap:wrap;gap:8px;width:100%}
+.tm_chip{height:48px;padding:0 16px;border-radius:10px;border:1px solid #e1e4ea;background:#fff;display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:14px;user-select:none;transition:.15s}
+.tm_chip:hover{border-color:#1f75a8}
+.tm_chip_act,.tm_chip_act:hover{background:#e3f5ec;border-color:#0EA768;color:#0EA768}
+@media (max-width:700px){.tm_list{grid-template-columns:1fr}}

@@ -1,0 +1,27 @@
+/* каталог беті */
+.ctg_c{margin-top:16px}
+.ctg_hint{display:flex;align-items:center;gap:10px;color:#8a94a6;font-size:14px;margin-bottom:12px}
+.ctg_list{display:flex;flex-direction:column;gap:8px}
+.ctg_i{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #e6e9ef;border-radius:12px;padding:10px 12px;min-height:64px;transition:box-shadow .2s, opacity .2s}
+.ctg_i:hover{box-shadow:0 4px 14px rgba(20,40,80,.08)}
+.ctg_i_drag{opacity:.4}
+.ctg_drag{cursor:grab;color:#b3bac7;font-size:18px;padding:0 4px}
+.ctg_num{width:28px;text-align:center;font-weight:700;color:#8a94a6}
+.ctg_clr{width:36px;height:36px;border-radius:8px;flex-shrink:0}
+.ctg_name{flex:1;min-width:0}
+.ctg_name_kz{font-weight:700;font-size:16px}
+.ctg_name_ru{font-size:13px;color:#8a94a6}
+.ctg_cnt{color:#8a94a6;font-size:14px;white-space:nowrap}
+.ctg_btns{display:flex;gap:6px}
+.ctg_b{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#eef3f8;color:#1f75a8;cursor:pointer;user-select:none;transition:transform .1s}
+.ctg_b:active{transform:scale(.94)}
+.ctg_b_red{background:#fdecec;color:#c92a2a}
+.ctg_colors{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:6px}
+.ctg_color{width:40px;height:40px;border-radius:10px;cursor:pointer;border:3px solid transparent}
+.ctg_color_act{border-color:#1b1f27}
+.ctg_color_in{width:44px;height:44px;border:none;background:none;padding:0;cursor:pointer}
+@media (max-width:700px){
+	.ctg_cnt,.ctg_drag{display:none}
+	.ctg_i{gap:8px}
+	.ctg_b{width:40px;height:40px}
+}

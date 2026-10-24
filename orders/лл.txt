@@ -1,0 +1,36 @@
+<div class="uc_uc">
+					<div class="uc_ui " style="background-color: #f5f5f5;">
+						<div class="uc_uil2">
+							<div class="uc_ui_number">0</div>
+							<div class="uc_uin_other"></div>
+							<div class="uc_uin_other"></div>
+							<div class="uc_uin_other"></div>
+							<div class="uc_uin_other">
+								<select name="status" class="on_sort_status" data-order-id="<?=$buy_d['id']?>" >
+									<option data-id="" value="">Барлығы</option>
+									<? $orders_status = db::query("select * from retail_orders_status"); ?>
+									<? while ($orders_status_d = mysqli_fetch_assoc($orders_status)): ?>
+										<option data-id="<?=$orders_status_d['id']?>" <?=(@$_GET['status'] == $orders_status_d['id']?'selected':'')?> value="" ><?=$orders_status_d['name_kz']?></option>
+									<? endwhile ?>
+								</select>
+							</div>
+							<div class="uc_uin_other">
+								<select name="staff" class="on_sort_staff" data-order-id="<?=$buy_d['id']?>" >
+									<option data-id="" value="">Барлығы</option>
+									<option data-id="soboi" <?=(@$_GET['staff'] == 'soboi'?'selected':'')?> value="">Собой</option>
+									<option data-id="off" <?=(@$_GET['staff'] == 'off'?'selected':'')?> value="">Таңдалмаған</option>
+									<? $staff = db::query("select * from user_staff where positions_id = 6"); ?>
+									<? while ($staff_d = mysqli_fetch_assoc($staff)): ?>
+										<? $staff_user_d = fun::user($staff_d['user_id']); ?>
+										<option data-id="<?=$staff_d['user_id']?>" <?=(@$_GET['staff'] == $staff_d['user_id']?'selected':'')?> value=""><?=$staff_user_d['name']?></option>
+									<? endwhile ?>
+								</select>
+							</div>
+							<div class="uc_uin_other fr_price"><?=$allorder['total']?></div>
+							<div class="uc_uin_other fr_price"><?=$allorder['pay_qr']?> </div>
+							<div class="uc_uin_other fr_price"><?=$allorder['total'] - $allorder['pay_qr']?></div>
+							<div class="uc_uin_cn " data-id=""></div>
+							<div class="uc_uin_cn " data-id=""></div>
+						</div>
+					</div>
+				</div>

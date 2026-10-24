@@ -1,0 +1,13 @@
+				<div class="form_im cash_bl1_dc">
+					<div class="form_span">Доставка:</div>
+					<div class="cash_bl1_dc_slo " data-type-name="" data-val="0" data-total="<?=$total?>">
+						<div class="cash_bl1_dc_slo_i cash_bl1_dc_slo_ic " data-val="0" data-status="2">Собой</div>
+						<!-- <div class="cash_bl1_dc_slo_i cash_bl1_dc_slo_ic fr_price form_im_slo_act" data-val="500">500</div> -->
+						<!-- <div class="cash_bl1_dc_slo_i cash_bl1_dc_slo_ic fr_price" data-val="1000">1000</div> -->
+						<!-- <div class="cash_bl1_dc_slo_i cash_bl1_dc_slo_ic fr_price" data-val="1500">1500</div> -->
+						<!-- <div class="cash_bl1_dc_slo_i cash_bl1_dc_slo_ic fr_price" data-val="2000">2000</div> -->
+						<div class="cash_bl1_dc_slo_i cash_bl1_dc_slo_ici cash_bl1_dcin" data-val="">
+							<input type="tel" class="uc_uin_calc_q fr_price " value="700 тг" data-lenght="1" data-val="700" />
+						</div>
+					</div>
+				</div>
