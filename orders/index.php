@@ -14,6 +14,11 @@
 	if ($f_status) $where .= " and order_status = '$f_status'";
 	if ($f_type) $where .= " and order_type = '$f_type'";
 	if (@$_GET['by_ubd']) $where .= " and ubd = 1";
+	$f_branch = intval(@$_GET['branch']);
+	if ($f_branch) $where .= " and branch_id = '$f_branch'";
+	$o_branches = [];
+	$obq = db::query("select id, name from company_branch where company_id = '$company' order by number asc");
+	while ($ob = mysqli_fetch_assoc($obq)) $o_branches[] = $ob;
 	if ($f_staff == 'off') $where .= " and order_type = 1 and сourier_id is null";
 	elseif ($f_staff == 'soboi') $where .= " and order_type = 2";
 	elseif ($f_staff) $where .= " and сourier_id = '".intval($f_staff)."'";
@@ -239,6 +244,14 @@
 				<div class="">
 					<input class="form_dt on_sort_time" type="date" value="<?=date('Y-m-d', strtotime("$start_cdate"))?>">
 				</div>
+				<? if (count($o_branches) >= 2): ?>
+				<div class="k_br">
+					<a class="k_br_i <?=(!$f_branch?'k_br_act':'')?>" href="?<?=htmlspecialchars(http_build_query(array_merge($_GET, ['branch' => 0])))?>"><i class="fal fa-store"></i><span><?=t::w('Branch: all', 'Барлық точка')?></span></a>
+					<? foreach ($o_branches as $ob): ?>
+						<a class="k_br_i <?=($f_branch == $ob['id']?'k_br_act':'')?>" href="?<?=htmlspecialchars(http_build_query(array_merge($_GET, ['branch' => $ob['id']])))?>"><span><?=htmlspecialchars($ob['name'])?></span></a>
+					<? endforeach ?>
+				</div>
+				<? endif ?>
 				<div class="">
 					<select class="on_sort_type">
 						<option data-id="" value=""><?=t::w('Type: all', 'Барлық формат')?></option>

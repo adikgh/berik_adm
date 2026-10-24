@@ -131,6 +131,13 @@ $(function () {
 		$('.acc_menu .acc_hd').after(cbox);
 	}
 
+	// беттің жоғарғы табтары (Тағамдар / Құрамы / Оператор) Аналитика мәзірінде бар болса, телефонда қайталамаймыз
+	var ddFiles = $('.mp_dd_c .mp_dd_i').map(function () { return (this.pathname || '').split('/').pop(); }).get();
+	$('.tg1_top').each(function () {
+		var t = $(this).find('.tg1_topi');
+		if (t.length && t.filter(function () { return $.inArray((this.pathname || '').split('/').pop(), ddFiles) < 0; }).length == 0) $(this).addClass('bm_dup');
+	});
+
 	$('body').append(nav).append('<div class="bm_back"></div>');
 	$('body').addClass('bm_has_nav');
 

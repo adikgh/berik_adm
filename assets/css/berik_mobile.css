@@ -119,6 +119,7 @@
 	.bm_pop_act i{ color: var(--bp-green, #0EA768); }
 	.bm_pop_sep{ height: 1px; margin: 4px 10px; background: var(--bp-line, #e7e7e7); }
 	.acc_list .menu_ci.bm_moved{ display: none; }
+	.tg1_top.bm_dup{ display: none; }
 	.bm_open .bm_nav{ z-index: 6930; }
 
 	/* ---------- Ортақ: батырмалар, формалар, сүзгілер ---------- */

@@ -17,6 +17,13 @@
 		$ins = db::query("INSERT INTO `report_1`(`id`, `user_id`, `company_id`) VALUES ('$cashbox_id', '$user_id', '$company')");
 	}
 	$cashboxp = db::query("select * from report_сourier where report_id = '$cashbox_id' order by ins_dt asc");
+
+	// курьерлердің күндік есебі (сақталғандар)
+	include "cday_lib.php";
+	$cd_ready = cday::ready();
+	$cd_day = $time_sort;
+	$cd_map = cday::day_map($company, $cd_day);
+	$cd_unsaved = 0;
     
 
 
@@ -96,8 +103,8 @@
 	$page_name = 'Касса';
 	$page_key = 'Cashbox';
 	$site_set['view_dt'] = 1;
-	$css = ['kassa'];
-	$js = ['kassa'];
+	$css = ['kassa', 'kassa_cday'];
+	$js = ['kassa', 'kassa_cday'];
 ?>
 <? include "../block/header.php"; ?>
 
@@ -110,7 +117,7 @@
 						<input class="form_dt on_sort_time" type="date" name="" id="" value="<?=date('Y-m-d', strtotime("$start_cdate"))?>">
 					</div>
 
- 					<? if (count($branches)): ?>
+ 					<? if (count($branches) >= 2): ?>
 						<div class="k_br">
 							<a class="k_br_i <?=(!$branch_id?'k_br_act':'')?>" href="?<?=http_build_query(array_merge($_GET, ['branch' => 0]))?>"><i class="fal fa-store"></i><span><?=t::w('Branch: all', 'Барлық точка')?></span></a>
 							<? foreach ($branches as $branch_d): ?>
@@ -149,7 +156,7 @@
 
 			<div class="table4">
 
-				<table>
+				<table class="k_cour">
 
                     <tbody>
                         <? while ($staff_d = mysqli_fetch_assoc($staff)): ?>
@@ -157,6 +164,7 @@
                             <? $staff_id = $staff_d['user_id']; ?>
                             <? $orders = db::query("select * from retail_orders where ins_dt BETWEEN '$start_cdate' and '$end_cdate' and сourier_id = '$staff_id' and company_id = '$company' and number is not null and order_status in (1, 2, 3, 4) $br_cond order by number desc"); ?>
                             <? $report_сourier_d = fun::report_сourier($cashbox_id, $staff_id); ?>
+                            <? $cd_s = @$cd_map[$staff_id]; if ($cd_s) $report_сourier_d = ['expenses' => $cd_s['expenses'], 'cash' => $cd_s['cash']]; ?>
 
                             <?
                                 $allorder['total'] = 0;
@@ -187,7 +195,8 @@
                                 $onw['pay_delivery'] = $onw['pay_delivery'] + $allorder['pay_delivery'];
                             ?>
 
-                            <tr>
+                            <? $cd_empty = !$cd_s && !mysqli_num_rows($orders) && !@$report_сourier_d['expenses'] && !@$report_сourier_d['cash']; ?>
+                            <tr class="k_cr_row <?=($cd_s?'cd_saved_row':'')?> <?=($cd_empty?'k_row_zero':'')?>">
                                 <td><? if ($has_cpay && $c_list): ?><div class="k_cr_tg" data-id="<?=$staff_id?>"><i class="fal fa-angle-down"></i> <?=$staff_user_d['name']?></div><? else: ?><?=$staff_user_d['name']?><? endif ?></td>
                                 <td><?=mysqli_num_rows($orders)?></td>
                                 <td class="fr_price"><?=$allorder['total']?></td>
@@ -205,17 +214,33 @@
                                 <td class="fr_price"><?=$allorder['pay_delivery']?></td>
                                 <td class="fr_price btype_start" data-rask="0" data-start="<?=$allorder['pay_cash'] - $allorder['pay_delivery']?>"><?=$allorder['pay_cash'] - $allorder['pay_delivery']?></td>
                                 <td class="">
-							        <input type="tel" data-id="<?=$cashbox_id?>" data-user-id="<?=$staff_id?>" class="form_txt fr_price btype_rask" placeholder="0" data-val="<?=(@$report_сourier_d['expenses']?$report_сourier_d['expenses']:0)?>" value="<?=@$report_сourier_d['expenses']?>">
+							        <input type="tel" data-id="<?=$cashbox_id?>" data-user-id="<?=$staff_id?>" class="form_txt fr_price btype_rask" <?=($cd_s?'disabled':'')?> placeholder="0" data-val="<?=(@$report_сourier_d['expenses']?$report_сourier_d['expenses']:0)?>" value="<?=@$report_сourier_d['expenses']?>">
                                 </td>
                                 <td class="">
-							        <input type="tel" data-id="<?=$cashbox_id?>" data-user-id="<?=$staff_id?>" class="form_txt fr_price btype_cash" placeholder="0" data-val="<?=(@$report_сourier_d['cash']?$report_сourier_d['cash']:0)?>" value="<?=@$report_сourier_d['cash']?>">
+							        <input type="tel" data-id="<?=$cashbox_id?>" data-user-id="<?=$staff_id?>" class="form_txt fr_price btype_cash" <?=($cd_s?'disabled':'')?> placeholder="0" data-val="<?=(@$report_сourier_d['cash']?$report_сourier_d['cash']:0)?>" value="<?=@$report_сourier_d['cash']?>">
                                 </td>
-                                <td class="fr_price btype_kaspi"><?=$allorder['pay_cash']- $allorder['pay_delivery'] - @$report_сourier_d['expenses'] - @$report_сourier_d['cash']?></td>
+                                <? $cd_rest = $allorder['pay_cash']- $allorder['pay_delivery'] - @$report_сourier_d['expenses'] - @$report_сourier_d['cash']; ?>
+                                <td class="fr_price btype_kaspi <?=($cd_rest < 0 ? 'k_neg' : '')?>"><?=$cd_rest?></td>
                                 <!-- <td class="fr_price btype_kaspi"><div class="btn btn_dd_cm"><i class="far fa-check-circle"></i></div></td> -->
+                                <td class="cd_cell">
+                                    <? $cd_live_box = $allorder['pay_cash'] - $allorder['pay_delivery']; $cd_live_n = mysqli_num_rows($orders); ?>
+                                    <? $cd_attr = 'data-id="'.$cashbox_id.'" data-user-id="'.$staff_id.'" data-day="'.$cd_day.'" data-name="'.htmlspecialchars($staff_user_d['name']).'"'; ?>
+                                    <? if (!$cd_ready): ?>
+                                    <? elseif ($cd_s): ?>
+                                        <span class="cd_ok"><i class="fas fa-check-circle"></i> <?=t::w('Saved', 'Сақталды')?> <span><?=date('H:i', strtotime($cd_s['upd_dt'] ?: $cd_s['ins_dt']))?></span></span><i class="fal fa-undo cd_undo" title="<?=t::w('Reopen', 'Ашу')?>" <?=$cd_attr?>></i>
+                                        <? if (!$branch_id && ($cd_live_n != $cd_s['orders'] || $cd_live_box != $cd_s['to_cashbox'])): ?>
+                                            <span class="cd_chg"><i class="fal fa-exclamation-triangle"></i> <?=t::w('Orders changed', 'Тапсырыс өзгерді')?> · <span class="cd_save" <?=$cd_attr?>><?=t::w('Re-save', 'Қайта сақтау')?></span></span>
+                                        <? endif ?>
+                                    <? elseif ($branch_id): ?>
+                                        <span class="cd_off"><?=t::w('Choose all branches', 'Барлық точка таңдаңыз')?></span>
+                                    <? elseif ($cd_live_n || @$report_сourier_d['expenses'] || @$report_сourier_d['cash']): $cd_unsaved++; ?>
+                                        <span class="cd_save" <?=$cd_attr?>><i class="fal fa-save"></i> <?=t::w('Save', 'Сақтау')?></span>
+                                    <? endif ?>
+                                </td>
                             </tr>
                             <? if ($has_cpay && $c_list): ?>
                                 <tr class="k_cr_det" data-id="<?=$staff_id?>">
-                                    <td colspan="10">
+                                    <td colspan="11">
                                         <div class="k_cr_list">
                                             <? foreach ($c_list as $co): ?>
                                                 <div class="k_cr_o">
@@ -239,7 +264,14 @@
                     </tbody>
 
                     <thead>
-                        <tr>
+                        <tr class="k_grp">
+                            <td></td>
+                            <td colspan="3"><?=t::w('Orders', 'Тапсырыстар')?></td>
+                            <td colspan="3"><?=t::w('Money at courier', 'Курьердегі ақша')?></td>
+                            <td colspan="3"><?=t::w('Courier handed over', 'Курьер тапсырды')?></td>
+                            <td></td>
+                        </tr>
+                        <tr class="k_hd">
                             <td><b><?=t::w('Courier', 'Курьер')?></b></td>
                             <td><?=t::w('Qty', 'Саны')?></td>
                             <td><?=t::w('Total', 'Жалпы')?></td>
@@ -249,10 +281,10 @@
                             <td><?=t::w('To cashbox', 'Кассаға')?></td>
                             <td><?=t::w('Expenses', 'Шығын')?></td>
                             <td><?=t::w('Cash', 'Қолма-қол')?></td>
-                            <td><?=t::w('Kaspi', 'Kaspi')?></td>
-                            <!-- <td>Статус</td> -->
+                            <td><?=t::w('Kaspi (rest)', 'Kaspi (қалғаны)')?></td>
+                            <td><?=t::w('Report', 'Есеп')?></td>
                         </tr>
-                        <tr>
+                        <tr class="k_row_all k_cr_tot">
                             <td><?=t::w('All', 'Барлығы')?></td>
                             <td><?=$onw['number']?></td>
                             <td class="fr_price"><?=$onw['total']?></td>
@@ -262,8 +294,11 @@
                             <td class="fr_price"><?=$onw['pay_cash'] - $onw['pay_delivery']?></td>
                             <td class="fr_price"><?=$onw['rask']?></td>
                             <td class="fr_price"><?=$onw['cash']?></td>
-                            <td class="fr_price"><?=$onw['kaspi']?></td>
-                            <!-- <td><div class="btn">Отчетты сақтау</div></td> -->
+                            <td class="fr_price <?=($onw['kaspi'] < 0 ? 'k_neg' : '')?>"><?=$onw['kaspi']?></td>
+                            <td class="cd_cell">
+                                <? if ($cd_ready && !$branch_id && $cd_unsaved): ?><span class="cd_save_all" data-id="<?=$cashbox_id?>" data-day="<?=$cd_day?>"><i class="fal fa-save"></i> <?=t::w('Save all', 'Барлығын сақтау')?></span><? endif ?>
+                                <a class="cd_hist" href="/kassa/couriers.php"><i class="fal fa-history"></i> <?=t::w('History', 'Тарих')?></a>
+                            </td>
                         </tr>
                     </thead>
                 </table>

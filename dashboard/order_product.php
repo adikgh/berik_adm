@@ -26,6 +26,13 @@
     // Сатылым: тек осы компанияның, нөмірі бар, отказ емес тапсырыстары
     $sale_cond = "o.ins_dt BETWEEN '$start_cdate' and '$end_cdate' and o.company_id = '$company' and o.number is not null and o.order_status not in (5, 6)";
 
+    // точка сүзгісі
+    $f_branch = intval(@$_GET['branch']);
+    if ($f_branch) $sale_cond .= " and o.branch_id = '$f_branch'";
+    $o_branches = [];
+    $obq = db::query("select id, name from company_branch where company_id = '$company' order by number asc");
+    while ($ob = mysqli_fetch_assoc($obq)) $o_branches[] = $ob;
+
     // тағам бойынша: саны (quantity қосындысы) және сомасы
     $cashboxp = db::query("select p.product_id, max(p.price) price, SUM(p.quantity) AS quantity, SUM(p.quantity * p.price) AS total
         from retail_orders_products p inner join retail_orders o on o.id = p.order_id

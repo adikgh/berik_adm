@@ -1,5 +1,30 @@
 <? include "../../config/core.php";
 
+	// Тағам құрамы: қосу / санын өзгерту / өшіру (тек осы компанияның тағамы мен құрамы)
+	if (isset($_GET['ci_add']) || isset($_GET['ci_qty']) || isset($_GET['ci_del'])) {
+		if (!$user_id) exit('error');
+		$cmp = (int)$company;
+		$has = function ($sql) { $q = db::query($sql); return $q && mysqli_num_rows($q) > 0; };
+		try {
+			if (isset($_GET['ci_add'])) {
+				$pid = (int)@$_POST['id']; $cid = (int)@$_POST['comp']; $qty = (int)@$_POST['quantity'];
+				if ($qty <= 0) exit('qty');
+				if (!$has("select id from product where id = '$pid' and company_id = '$cmp'")) exit('error');
+				if (!$has("select id from product_comp where id = '$cid' and company_id = '$cmp'")) exit('error');
+				$q = db::query("insert into product_item (product_id, comp_id, quantity) values ('$pid', '$cid', '$qty')");
+			} else {
+				$id = (int)@$_POST['id'];
+				if (!$has("select pi.id from product_item pi join product p on p.id = pi.product_id where pi.id = '$id' and p.company_id = '$cmp'")) exit('error');
+				if (isset($_GET['ci_qty'])) {
+					$qty = (int)@$_POST['quantity'];
+					if ($qty <= 0) exit('qty');
+					$q = db::query("update product_item set quantity = '$qty', ubd_dt = NOW() where id = '$id'");
+				} else $q = db::query("delete from product_item where id = '$id'");
+			}
+			exit($q ? 'yes' : 'error');
+		} catch (Throwable $e) { exit('error'); }
+	}
+
 
    // pitem_minus
 	if(isset($_GET['pitem_minus'])) {
@@ -107,6 +132,22 @@
 
    // pr_upd
 	if(isset($_GET['pr_upd'])) {
+		// тағам карточкасынан сақтау (атау kz/ru, каталог, баға)
+		if (isset($_POST['card'])) {
+			$id = intval(@$_POST['id']); $cmp = (int)$company;
+			$esc = function ($v) { return mysqli_real_escape_string(db::$connect, mb_substr(trim(strip_tags((string)$v)), 0, 255)); };
+			$nkz = $esc(@$_POST['name_kz']); $nru = $esc(@$_POST['name_ru']);
+			if ($nkz === '' && $nru === '') exit('empty');
+			if ($nkz === '') $nkz = $nru;
+			if ($nru === '') $nru = $nkz;
+			$price = (int)preg_replace('/\D+/', '', (string)@$_POST['price']);
+			try {
+				$cat = intval(@$_POST['catalog']);
+				if ($cat && !mysqli_num_rows(db::query("select id from product_catalog where id = '$cat' and company_id = '$cmp'"))) $cat = 0;
+				$upd = db::query("UPDATE `product` SET `name_kz` = '$nkz', `name_ru` = '$nru', `catalog_id` = ".($cat ? "'$cat'" : "NULL").", `price` = '$price', `upd_dt` = '$datetime' WHERE id = '$id' and company_id = '$cmp'");
+				exit($upd ? 'yes' : 'error');
+			} catch (Throwable $e) { exit('error'); }
+		}
 		$id = strip_tags($_POST['id']);
       $name = strip_tags($_POST['name']);
 		$catalog_id = strip_tags($_POST['catalog']);

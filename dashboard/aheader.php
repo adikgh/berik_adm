@@ -17,11 +17,19 @@
 <br>
 
       <div class="">
-         <div class="uc_ui69">
+         <div class="uc_ui69" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
 
             <div class="">
                <input class="form_dt on_sort_time" type="date" name="" id="" value="<?=date('Y-m-d', strtotime("$start_cdate"))?>">
             </div>
+			<? if (!empty($o_branches) && count($o_branches) >= 2): ?>
+				<div class="k_br" style="flex: 0 0 auto; width: auto;">
+					<a class="k_br_i <?=(!$f_branch?'k_br_act':'')?>" href="?<?=htmlspecialchars(http_build_query(array_merge($_GET, ['branch' => 0])))?>"><i class="fal fa-store"></i><span><?=t::w('Branch: all', 'Барлық точка')?></span></a>
+					<? foreach ($o_branches as $ob): ?>
+						<a class="k_br_i <?=($f_branch == $ob['id']?'k_br_act':'')?>" href="?<?=htmlspecialchars(http_build_query(array_merge($_GET, ['branch' => $ob['id']])))?>"><span><?=htmlspecialchars($ob['name'])?></span></a>
+					<? endforeach ?>
+				</div>
+			<? endif ?>
             
          </div>
       </div>

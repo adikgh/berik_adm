@@ -1,4 +1,30 @@
 <? include "../config/core.php";
+	// Құрам (product_comp) / шикізат (product_raw): қосу және өзгерту
+	$cr_act = null;
+	foreach (['comp_add', 'raw_add', 'comp_upd', 'raw_upd'] as $k) if (isset($_GET[$k])) $cr_act = $k;
+	if ($cr_act) {
+		if (!$user_id) exit('error');
+		$tbl = strpos($cr_act, 'comp') === 0 ? 'product_comp' : 'product_raw';
+		$upd = substr($cr_act, -3) == 'upd';
+		$cmp = (int)$company;
+		$id = (int)@$_POST['id'];
+		$name = trim(strip_tags((string)@$_POST['name']));
+		if ($name === '') exit('empty');
+		$name = mysqli_real_escape_string(db::$connect, mb_substr($name, 0, 255));
+		$price = (int)preg_replace('/\D+/', '', (string)@$_POST['price']);
+		try {
+			if ($upd && !mysqli_num_rows(db::query("select id from $tbl where id = '$id' and company_id = '$cmp'"))) exit('error');
+			if (mysqli_num_rows(db::query("select id from $tbl where company_id = '$cmp' and (name_kz = '$name' or name_ru = '$name')".($upd ? " and id <> '$id'" : "")." limit 1"))) exit('exists');
+			$unit = null;
+			if (fun::has_col($tbl, 'unit')) {
+				$u = mysqli_real_escape_string(db::$connect, mb_substr(trim(strip_tags((string)@$_POST['unit'])), 0, 20));
+				$unit = $u !== '' ? "'$u'" : "NULL";
+			}
+			if ($upd) $q = db::query("update $tbl set name_kz = '$name', name_ru = '$name', price = '$price'".($unit !== null ? ", unit = $unit" : "").", ubd_dt = NOW() where id = '$id' and company_id = '$cmp'");
+			else $q = db::query("insert into $tbl (company_id, name_kz, name_ru, price".($unit !== null ? ", unit" : "").") values ('$cmp', '$name', '$name', '$price'".($unit !== null ? ", $unit" : "").")");
+			exit($q ? 'yes' : 'error');
+		} catch (Throwable $e) { exit('error'); }
+	}
 
 
 	// 

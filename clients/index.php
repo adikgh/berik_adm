@@ -13,15 +13,24 @@
 	$per = clients::period();
 	$ps = $per['start']; $pe = $per['end'];
 
+	// точка сүзгісі
+	$f_branch = intval(@$_GET['branch']);
+	$BR = $f_branch ? " and ro.branch_id = '$f_branch'" : "";
+	// точка таңдалса: тек осы точкада тапсырыс берген клиенттер
+	$BRC = $f_branch ? " and exists (select 1 from retail_orders ro where ro.client_id = c.id and ro.company_id = '$cmp' and ro.branch_id = '$f_branch')" : "";
+	$o_branches = [];
+	$obq = db::query("select id, name from company_branch where company_id = '$cmp' order by number asc");
+	while ($ob = mysqli_fetch_assoc($obq)) $o_branches[] = $ob;
+
 	// ---- Кезең карточкалары ----
 	$st = mysqli_fetch_assoc(db::query("select COUNT(DISTINCT ro.client_id) act, COUNT(*) cnt, IFNULL(SUM(ro.total), 0) s,
 			COUNT(DISTINCT CASE WHEN c.first_dt >= '$ps' THEN ro.client_id END) nw
 		from retail_orders ro join client c on c.id = ro.client_id
-		where ro.company_id = '$cmp' and ro.client_id > 0 and $OK and ro.ins_dt >= '$ps' and ro.ins_dt < '$pe'"));
-	$all_cnt = (int)mysqli_fetch_assoc(db::query("select COUNT(*) n from retail_orders ro where ro.company_id = '$cmp' and $OK and ro.ins_dt >= '$ps' and ro.ins_dt < '$pe'"))['n'];
+		where ro.company_id = '$cmp' and ro.client_id > 0 and $OK and ro.ins_dt >= '$ps' and ro.ins_dt < '$pe'$BR"));
+	$all_cnt = (int)mysqli_fetch_assoc(db::query("select COUNT(*) n from retail_orders ro where ro.company_id = '$cmp' and $OK and ro.ins_dt >= '$ps' and ro.ins_dt < '$pe'$BR"))['n'];
 	$base = mysqli_fetch_assoc(db::query("select COUNT(*) total,
 			SUM(orders_cnt >= 2 and last_dt < NOW() - INTERVAL 30 DAY) sleep
-		from client where company_id = '$cmp' and archive = 0 and orders_cnt > 0"));
+		from client c where c.company_id = '$cmp' and c.archive = 0 and c.orders_cnt > 0$BRC"));
 	$back = (int)$st['act'] - (int)$st['nw'];
 	$avg = $st['cnt'] ? round($st['s'] / $st['cnt']) : 0;
 	$share = $all_cnt ? round($st['cnt'] * 100 / $all_cnt) : 0;
@@ -34,7 +43,7 @@
 			COUNT(DISTINCT CASE WHEN DATE_FORMAT(c.first_dt - INTERVAL 6 HOUR, '%Y-%m') = DATE_FORMAT(ro.ins_dt - INTERVAL 6 HOUR, '%Y-%m') THEN ro.client_id END) nw,
 			SUM(ro.total) s
 		from retail_orders ro join client c on c.id = ro.client_id
-		where ro.company_id = '$cmp' and ro.client_id > 0 and $OK and ro.ins_dt >= '$m_start'
+		where ro.company_id = '$cmp' and ro.client_id > 0 and $OK and ro.ins_dt >= '$m_start'$BR
 		group by m");
 	while ($mq && $r = mysqli_fetch_assoc($mq)) if (isset($months[$r['m']])) $months[$r['m']] = $r;
 	$m_max = 1; foreach ($months as $m) $m_max = max($m_max, (int)$m['act']);
@@ -46,7 +55,7 @@
 	$page = max(1, (int)@$_GET['page']);
 	$lim = 50; $off = ($page - 1) * $lim;
 
-	$where = "c.company_id = '$cmp'";
+	$where = "c.company_id = '$cmp'".$BRC;
 	$where .= $seg == 'archive' ? " and c.archive = 1" : " and c.archive = 0";
 	if ($seg == 'new') $where .= " and c.orders_cnt = 1";
 	if ($seg == 'back') $where .= " and c.orders_cnt between 2 and 4 and c.last_dt >= NOW() - INTERVAL 30 DAY";
@@ -61,7 +70,7 @@
 
 	// кезеңдегі тапсырыстар (p=all болса барлығы)
 	$join = "left join (select ro.client_id, COUNT(*) pc, SUM(ro.total) psum, MAX(ro.ins_dt) pl from retail_orders ro
-		where ro.company_id = '$cmp' and ro.client_id > 0 and $OK and ro.ins_dt >= '$ps' and ro.ins_dt < '$pe' group by ro.client_id) p on p.client_id = c.id";
+		where ro.company_id = '$cmp' and ro.client_id > 0 and $OK and ro.ins_dt >= '$ps' and ro.ins_dt < '$pe'$BR group by ro.client_id) p on p.client_id = c.id";
 	$in_period = ($per['p'] != 'all' && !$q && !$seg);
 	if ($in_period) $where .= " and p.pc > 0";
 	else $where .= " and (c.orders_cnt > 0 or c.name is not null or c.archive = 1)";
@@ -96,12 +105,23 @@
 
 	<!-- Кезең -->
 	<div class="cl_bar">
+		<div class="cl_bar_l" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
 		<div class="cl_tabs">
 			<? foreach ($p_names as $k => $v): ?>
 				<a class="cl_tab <?=($per['p'] == $k ? 'cl_tab_act' : '')?>" href="<?=cl_url(['p' => $k, 'from' => null, 'to' => null, 'page' => null])?>"><?=$v?></a>
 			<? endforeach ?>
 		</div>
+			<? if (count($o_branches) >= 2): ?>
+				<div class="k_br">
+					<a class="k_br_i <?=(!$f_branch?'k_br_act':'')?>" href="<?=cl_url(['branch' => null, 'page' => null])?>"><i class="fal fa-store"></i><span><?=t::w('Branch: all', 'Барлық точка')?></span></a>
+					<? foreach ($o_branches as $ob): ?>
+						<a class="k_br_i <?=($f_branch == $ob['id']?'k_br_act':'')?>" href="<?=cl_url(['branch' => $ob['id'], 'page' => null])?>"><span><?=htmlspecialchars($ob['name'])?></span></a>
+					<? endforeach ?>
+				</div>
+			<? endif ?>
+		</div>
 		<form class="cl_range" method="get" action="/clients/">
+			<? if ($f_branch): ?><input type="hidden" name="branch" value="<?=$f_branch?>"><? endif ?>
 			<input type="date" name="from" value="<?=($per['p'] == 'custom' ? $per['from'] : '')?>" class="cl_inp">
 			<span>—</span>
 			<input type="date" name="to" value="<?=($per['p'] == 'custom' ? $per['to'] : '')?>" class="cl_inp">
@@ -173,7 +193,7 @@
 			<? endforeach ?>
 		</div>
 		<form class="cl_range" method="get" action="/clients/">
-			<? foreach (['p', 'from', 'to', 'seg', 'sort'] as $k): if (@$_GET[$k]): ?><input type="hidden" name="<?=$k?>" value="<?=htmlspecialchars($_GET[$k])?>"><? endif; endforeach ?>
+			<? foreach (['p', 'from', 'to', 'seg', 'sort', 'branch'] as $k): if (@$_GET[$k]): ?><input type="hidden" name="<?=$k?>" value="<?=htmlspecialchars($_GET[$k])?>"><? endif; endforeach ?>
 			<input type="text" name="q" value="<?=htmlspecialchars($q)?>" class="cl_inp cl_search" placeholder="Телефон, аты немесе мекенжай">
 			<select class="cl_inp" onchange="location.href=this.value">
 				<? foreach (['sum' => 'Сома бойынша', 'cnt' => 'Тапсырыс саны', 'last' => 'Соңғы келгені', 'new' => 'Жаңалары'] as $k => $v): ?>
