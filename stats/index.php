@@ -135,25 +135,25 @@
 			$h = ($i + 6) % 24;
 			$series[$h] = ['label' => sprintf('%02d', $h), 'cnt' => 0, 'total' => 0, 'link' => '/orders/?time='.$dd, 'name' => sprintf('%02d:00–%02d:00', $h, ($h + 1) % 24), 'today' => $h == $cur_h, 'wk' => false];
 		}
-		$g_q = db::query("select HOUR(ins_dt) as k, COUNT(*) as cnt, COALESCE(SUM(total), 0) as total from retail_orders
-			where $base and $ok_st and ins_dt >= '$p_start' and ins_dt < '$p_to' group by k");
+		$g_q = db::query("select HOUR(ins_dt) as k, SUM($ok_st) as cnt, COALESCE(SUM(IF($ok_st, total, 0)), 0) as total, SUM($otk_st) as otk from retail_orders
+			where $base and ($ok_st or $otk_st) and ins_dt >= '$p_start' and ins_dt < '$p_to' group by k");
 	} elseif ($mode == 'm') {
 		for ($t = strtotime($p_start_d); $t < strtotime($p_end_d); $t += 86400) {
 			$d = date('Y-m-d', $t);
 			$series[$d] = ['label' => intval(date('j', $t)), 'cnt' => 0, 'total' => 0, 'link' => '?mode=d&d='.$d.$q_branch, 'name' => date('j', $t).' '.$m_low[intval(date('n', $t))], 'today' => $d == $today_bd, 'wk' => date('N', $t) >= 6];
 		}
-		$g_q = db::query("select $bd as k, COUNT(*) as cnt, COALESCE(SUM(total), 0) as total from retail_orders
-			where $base and $ok_st and ins_dt >= '$p_start' and ins_dt < '$p_to' group by k");
+		$g_q = db::query("select $bd as k, SUM($ok_st) as cnt, COALESCE(SUM(IF($ok_st, total, 0)), 0) as total, SUM($otk_st) as otk from retail_orders
+			where $base and ($ok_st or $otk_st) and ins_dt >= '$p_start' and ins_dt < '$p_to' group by k");
 	} else {
 		for ($i = 1; $i <= 12; $i++) {
 			$k = sprintf('%s-%02d', $yy, $i);
 			$series[$k] = ['label' => $m_short[$i], 'cnt' => 0, 'total' => 0, 'link' => '?mode=m&m='.$k.$q_branch, 'name' => $m_names[$i], 'today' => $k == substr($today_bd, 0, 7), 'wk' => false];
 		}
-		$g_q = db::query("select DATE_FORMAT($bd, '%Y-%m') as k, COUNT(*) as cnt, COALESCE(SUM(total), 0) as total from retail_orders
-			where $base and $ok_st and ins_dt >= '$p_start' and ins_dt < '$p_to' group by k");
+		$g_q = db::query("select DATE_FORMAT($bd, '%Y-%m') as k, SUM($ok_st) as cnt, COALESCE(SUM(IF($ok_st, total, 0)), 0) as total, SUM($otk_st) as otk from retail_orders
+			where $base and ($ok_st or $otk_st) and ins_dt >= '$p_start' and ins_dt < '$p_to' group by k");
 	}
 	while ($g_q && $g_d = mysqli_fetch_assoc($g_q)) {
-		if (isset($series[$g_d['k']])) { $series[$g_d['k']]['cnt'] = intval($g_d['cnt']); $series[$g_d['k']]['total'] = intval($g_d['total']); }
+		if (isset($series[$g_d['k']])) { $series[$g_d['k']]['cnt'] = intval($g_d['cnt']); $series[$g_d['k']]['total'] = intval($g_d['total']); $series[$g_d['k']]['otk'] = intval($g_d['otk']); }
 	}
 	$g_max = 0; $best = null;
 	foreach ($series as $k => $s) { if ($s['total'] > $g_max) { $g_max = $s['total']; $best = $k; } }
@@ -295,23 +295,23 @@
 		<? else: ?>
 
 		<!-- негізгі сандар -->
-		<div class="st_kpis">
-			<div class="st_kpi">
+		<div class="st_kpis" id="st_kpis">
+			<div class="st_kpi" data-m="cnt">
 				<div class="st_kpi_h"><i class="fal fa-receipt"></i>Сатылым саны</div>
 				<div class="st_kpi_v"><?=st_num($cnt)?> <?=st_delta($cnt, @$prv['cnt'])?></div>
 				<div class="st_kpi_s"><?=$prev_name?>: <?=st_num(@$prv['cnt'])?></div>
 			</div>
-			<div class="st_kpi st_kpi_main">
+			<div class="st_kpi st_kpi_main st_kpi_act" data-m="total">
 				<div class="st_kpi_h"><i class="fal fa-wallet"></i>Жалпы сумма</div>
 				<div class="st_kpi_v"><?=st_money($total)?> <?=st_delta($total, @$prv['total'])?></div>
 				<div class="st_kpi_s"><? if ($mode == 'd'): ?><?=$prev_name?>: <?=st_money(@$prv['total'])?><? else: ?>күніне орташа: <?=st_money($per_day)?><? endif ?></div>
 			</div>
-			<div class="st_kpi">
+			<div class="st_kpi" data-m="avg">
 				<div class="st_kpi_h"><i class="fal fa-shopping-basket"></i>Орташа чек</div>
 				<div class="st_kpi_v"><?=st_money($avg)?> <?=st_delta($avg, $prv_avg)?></div>
 				<div class="st_kpi_s"><?=$prev_name?>: <?=st_money($prv_avg)?></div>
 			</div>
-			<div class="st_kpi">
+			<div class="st_kpi" data-m="otk">
 				<div class="st_kpi_h"><i class="fal fa-ban"></i>Отказ</div>
 				<div class="st_kpi_v"><?=st_num(@$otk['cnt'])?> <span class="st_kpi_vs"><?=st_money(@$otk['total'])?></span></div>
 				<div class="st_kpi_s"><?=$prev_name?>: <?=st_num(@$otk_prv['cnt'])?></div>
@@ -328,24 +328,24 @@
 		<!-- график -->
 		<div class="st_card">
 			<div class="st_card_h">
-				<div><?=$mode=='d'?'Сағат бойынша':($mode=='m'?'Күндер бойынша':'Айлар бойынша')?></div>
+				<div><?=$mode=='d'?'Сағат бойынша':($mode=='m'?'Күндер бойынша':'Айлар бойынша')?> <span id="st_g_m" class="st_g_m"></span></div>
 				<div class="st_card_hr">
 					<? if ($trend): ?><div class="st_card_hs st_trend_lg"><span></span>Тренд: <?=$trend['pct'] > 0 ? 'өсу +'.$trend['pct'].'%' : ($trend['pct'] < 0 ? 'төмендеу '.$trend['pct'].'%' : 'тұрақты')?></div><? endif ?>
-					<? if ($best !== null && $g_max): ?><div class="st_card_hs">Ең жақсы: <?=$series[$best]['name']?>, <?=st_money($g_max)?></div><? endif ?>
+					<? if ($best !== null && $g_max): ?><div class="st_card_hs" id="st_g_best">Ең жақсы: <?=$series[$best]['name']?>, <?=st_money($g_max)?></div><? endif ?>
 				</div>
 			</div>
-			<div class="st_chart st_chart_<?=$mode?>">
+			<div class="st_chart st_chart_<?=$mode?>" id="st_chart">
 			<div class="st_chart_in" style="min-width:<?=$g_n * $g_minw?>px">
 				<? if ($trend): ?>
 					<svg class="st_trend" viewBox="0 0 1000 100" preserveAspectRatio="none"><line x1="<?=round($trend['x1'], 2)?>" y1="<?=round($trend['y1'], 2)?>" x2="<?=round($trend['x2'], 2)?>" y2="<?=round($trend['y2'], 2)?>" vector-effect="non-scaling-stroke" /></svg>
 				<? endif ?>
 				<? foreach ($series as $k => $s): ?>
-					<a class="st_col <?=$s['today']?'st_col_today':''?> <?=$s['wk']?'st_col_wk':''?>" href="<?=$s['link']?>">
+					<a class="st_col <?=$s['today']?'st_col_today':''?> <?=$s['wk']?'st_col_wk':''?>" href="<?=$s['link']?>" data-n="<?=htmlspecialchars($s['name'])?>" data-cnt="<?=$s['cnt']?>" data-total="<?=$s['total']?>" data-avg="<?=$s['cnt'] ? intval($s['total'] / $s['cnt']) : 0?>" data-otk="<?=intval(@$s['otk'])?>">
 						<div class="st_col_bar">
 							<div class="st_col_f" style="height:<?=$g_max ? max($s['total'] ? 2 : 0, round($s['total'] / $g_max * 100)) : 0?>%"></div>
 						</div>
 						<div class="st_col_l"><?=$s['label']?></div>
-						<div class="st_tip"><b><?=$s['name']?></b><span><?=st_money($s['total'])?></span><span><?=st_num($s['cnt'])?> заказ</span></div>
+						<div class="st_tip"><b><?=$s['name']?></b><span><?=st_money($s['total'])?></span><span><?=st_num($s['cnt'])?> заказ</span><span>орташа: <?=st_money($s['cnt'] ? $s['total'] / $s['cnt'] : 0)?></span><span>отказ: <?=st_num(@$s['otk'])?></span></div>
 					</a>
 				<? endforeach ?>
 			</div>
@@ -438,7 +438,7 @@
 				<div class="st_list">
 					<? foreach ($top as $i => $tp): ?>
 						<div class="st_li st_li_bar">
-							<div class="st_li_n"><span class="st_rank"><?=$i + 1?></span><?=htmlspecialchars($tp['name_kz'] ?: ($tp['name_ru'] ?: '#'.$tp['product_id']))?></div>
+							<div class="st_li_n"><span class="st_rank"><?=$i + 1?></span><?=htmlspecialchars(trim(strip_tags(html_entity_decode($tp['name_kz'] ?: ($tp['name_ru'] ?: '#'.$tp['product_id'])))))?></div>
 							<div class="st_li_p"><?=st_num($tp['qty'])?> шт</div>
 							<div class="st_li_v"><?=st_money($tp['total'])?></div>
 							<div class="st_li_line"><div style="width:<?=round($tp['total'] / $top_max * 100, 1)?>%"></div></div>
@@ -454,5 +454,42 @@
 
 		<br><br>
 	</div>
+
+	<style>
+		.st_kpis .st_kpi { cursor: pointer; transition: box-shadow .15s, border-color .15s; }
+		.st_kpis .st_kpi:hover { box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+		.st_kpis .st_kpi_act { box-shadow: 0 0 0 2px #1f75a8 inset; }
+		.st_g_m { font-weight: 400; opacity: .6; }
+		.st_chart_otk .st_col_f { background: #e5484d; }
+	</style>
+	<script>
+	(function () {
+		var box = document.getElementById('st_kpis'), chart = document.getElementById('st_chart');
+		if (!box || !chart) return;
+		var names = {cnt: 'сатылым саны', total: '', avg: 'орташа чек', otk: 'отказ'};
+		var money = {total: 1, avg: 1};
+		var best = document.getElementById('st_g_best'), bestHtml = best ? best.innerHTML : '';
+		var trend = chart.querySelector('.st_trend'), trendLg = document.querySelector('.st_trend_lg');
+		function fmt(n, m) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (money[m] ? ' ₸' : ''); }
+		function show(m) {
+			var cols = chart.querySelectorAll('.st_col'), max = 0, bi = null;
+			cols.forEach(function (c) { var v = +c.dataset[m]; if (v > max) { max = v; bi = c; } });
+			cols.forEach(function (c) {
+				var v = +c.dataset[m];
+				c.querySelector('.st_col_f').style.height = (max ? Math.max(v ? 2 : 0, Math.round(v / max * 100)) : 0) + '%';
+			});
+			chart.classList.toggle('st_chart_otk', m == 'otk');
+			if (trend) trend.style.display = m == 'total' ? '' : 'none';
+			if (trendLg) trendLg.style.display = m == 'total' ? '' : 'none';
+			if (best) {
+				best.innerHTML = m == 'total' ? bestHtml : (bi ? (m == 'otk' ? 'Ең көп: ' : 'Ең жоғары: ') + bi.dataset.n + ', ' + fmt(max, m) : '');
+				best.style.display = best.innerHTML ? '' : 'none';
+			}
+			document.getElementById('st_g_m').textContent = names[m] ? '· ' + names[m] : '';
+			box.querySelectorAll('.st_kpi').forEach(function (k) { k.classList.toggle('st_kpi_act', k.dataset.m == m); });
+		}
+		box.addEventListener('click', function (e) { var k = e.target.closest('.st_kpi'); if (k && k.dataset.m) show(k.dataset.m); });
+	})();
+	</script>
 
 <? include "../block/footer.php"; ?>

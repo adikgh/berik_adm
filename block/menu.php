@@ -64,14 +64,16 @@
 								<a class="mp_topi <?=($menu_name=='kassa'?'mp_topi_act':'')?>" href="/kassa/?time=<?=$time_sort?>"><i class="fal fa-cash-register"></i><span><?=t::w('Cashbox', 'Касса')?></span></a>
 								<!-- Тағамдар: компьютерде бір батырма, ішінен бөлімдері ашылады (Аналитика сияқты) -->
 								<? $pm = @$pod_menu_name; ?>
-								<div class="mp_dd <?=($menu_name=='products'?'mp_dd_act':'')?>">
+								<div class="mp_dd <?=($menu_name=='products' || $menu_name=='remains' || $menu_name=='waybill'?'mp_dd_act':'')?>">
 									<a class="mp_dd_t" href="javascript:;" tabindex="0"><i class="fal fa-utensils"></i><span><?=t::w('Dishes', 'Тағамдар')?></span><i class="far fa-angle-down mp_dd_ar"></i></a>
 									<div class="mp_dd_c">
 										<a class="mp_dd_i <?=($menu_name=='products' && ($pm=='main' || $pm=='item')?'mp_dd_i_act':'')?>" href="/products/"><i class="fal fa-list-ul"></i><span><?=t::w('All dishes', 'Барлық тағамдар')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='catalog'?'mp_dd_i_act':'')?>" href="/products/catalog/"><i class="fal fa-folder"></i><span><?=t::w('Catalog', 'Каталог')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='comp'?'mp_dd_i_act':'')?>" href="/products/comp/"><i class="fal fa-layer-group"></i><span><?=t::w('Ingredients', 'Құрамы')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='raw'?'mp_dd_i_act':'')?>" href="/products/raw/"><i class="fal fa-box"></i><span><?=t::w('Raw materials', 'Шикізат')?></span></a>
-										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='rent'?'mp_dd_i_act':'')?>" href="/products/rent/"><i class="fal fa-shopping-cart"></i><span><?=t::w('Purchase', 'Сатып алу')?></span></a>
+										<div class="mp_dd_sep"></div>
+										<a class="mp_dd_i <?=($menu_name=='remains'?'mp_dd_i_act':'')?>" href="/products/remains/"><i class="fal fa-boxes-alt"></i><span><?=t::w('Remains', 'Қалдықтар')?></span></a>
+										<a class="mp_dd_i <?=($menu_name=='waybill'?'mp_dd_i_act':'')?>" href="/waybill/"><i class="fal fa-file-invoice"></i><span><?=t::w('Waybills', 'Накладной')?></span></a>
 									</div>
 									<!-- телефондағы төменгі мәзір үшін -->
 									<a class="mp_topi mp_dd_m <?=($menu_name=='products'?'mp_topi_act':'')?>" href="/products/"><i class="fal fa-utensils"></i><span><?=t::w('Dishes', 'Тағамдар')?></span></a>
@@ -114,11 +116,6 @@
 									<div class="menu_cin"><i class="fal fa-user-headset"></i></div>
 									<div class="menu_cih"><?=t::w('Staff', 'Жұмысшылар')?></div>
 								</a>
-								<a class="menu_ci" href="/remains/">
-									<div class="menu_cin"><i class="fal fa-boxes-alt"></i></div>
-									<div class="menu_cih"><?=t::w('Remains', 'Қалдықтар')?></div>
-								</a>
-								<a class="menu_ci" href="/waybill/"><div class="menu_cin"><i class="fal fa-file-invoice"></i></div><div class="menu_cih"><?=t::w('Waybills', 'Накладной')?></div></a>
 								<a class="menu_ci" href="#/acc/">
 									<div class="menu_cin"><i class="fal fa-user"></i></div>
 									<div class="menu_cih"><?=t::w('Account', 'Аккаунт')?></div>
