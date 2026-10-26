@@ -5,6 +5,7 @@
       <a class="tg1_topi <?=($pod_menu_name=='catalog'?'tg1_topi_act':'')?>" href="/products/catalog/"><?=t::w('Catalog', 'Каталог')?></a>
       <a class="tg1_topi <?=($pod_menu_name=='comp'?'tg1_topi_act':'')?>" href="/products/comp/"><?=t::w('Ingredients', 'Құрамы')?></a>
       <a class="tg1_topi <?=($pod_menu_name=='raw'?'tg1_topi_act':'')?>" href="/products/raw/"><?=t::w('Raw materials', 'Шикізат')?></a>
+      <a class="tg1_topi <?=($pod_menu_name=='cost'?'tg1_topi_act':'')?>" href="/products/cost/"><?=t::w('Cost sheet', 'Себес')?></a>
       <a class="tg1_topi <?=($pod_menu_name=='rent'?'tg1_topi_act':'')?>" href="/waybill/"><?=t::w('Purchase', 'Сатып алу')?></a>
       <!-- <a class="tg1_topi <?=($pod_menu_name=='displacement'?'tg1_topi_act':'')?>" href="/products/#displacement/">Перемещения</a> -->
       <!-- <a class="tg1_topi <?=($pod_menu_name=='warehouses'?'tg1_topi_act':'')?>" href="/products/#warehouses/">Склады</a> -->

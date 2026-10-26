@@ -71,6 +71,7 @@
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='catalog'?'mp_dd_i_act':'')?>" href="/products/catalog/"><i class="fal fa-folder"></i><span><?=t::w('Catalog', 'Каталог')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='comp'?'mp_dd_i_act':'')?>" href="/products/comp/"><i class="fal fa-layer-group"></i><span><?=t::w('Ingredients', 'Құрамы')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='raw'?'mp_dd_i_act':'')?>" href="/products/raw/"><i class="fal fa-box"></i><span><?=t::w('Raw materials', 'Шикізат')?></span></a>
+										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='cost'?'mp_dd_i_act':'')?>" href="/products/cost/"><i class="fal fa-calculator"></i><span><?=t::w('Cost sheet', 'Себес')?></span></a>
 										<div class="mp_dd_sep"></div>
 										<a class="mp_dd_i <?=($menu_name=='waybill'?'mp_dd_i_act':'')?>" href="/waybill/"><i class="fal fa-file-invoice"></i><span><?=t::w('Incoming goods', 'Кіріс тауарлары')?></span></a>
 									</div>

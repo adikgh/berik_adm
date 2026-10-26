@@ -113,13 +113,15 @@
 				while ($r = mysqli_fetch_assoc($ci)) {
 					$c = $comps[$r['comp_id']] ?? null;
 					$r['c'] = $c;
-					$r['cost'] = $c ? round((int)$r['quantity'] * (int)$c['price'] / $c['div']) : 0;
+					$r['cost'] = $c ? round((float)$r['quantity'] * (int)$c['price'] / $c['div']) : 0;
 					$ci_cost += $r['cost'];
 					$ci_rows[] = $r;
 				}
 				$d_price = (int)$product_d['price'];
 				$profit = $d_price - $ci_cost;
 				$fmt = function ($n) { return number_format((int)$n, 0, '', ' '); };
+				// 0.500 → 0,5; 2.000 → 2
+				$qfmt = function ($q) { return str_replace('.', ',', rtrim(rtrim(number_format((float)$q, 3, '.', ''), '0'), '.')); };
 			?>
 			<div class="item_c ci_c">
 				<div class="ci_head">
@@ -139,11 +141,11 @@
 							<div>#</div><div><?=t::w('Name', 'Атауы')?></div><div><?=t::w('Quantity', 'Саны')?></div><div><?=t::w('Cost', 'Өзіндік құны')?></div><div></div>
 						</div>
 						<? foreach ($ci_rows as $i => $r): $c = $r['c']; ?>
-							<div class="ci_tr" data-id="<?=$r['id']?>" data-comp="<?=(int)$r['comp_id']?>" data-qty="<?=(int)$r['quantity']?>">
+							<div class="ci_tr" data-id="<?=$r['id']?>" data-comp="<?=(int)$r['comp_id']?>" data-qty="<?=$qfmt($r['quantity'])?>">
 								<div class="ci_n"><?=$i + 1?></div>
 								<div class="ci_nm"><?=($c ? htmlspecialchars($c['nm']) : '<m>'.t::w('Deleted item', 'Өшірілген құрам').'</m>')?>
 									<? if ($c): ?><small><?=$fmt($c['price'])?> тг / <?=htmlspecialchars($c['pu'])?></small><? endif ?></div>
-								<div class="ci_q"><b><?=(int)$r['quantity']?></b> <?=htmlspecialchars($c['qu'] ?? 'шт')?></div>
+								<div class="ci_q"><b><?=$qfmt($r['quantity'])?></b> <?=htmlspecialchars($c['qu'] ?? 'шт')?></div>
 								<div class="ci_cost"><?=$fmt($r['cost'])?> тг</div>
 								<div class="ci_btns">
 									<? if ($c): ?><div class="ctg_b ci_edit" title="<?=t::w('Edit', 'Өзгерту')?>"><i class="fal fa-pen"></i></div><? endif ?>
@@ -246,7 +248,7 @@
                   <div class="form_im">
                      <div class="form_span"><?=t::w('Quantity', 'Саны')?>:</div>
                      <div class="ci_q_w">
-                        <input type="text" class="form_txt ci_qty" inputmode="numeric" placeholder="0">
+                        <input type="text" class="form_txt ci_qty" inputmode="decimal" placeholder="0">
                         <span class="ci_sfx">шт</span>
                      </div>
                   </div>
@@ -308,7 +310,13 @@
             pop.querySelectorAll('.ci_opt').forEach(function (o) { var ok = !q || o.dataset.nm.indexOf(q) > -1; o.style.display = ok ? '' : 'none'; if (ok) any = true; });
             f('.ci_list .ci_none').style.display = any ? 'none' : '';
          });
-         [f('.ci_qty'), f('.ci_new_p')].forEach(function (i) { i.addEventListener('input', function () { this.value = this.value.replace(/\D+/g, ''); }); });
+         f('.ci_new_p').addEventListener('input', function () { this.value = this.value.replace(/\D+/g, ''); });
+         // саны: цифрлар және бір бөлгіш (үтір не нүкте)
+         f('.ci_qty').addEventListener('input', function () {
+            var v = this.value.replace(/[^\d.,]/g, ''), i = v.search(/[.,]/);
+            if (i > -1) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/[.,]/g, '');
+            this.value = v;
+         });
 
          // жаңа құрам жасау (бар ?comp_add арқылы), бет жаңарған соң сол таңдалып тұрады
          f('.ci_new_t').addEventListener('click', function () { var n = f('.ci_new'); n.style.display = n.style.display == 'none' ? '' : 'none'; if (n.style.display == '') f('.ci_new_n').focus(); });
@@ -333,8 +341,8 @@
             e.preventDefault();
             if (busy) return;
             if (mode == 'add' && !comp) { msg(T.pick); return; }
-            var q = parseInt(f('.ci_qty').value || '0', 10);
-            if (!q) { msg(T.qty); f('.ci_qty').focus(); return; }
+            var q = f('.ci_qty').value.replace(',', '.').replace(/\.$/, '');
+            if (!(parseFloat(q) > 0)) { msg(T.qty); f('.ci_qty').focus(); return; }
             busy = true;
             var req = mode == 'add' ? post('/products/item/get.php?ci_add', { id: PID, comp: comp, quantity: q }) : post('/products/item/get.php?ci_qty', { id: rowId, quantity: q });
             req.then(function (t) {

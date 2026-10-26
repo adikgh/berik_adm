@@ -5,10 +5,12 @@
 		if (!$user_id) exit('error');
 		$cmp = (int)$company;
 		$has = function ($sql) { $q = db::query($sql); return $q && mysqli_num_rows($q) > 0; };
+		// 0,5 / 0.5 / 1.25 → '0.5' (quantity әлі INT болса, MySQL өзі дөңгелектейді)
+		$dec = function ($v) { $v = round((float)str_replace(',', '.', trim((string)$v)), 3); return $v > 0 ? rtrim(rtrim(number_format($v, 3, '.', ''), '0'), '.') : ''; };
 		try {
 			if (isset($_GET['ci_add'])) {
-				$pid = (int)@$_POST['id']; $cid = (int)@$_POST['comp']; $qty = (int)@$_POST['quantity'];
-				if ($qty <= 0) exit('qty');
+				$pid = (int)@$_POST['id']; $cid = (int)@$_POST['comp']; $qty = $dec(@$_POST['quantity']);
+				if ($qty === '') exit('qty');
 				if (!$has("select id from product where id = '$pid' and company_id = '$cmp'")) exit('error');
 				if (!$has("select id from product_comp where id = '$cid' and company_id = '$cmp'")) exit('error');
 				$q = db::query("insert into product_item (product_id, comp_id, quantity) values ('$pid', '$cid', '$qty')");
@@ -16,8 +18,8 @@
 				$id = (int)@$_POST['id'];
 				if (!$has("select pi.id from product_item pi join product p on p.id = pi.product_id where pi.id = '$id' and p.company_id = '$cmp'")) exit('error');
 				if (isset($_GET['ci_qty'])) {
-					$qty = (int)@$_POST['quantity'];
-					if ($qty <= 0) exit('qty');
+					$qty = $dec(@$_POST['quantity']);
+					if ($qty === '') exit('qty');
 					$q = db::query("update product_item set quantity = '$qty', ubd_dt = NOW() where id = '$id'");
 				} else $q = db::query("delete from product_item where id = '$id'");
 			}
