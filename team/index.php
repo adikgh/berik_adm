@@ -102,6 +102,12 @@
 			<div class="pop_bl_cl">
 				<div class="form_c">
 					<div class="form_im">
+						<div class="form_span">Телефон:</div>
+						<input type="tel" class="form_txt fr_phone tm_in_phone" data-lenght="11" placeholder="8 (7__) ___-__-__">
+						<i class="fal fa-phone form_icon"></i>
+					</div>
+					<div class="tm_hint"></div>
+					<div class="form_im">
 						<div class="form_span">Аты:</div>
 						<input type="text" class="form_txt tm_in_name" placeholder="Мысалы: Асан">
 						<i class="fal fa-user form_icon"></i>
@@ -110,12 +116,6 @@
 						<div class="form_span">Тегі:</div>
 						<input type="text" class="form_txt tm_in_surname" placeholder="Міндетті емес">
 						<i class="fal fa-user form_icon"></i>
-					</div>
-					<div class="form_im">
-						<div class="form_span">Телефон:</div>
-						<input type="tel" class="form_txt tm_in_phone" placeholder="87001234567">
-						<i class="fal fa-phone form_icon"></i>
-						<div class="tm_hint"></div>
 					</div>
 					<div class="form_im">
 						<div class="form_span">Лауазымы:</div>
@@ -136,9 +136,10 @@
 							</div>
 						</div>
 					<? endif ?>
-					<div class="form_im">
+					<!-- PIN тек оператор (кассир, id 5) үшін -->
+					<div class="form_im tm_code_box">
 						<div class="form_span">Кассаға кіру PIN (4 сан):</div>
-						<input type="tel" class="form_txt tm_in_code" maxlength="4" placeholder="Өзгертпесеңіз бос қалдырыңыз">
+						<input type="tel" class="form_txt fr_code tm_in_code" maxlength="4" placeholder="Өзгертпесеңіз бос қалдырыңыз">
 						<i class="fal fa-key form_icon"></i>
 					</div>
 					<div class="form_im">

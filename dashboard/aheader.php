@@ -3,9 +3,10 @@
    <!-- компьютерде бұл беттер жоғарғы «Аналитика» мәзірінде, бұл қатар тек телефонда көрінеді -->
    <div class="tg1_top an_tabs_m">
       <div class="tg1_topc">
-         <a class="tg1_topi <?=($menu_name=='order_product'?'tg1_topi_act':'')?>" href="order_product.php?time=<?=$time_sort?>"><?=t::w('Dishes', 'Тағамдар')?></a>
-         <a class="tg1_topi <?=($menu_name=='order_comp'?'tg1_topi_act':'')?>" href="order_comp.php?time=<?=$time_sort?>"><?=t::w('Ingredients', 'Құрамы')?></a>
-         <a class="tg1_topi <?=($menu_name=='order_user'?'tg1_topi_act':'')?>" href="order_user.php?time=<?=$time_sort?>"><?=t::w('Operator', 'Оператор')?></a>
+         <? $q_per = 'time='.urlencode($time_sort).(isset($period) && $period != 'day' ? '&period='.$period : ''); // басқа бетке өткенде кезең сақталады ?>
+         <a class="tg1_topi <?=($menu_name=='order_product'?'tg1_topi_act':'')?>" href="order_product.php?<?=htmlspecialchars($q_per)?>"><?=t::w('Dishes', 'Тағамдар')?></a>
+         <a class="tg1_topi <?=($menu_name=='order_comp'?'tg1_topi_act':'')?>" href="order_comp.php?<?=htmlspecialchars($q_per)?>"><?=t::w('Ingredients', 'Құрамы')?></a>
+         <a class="tg1_topi <?=($menu_name=='order_user'?'tg1_topi_act':'')?>" href="order_user.php?<?=htmlspecialchars($q_per)?>"><?=t::w('Operator', 'Оператор')?></a>
       </div>
    </div>
    <div class="">

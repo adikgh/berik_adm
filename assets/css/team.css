@@ -16,3 +16,5 @@
 .tm_chip_act,.tm_chip_act:hover{background:#e3f5ec;border-color:#0EA768;color:#0EA768}
 @media (max-width:700px){.tm_list{grid-template-columns:1fr}}
 .tm_hint{font-size:13px;margin-top:6px;color:#1f75a8}.tm_hint:empty{display:none}.tm_hint_warn{color:#d9534f}
+
+.tm_hint{margin:-6px 0 4px}

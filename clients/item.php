@@ -38,10 +38,23 @@
 	// Тапсырыстар тарихы
 	$orders = db::query("select ro.* from retail_orders ro where ro.client_id = '$id' and ro.paid = 1 order by ro.ins_dt desc limit 100");
 
+	// Лоялдық: кэшбэк балансы, қозғалысы, сыйлыққа санауыш (компанияда қосулы болса ғана)
+	require_once "../config/loyalty.php";
+	$lc = loyalty::on() ? loyalty::cfg($cmp) : null;
+	$lc_info = null; $lc_moves = false; $lc_gifts = false;
+	if ($lc && ($lc['cashback'] || $lc['gift'] || (int)@$c['cashback_balance'])) {
+		loyalty::sync($cmp);
+		$c = mysqli_fetch_assoc(db::query("select * from company_client where id = '$id'"));
+		$lc_info = loyalty::client_info($cmp, $c);
+		$lc_moves = db::query("select k.*, o.number from company_client_cashback k left join retail_orders o on o.id = k.order_id where k.client_id = '$id' order by k.id desc limit 50");
+		$lc_gifts = db::query("select g.*, o.number from company_client_gift g left join retail_orders o on o.id = g.order_id where g.client_id = '$id' order by g.id desc limit 20");
+	}
+	$lc_t = ['earn' => 'Түсті', 'spend' => 'Жұмсалды', 'cancel' => 'Қайтарылды (статус)', 'refund' => 'Клиентке қайтты', 'manual' => 'Қолмен'];
+
 	// site setting
 	$menu_name = 'clients';
 	$page_name = 'Клиент';
-	$css = ['clients'];
+	$css = ['clients', 'loyalty'];
 	$js = ['clients'];
 ?>
 <? include "../block/header.php"; ?>
@@ -77,6 +90,17 @@
 					<? endif ?>
 				</div>
 			</div>
+
+			<? if ($c['user_id']): include_once "../config/client_link.php"; $cab = client_link((int)$c['user_id']); ?>
+				<div class="cl_form cl_cab">
+					<label class="cl_lbl">Жеке кабинет сілтемесі</label>
+					<input type="text" class="cl_inp" value="<?=htmlspecialchars($cab)?>" readonly onclick="this.select()">
+					<div class="cl_form_btns">
+						<div class="cl_btn cl_btn_green" onclick="var i=this.parentNode.previousElementSibling;i.select();document.execCommand('copy');this.innerHTML='<i class=&quot;fal fa-check&quot;></i> Көшірілді'"><i class="fal fa-copy"></i> Көшіру</div>
+						<a class="cl_btn cl_btn_light" target="_blank" rel="noopener" href="https://wa.me/7<?=htmlspecialchars($c['phone'])?>?text=<?=rawurlencode('Сіздің жеке кабинетіңіз: '.$cab)?>"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+					</div>
+				</div>
+			<? endif ?>
 		</div>
 
 		<div class="cl_pf_right">
@@ -103,6 +127,36 @@
 			</div>
 		</div>
 	</div>
+
+	<? if ($lc_info): ?>
+	<div class="cl_two">
+		<div class="cl_box lc_cl_box">
+			<div class="cl_box_h"><div><i class="fal fa-coins"></i> Кэшбэк<?=($lc['cashback'] ? ' · '.rtrim(rtrim(number_format($lc['percent'], 2, '.', ''), '0'), '.').'%' : '')?></div><div class="cl_card_v cl_c_green"><?=clients::sum($c['cashback_balance'])?></div></div>
+			<? $has = false; while ($lc_moves && $k = mysqli_fetch_assoc($lc_moves)): $has = true; ?>
+				<div class="cl_li">
+					<div><?=@$lc_t[$k['type']] ?: htmlspecialchars($k['type'])?><?=($k['number'] ? ' · #'.$k['number'] : '')?> <span class="cl_small"><?=clients::dt($k['ins_dt'])?></span></div>
+					<div class="cl_small"><b class="<?=($k['amount'] > 0 ? 'cl_c_green' : '')?>"><?=($k['amount'] > 0 ? '+' : '−').clients::sum(abs($k['amount']))?></b> · <?=clients::sum($k['balance_after'])?></div>
+				</div>
+			<? endwhile ?>
+			<? if (!$has): ?><div class="cl_empty">Әзірге қозғалыс жоқ</div><? endif ?>
+		</div>
+		<div class="cl_box lc_cl_box">
+			<? if ($lc['gift']): $n = $lc['gift_every']; $cnt = min($lc_info['gift_cnt'], $n - 1); ?>
+				<div class="cl_box_h"><div><i class="fal fa-gift"></i> Сыйлық: <?=htmlspecialchars($lc['gift_name'])?></div><div class="cl_small"><b><?=$cnt?> / <?=$n?></b></div></div>
+				<div class="lc_stamps">
+					<? for ($i = 1; $i < $n; $i++): ?><span class="lc_stamp <?=($i <= $cnt ? 'lc_stamp_on' : '')?>"></span><? endfor ?>
+					<span class="lc_stamp lc_stamp_gift"><i class="fal fa-gift"></i></span>
+				</div>
+				<div class="cl_small"><?=($lc_info['gift_due'] ? 'Келесі тапсырысы сыйлықпен' : ($n - 1 - $cnt).' тапсырыстан кейін сыйлық')?></div>
+			<? else: ?>
+				<div class="cl_box_h"><div><i class="fal fa-gift"></i> Сыйлықтар</div></div>
+			<? endif ?>
+			<? while ($lc_gifts && $g = mysqli_fetch_assoc($lc_gifts)): ?>
+				<div class="cl_li"><div><?=htmlspecialchars($g['gift_name'])?><?=($g['number'] ? ' · #'.$g['number'] : '')?></div><div class="cl_small"><?=clients::dt($g['ins_dt'])?></div></div>
+			<? endwhile ?>
+		</div>
+	</div>
+	<? endif ?>
 
 	<div class="cl_two">
 		<div class="cl_box">

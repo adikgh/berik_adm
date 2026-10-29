@@ -1,3 +1,4 @@
 /config/db.php
-/assets/pl/fontawesome
 /assets/pl/fontawesome/
+/config/client_link.php
+*.bak_2026*

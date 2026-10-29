@@ -23,15 +23,8 @@
     //     $_SESSION['company'] = $_GET['company'];
 	// }
 
-    // кезең: күн (әдепкі), ай немесе жыл. Жұмыс күні 06:00-де басталады
-    $period = in_array(@$_GET['period'], ['month', 'year']) ? $_GET['period'] : 'day';
-    $time_pick = $time_sort; // кезеңді ауыстырғанда таңдалған күн сақталады
-    if ($period == 'month') $time_sort = date('Y-m-01', strtotime($time_sort));
-    if ($period == 'year') $time_sort = date('Y-01-01', strtotime($time_sort));
-    if ($period != 'day') {
-        $start_cdate = "$time_sort 06:00:00";
-        $end_cdate = date('Y-m-d 06:00:00', strtotime("$time_sort +1 $period"));
-    }
+    // кезең: күн / ай / жыл
+    include "period.php";
 
     // Сатылым: тек осы компанияның, нөмірі бар, отказ емес тапсырыстары
     $sale_cond = "o.ins_dt BETWEEN '$start_cdate' and '$end_cdate' and o.company_id = '$company' and o.number is not null and o.order_status not in (5, 6, 10)";

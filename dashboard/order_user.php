@@ -8,11 +8,8 @@
 	// $start_cdate = date('Y-m-d 06:00:00', strtotime("20.01.2025"));
 	// $end_cdate = date('Y-m-d 06:00:00', strtotime("$start_cdate +1 day"));
 
-    if (@$_GET['time']) {
-		$time_sort = $_GET['time'];
-		$start_cdate = date('Y-m-d 06:00:00', strtotime("$time_sort"));
-		$end_cdate = date('Y-m-d 06:00:00', strtotime("$start_cdate +1 day"));
-	}
+    // кезең: күн / ай / жыл (?time-ды core.php өңдейді)
+    include "period.php";
 
 
     // 

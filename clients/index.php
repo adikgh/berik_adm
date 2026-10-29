@@ -7,6 +7,8 @@
 	@set_time_limit(120);
 	clients::install();
 	clients::sync($company);
+	require_once "../config/loyalty.php";
+	loyalty::sync($company); // кэшбэк: аяқталған/отказ тапсырыстарды реттеу
 
 	$cmp = (int)$company;
 	$OK = clients::OK;
@@ -121,6 +123,7 @@
 			<? endif ?>
 		</div>
 		<form class="cl_range" method="get" action="/clients/">
+			<? if (loyalty::on()): ?><a class="cl_btn cl_btn_light" href="/clients/loyalty.php"><i class="fal fa-gift"></i> Кэшбэк, сыйлық</a><? endif ?>
 			<? if ($f_branch): ?><input type="hidden" name="branch" value="<?=$f_branch?>"><? endif ?>
 			<input type="date" name="from" value="<?=($per['p'] == 'custom' ? $per['from'] : '')?>" class="cl_inp">
 			<span>—</span>

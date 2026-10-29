@@ -11,36 +11,54 @@ $(document).ready(function() {
 		$('.tm_save').attr('data-id', id || '');
 		$('.tm_in_name').val(d.name || '');
 		$('.tm_in_surname').val(d.surname || '');
-		$('.tm_in_phone').val(d.phone || '');
+		var ph = $('.tm_in_phone');
+		ph.val(d.phone ? ph.masked(d.phone) : '').attr('data-val', '');
+		tmAuto = false; tmLast = '';
 		$('.tm_in_code, .tm_in_pass').val('');
 		$('.tm_hint').text('').removeClass('tm_hint_warn');
 		tmChip('.tm_in_pos', d.pos || 6);
+		tmPin();
 		tmChip('.tm_in_branch', d.branch || 0);
 		$('.tm_block').addClass('pop_bl_act');
 		$('#html').addClass('ovr_h');
+		if (!id) setTimeout(function(){ ph.focus() }, 200);
+	}
+	// PIN тек оператор (кассир) үшін керек
+	function tmPin() {
+		var op = $('.tm_in_pos .tm_chip_act').attr('data-val') == '5';
+		$('.tm_code_box').toggle(op);
+		if (!op) $('.tm_in_code').val('');
 	}
 	function tmClose() { $('.tm_block').removeClass('pop_bl_act'); $('#html').removeClass('ovr_h'); }
 
 	$('.tm_add_pop').on('click', function(){ tmOpen() });
 	$('.tm_back').on('click', tmClose);
-	$('html').on('click', '.tm_chip', function(){ tmChip($(this).parent(), $(this).attr('data-val')) });
+	$('html').on('click', '.tm_chip', function(){ tmChip($(this).parent(), $(this).attr('data-val')); tmPin() });
 	$('html').on('click', '.tm_edit', function(){
 		var b = $(this);
 		tmOpen(b.closest('.tm_i').attr('data-id'), { name: b.attr('data-name'), surname: b.attr('data-surname'), phone: b.attr('data-phone'), pos: b.attr('data-pos'), branch: b.attr('data-branch') });
 	});
 
 	// жаңа жұмысшы: нөмір базада бар болса, сол адамды көрсетеміз (екінші рет жасалмайды)
-	var tmLast = '';
+	var tmLast = '', tmAuto = false;
+	// базадан толтырылған аты-жөні нөмір өзгерсе тазаланады
+	function tmClearAuto() {
+		if (!tmAuto) return;
+		$('.tm_in_name, .tm_in_surname').val('');
+		tmAuto = false;
+	}
 	$('.tm_in_phone').on('input change', function(){
 		if ($('.tm_save').attr('data-id')) return;
-		var ph = $(this).val().replace(/\D/g, '').slice(-10), hint = $('.tm_hint');
-		if (ph.length < 10) { tmLast = ''; hint.text('').removeClass('tm_hint_warn'); return; }
+		// маска толық болғанда ғана (8 + 10 сан) іздейміз
+		var dg = $(this).val().replace(/\D/g, ''), ph = dg.length >= 11 ? dg.slice(-10) : '', hint = $('.tm_hint');
+		if (ph.length < 10) { if (tmLast) tmClearAuto(); tmLast = ''; hint.text('').removeClass('tm_hint_warn'); return; }
 		if (ph == tmLast) return;
 		tmLast = ph;
 		$.post('/team/get.php?find', { phone: ph }, function(d){
 			if (ph != tmLast) return;
 			hint.text('').removeClass('tm_hint_warn');
-			if (!d || !d.name) return;
+			tmClearAuto();
+			if (!d || !d.name) { $('.tm_in_name').focus(); return; }
 			var who = (d.name + ' ' + d.surname).trim();
 			if (d.staff == 'here') {
 				var pos = $('.tm_in_pos .tm_chip[data-val="' + d.pos + '"]').text().trim();
@@ -49,11 +67,17 @@ $(document).ready(function() {
 				hint.addClass('tm_hint_warn').text('Бұл нөмір басқа компанияда жұмысшы болып тіркелген.');
 			} else {
 				hint.text('Базада бар адам: ' + who + '. Жаңасы жасалмайды, осы адам қосылады.');
-				if (!$('.tm_in_name').val()) $('.tm_in_name').val(d.name);
-				if (!$('.tm_in_surname').val()) $('.tm_in_surname').val(d.surname);
+				if (!$('.tm_in_name').val() && !$('.tm_in_surname').val()) {
+					$('.tm_in_name').val(d.name);
+					$('.tm_in_surname').val(d.surname);
+					tmAuto = true;
+				}
 			}
 		}, 'json');
 	});
+
+	// қолмен өзгертсе, енді автоматты деп санамаймыз
+	$('.tm_in_name, .tm_in_surname').on('input', function(){ tmAuto = false });
 
 	var errs = { name: 'Атын жазыңыз', phone: 'Телефонды дұрыс жазыңыз', pos: 'Лауазымын таңдаңыз', code: 'PIN 4 сан болуы керек',
 		phone_busy: 'Бұл нөмір басқа адамда тұр', already: 'Бұл адам тізімде бар', other_company: 'Бұл нөмір басқа компанияда тіркелген' };
