@@ -133,7 +133,7 @@
 									<div class="uc_uin_other">
 										<select name="" id="" class="on_staff" data-order-id="<?=$buy_d['id']?>" >
 											<option value="" >Не выбрано</option>
-											<? $staff = db::query("select * from user_staff where positions_id = 6"); ?>
+											<? $staff = db::query("select * from company_staff where positions_id = 6"); ?>
 											<? while ($staff_d = mysqli_fetch_assoc($staff)): ?>
 												<? $staff_user_d = fun::user($staff_d['user_id']); ?>
 												<option value="" data-id="<?=$staff_d['user_id']?>" <?=($buy_d['сourier_id'] == $staff_d['user_id']?'selected':'')?>><?=$staff_user_d['name']?></option>
@@ -185,7 +185,7 @@
 									<option data-id="" value="">Барлығы</option>
 									<option data-id="soboi" <?=(@$_GET['staff'] == 'soboi'?'selected':'')?> value="">Собой</option>
 									<option data-id="off" <?=(@$_GET['staff'] == 'off'?'selected':'')?> value="">Таңдалмаған</option>
-									<? $staff = db::query("select * from user_staff where positions_id = 6"); ?>
+									<? $staff = db::query("select * from company_staff where positions_id = 6"); ?>
 									<? while ($staff_d = mysqli_fetch_assoc($staff)): ?>
 										<? $staff_user_d = fun::user($staff_d['user_id']); ?>
 										<option data-id="<?=$staff_d['user_id']?>" <?=(@$_GET['staff'] == $staff_d['user_id']?'selected':'')?> value=""><?=$staff_user_d['name']?></option>

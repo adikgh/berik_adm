@@ -47,7 +47,7 @@
 			if ($name === '') out(false, ['msg' => 'Тауардың атауын жазыңыз']);
 			if ($qty <= 0) out(false, ['msg' => '«'.$name.'» саны 0-ден көп болуы керек']);
 			if ($price < 0) out(false, ['msg' => '«'.$name.'» бағасы дұрыс емес']);
-			$unit = trim(strip_tags((string)@$r['unit'])) ?: 'кг';
+			$unit = fun::unit_norm(strip_tags((string)@$r['unit'])) ?: 'кг';
 			$sum = round($qty * $price, 2);
 			$total += $sum;
 			$items[] = ['raw_id' => (int)@$r['raw_id'], 'name' => mb_substr($name, 0, 255), 'unit' => mb_substr($unit, 0, 20), 'qty' => $qty, 'price' => $price, 'sum' => $sum];
@@ -86,7 +86,7 @@
 		mysqli_commit(db::$connect);
 
 		if ((int)@$_POST['post'] == 1) {
-			if (!wb::post($id, $cmp)) out(false, ['id' => $id, 'msg' => 'Сақталды, бірақ қабылдау кезінде қате шықты']);
+			if (!wb::post($id, $cmp)) out(false, ['id' => $id, 'msg' => 'Жоба сақталды, бірақ қабылданбады. '.(wb::$err ?: 'Қабылдау кезінде қате шықты.')]);
 			out(true, ['id' => $id, 'msg' => 'Қабылданды, қалдыққа қосылды']);
 		}
 		out(true, ['id' => $id, 'msg' => 'Сақталды']);
@@ -137,6 +137,23 @@
 		$v = (int)@$_POST['v'] ? 1 : 0;
 		$ok = db::query("update supplier set archive = '$v', upd_dt = '$now' where id = '$id' and company_id = '$cmp'");
 		out((bool)$ok);
+	}
+
+	// Жеткізуші тауарын шикізатқа байлау: [{name, raw_id, factor}]
+	if (isset($_GET['alias_save'])) {
+		if (!fun::has_col('supplier_item', 'factor')) out(false, ['msg' => 'supplier_item кестесі әлі жоқ']);
+		$rows = json_decode((string)@$_POST['items'], true); $n = 0;
+		if (is_array($rows)) foreach (array_slice($rows, 0, 300) as $r) {
+			$name = wb::esc(mb_substr(trim((string)@$r['name']), 0, 255));
+			$raw = (int)@$r['raw_id'];
+			$f = round(wb::num(@$r['factor']), 4);
+			if ($name === '' || !$raw || $f <= 0) continue;
+			$ok = db::query("select id from product_raw where id = '$raw' and company_id = '$cmp'");
+			if (!$ok || !mysqli_num_rows($ok)) continue;
+			if (db::query("insert into supplier_item (company_id, name, raw_id, factor) values ('$cmp', '$name', '$raw', '$f')
+				on duplicate key update raw_id = values(raw_id), factor = values(factor), upd_dt = '$now'")) $n++;
+		}
+		out(true, ['n' => $n]);
 	}
 
 	out(false, ['msg' => 'Белгісіз сұрау']);

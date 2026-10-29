@@ -82,8 +82,8 @@
 	while ($col_q && $col_d = mysqli_fetch_assoc($col_q)) $cols[$col_d['Field']] = 1;
 	$sum = function ($c) use ($cols) { return isset($cols[$c]) ? "COALESCE(SUM(`$c`), 0)" : "0"; };
 
-	$ok_st  = "order_status in (1, 2, 3, 4)";
-	$otk_st = "order_status in (5, 6)";
+	$ok_st  = "order_status in (1, 8, 2, 11, 3, 9, 4)";
+	$otk_st = "order_status in (5, 6, 10)"; // 6, 10: отказ, бірақ бізде қалған ақша (kept_sum) жалпы сомаға қосылады
 	$base   = "company_id = '$company' and number is not null $br_cond";
 	$bd     = "DATE(DATE_SUB(ins_dt, INTERVAL 6 HOUR))"; // жұмыс күні
 
@@ -109,14 +109,14 @@
 		from retail_orders where $base and $ok_st and ins_dt >= '$p_start' and ins_dt < '$p_to'");
 	$prv = st_row("select COUNT(*) as cnt, COALESCE(SUM(total), 0) as total
 		from retail_orders where $base and $ok_st and ins_dt >= '$c_start' and ins_dt < '$c_to'");
-	$otk = st_row("select COUNT(*) as cnt, COALESCE(SUM(total), 0) as total
+	$otk = st_row("select COUNT(*) as cnt, COALESCE(SUM(total), 0) as total, COALESCE(SUM(IF(order_status in (6, 10), kept_sum, 0)), 0) as kept
 		from retail_orders where $base and $otk_st and ins_dt >= '$p_start' and ins_dt < '$p_to'");
 	$otk_prv = st_row("select COUNT(*) as cnt from retail_orders where $base and $otk_st and ins_dt >= '$c_start' and ins_dt < '$c_to'");
 	$future = $is_current ? st_row("select COUNT(*) as cnt, COALESCE(SUM(total), 0) as total
 		from retail_orders where $base and $ok_st and ins_dt >= '$now_dt' and ins_dt < '$p_end'") : [];
 
 	$cnt = intval(@$cur['cnt']);
-	$total = intval(@$cur['total']);
+	$total = intval(@$cur['total']) + intval(@$otk['kept']); // + отказтан бізде қалған ақша
 	$avg = $cnt ? intval($total / $cnt) : 0;
 	$prv_avg = @$prv['cnt'] ? intval($prv['total'] / $prv['cnt']) : 0;
 
@@ -135,21 +135,21 @@
 			$h = ($i + 6) % 24;
 			$series[$h] = ['label' => sprintf('%02d', $h), 'cnt' => 0, 'total' => 0, 'link' => '/orders/?time='.$dd, 'name' => sprintf('%02d:00–%02d:00', $h, ($h + 1) % 24), 'today' => $h == $cur_h, 'wk' => false];
 		}
-		$g_q = db::query("select HOUR(ins_dt) as k, SUM($ok_st) as cnt, COALESCE(SUM(IF($ok_st, total, 0)), 0) as total, SUM($otk_st) as otk from retail_orders
+		$g_q = db::query("select HOUR(ins_dt) as k, SUM($ok_st) as cnt, COALESCE(SUM(IF($ok_st, total, IF(order_status in (6, 10), kept_sum, 0))), 0) as total, SUM($otk_st) as otk from retail_orders
 			where $base and ($ok_st or $otk_st) and ins_dt >= '$p_start' and ins_dt < '$p_to' group by k");
 	} elseif ($mode == 'm') {
 		for ($t = strtotime($p_start_d); $t < strtotime($p_end_d); $t += 86400) {
 			$d = date('Y-m-d', $t);
 			$series[$d] = ['label' => intval(date('j', $t)), 'cnt' => 0, 'total' => 0, 'link' => '?mode=d&d='.$d.$q_branch, 'name' => date('j', $t).' '.$m_low[intval(date('n', $t))], 'today' => $d == $today_bd, 'wk' => date('N', $t) >= 6];
 		}
-		$g_q = db::query("select $bd as k, SUM($ok_st) as cnt, COALESCE(SUM(IF($ok_st, total, 0)), 0) as total, SUM($otk_st) as otk from retail_orders
+		$g_q = db::query("select $bd as k, SUM($ok_st) as cnt, COALESCE(SUM(IF($ok_st, total, IF(order_status in (6, 10), kept_sum, 0))), 0) as total, SUM($otk_st) as otk from retail_orders
 			where $base and ($ok_st or $otk_st) and ins_dt >= '$p_start' and ins_dt < '$p_to' group by k");
 	} else {
 		for ($i = 1; $i <= 12; $i++) {
 			$k = sprintf('%s-%02d', $yy, $i);
 			$series[$k] = ['label' => $m_short[$i], 'cnt' => 0, 'total' => 0, 'link' => '?mode=m&m='.$k.$q_branch, 'name' => $m_names[$i], 'today' => $k == substr($today_bd, 0, 7), 'wk' => false];
 		}
-		$g_q = db::query("select DATE_FORMAT($bd, '%Y-%m') as k, SUM($ok_st) as cnt, COALESCE(SUM(IF($ok_st, total, 0)), 0) as total, SUM($otk_st) as otk from retail_orders
+		$g_q = db::query("select DATE_FORMAT($bd, '%Y-%m') as k, SUM($ok_st) as cnt, COALESCE(SUM(IF($ok_st, total, IF(order_status in (6, 10), kept_sum, 0))), 0) as total, SUM($otk_st) as otk from retail_orders
 			where $base and ($ok_st or $otk_st) and ins_dt >= '$p_start' and ins_dt < '$p_to' group by k");
 	}
 	while ($g_q && $g_d = mysqli_fetch_assoc($g_q)) {
@@ -252,7 +252,7 @@
 		from retail_orders_products op
 		join retail_orders o on o.id = op.order_id
 		left join product p on p.id = op.product_id
-		where o.company_id = '$company' and o.number is not null and o.order_status in (1, 2, 3, 4) ".($f_branch ? " and o.branch_id = '$f_branch'" : "")."
+		where o.company_id = '$company' and o.number is not null and o.order_status in (1, 8, 2, 11, 3, 9, 4) ".($f_branch ? " and o.branch_id = '$f_branch'" : "")."
 			and o.ins_dt >= '$p_start' and o.ins_dt < '$p_to'
 		group by op.product_id order by total desc limit 10");
 	while ($tp_q && $tp_d = mysqli_fetch_assoc($tp_q)) $top[] = $tp_d;
@@ -313,7 +313,7 @@
 			</div>
 			<div class="st_kpi" data-m="otk">
 				<div class="st_kpi_h"><i class="fal fa-ban"></i>Отказ</div>
-				<div class="st_kpi_v"><?=st_num(@$otk['cnt'])?> <span class="st_kpi_vs"><?=st_money(@$otk['total'])?></span></div>
+				<div class="st_kpi_v"><?=st_num(@$otk['cnt'])?> <span class="st_kpi_vs"><?=st_money(@$otk['total'])?><?=(@$otk['kept'] ? ' · бізде қалды '.st_money($otk['kept']) : '')?></span></div>
 				<div class="st_kpi_s"><?=$prev_name?>: <?=st_num(@$otk_prv['cnt'])?></div>
 			</div>
 		</div>

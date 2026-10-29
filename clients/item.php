@@ -9,7 +9,7 @@
 	$id = (int)@$_GET['id'];
 	$OK = clients::OK;
 
-	$cq = db::query("select * from client where id = '$id' and company_id = '$cmp'");
+	$cq = db::query("select * from company_client where id = '$id' and company_id = '$cmp'");
 	if (!$cq || !mysqli_num_rows($cq)) { header('location: /clients/'); exit; }
 	$c = mysqli_fetch_assoc($cq);
 	$sg = clients::segment($c);
@@ -145,7 +145,7 @@
 				<div class="cl_td" data-h="Формат"><?=(@$types[$o['order_type']] ?: '—')?></div>
 				<div class="cl_td cl_td_name"><span class="cl_small"><?=htmlspecialchars((string)$o['address'])?></span></div>
 				<div class="cl_td" data-h="Сома"><b><?=clients::sum($o['total'])?></b></div>
-				<div class="cl_td cl_td_seg"><span class="cl_seg" style="<?=(@$sts['clr'] ? 'color:'.$sts['clr'].';background:'.$sts['clr'].'1a' : '')?>"><?=htmlspecialchars((string)@$sts['name_kz'])?></span></div>
+				<div class="cl_td cl_td_seg"><span class="cl_seg" style="<?=(@$sts['clr'] ? 'color:'.$sts['clr'].';background:'.$sts['clr'].'1a' : '')?>"><?=htmlspecialchars(t::w('st:'.trim((string)@$sts['name_ru']), (string)@$sts['name_kz']))?></span></div>
 			</div>
 		<? endwhile ?>
 	</div>

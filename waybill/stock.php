@@ -76,7 +76,7 @@
 			<div class="wb_tr <?=($r['qty'] <= 0 ? 'wb_tr_mut' : '')?>">
 				<div class="wb_td wb_td_n"><?=$k + 1?></div>
 				<div class="wb_td wb_td_name"><a class="wb_name" href="/waybill/?q=<?=urlencode($r['name_kz'] ?: $r['name_ru'])?>&p=all"><?=wb::h($r['name_kz'] ?: $r['name_ru'])?></a></div>
-				<div class="wb_td" data-h="Қалдық"><b class="<?=($r['qty'] < 0 ? 'wb_c_red' : '')?>"><?=wb::qty($r['qty'])?></b> <?=wb::h($r['unit'])?></div>
+				<div class="wb_td" data-h="Қалдық"><b class="<?=($r['qty'] < 0 ? 'wb_c_red' : '')?>"><?=wb::qty($r['qty'])?></b> <?=wb::h(fun::unit_norm($r['unit']))?></div>
 				<div class="wb_td" data-h="Соңғы баға"><?=($r['price'] ? wb::sum($r['price']) : '—')?></div>
 				<div class="wb_td" data-h="Құны"><?=($r['qty'] > 0 && $r['price'] ? wb::sum($r['qty'] * $r['price']) : '—')?></div>
 				<div class="wb_td" data-h="Соңғы келгені"><?=wb::dt($r['last_in'])?></div>

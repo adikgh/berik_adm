@@ -19,8 +19,15 @@
       <div class="">
          <div class="uc_ui69" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
 
+            <? if (isset($period)): // кезең ауыстырғышы: Күн · Ай · Жыл ?>
+               <div class="k_br" style="flex: 0 0 auto; width: auto;">
+                  <? foreach (['day' => t::w('Day', 'Күн'), 'month' => t::w('Month', 'Ай'), 'year' => t::w('Year', 'Жыл')] as $pk => $pn): ?>
+                     <a class="k_br_i <?=($period == $pk?'k_br_act':'')?>" href="?<?=htmlspecialchars(http_build_query(array_merge($_GET, ['period' => $pk, 'time' => $time_pick ?? $time_sort])))?>"><span><?=$pn?></span></a>
+                  <? endforeach ?>
+               </div>
+            <? endif ?>
             <div class="">
-               <input class="form_dt on_sort_time" type="date" name="" id="" value="<?=date('Y-m-d', strtotime("$start_cdate"))?>">
+               <input class="form_dt on_sort_time" type="date" name="" id="" data-period="<?=htmlspecialchars($period ?? 'day')?>" value="<?=date('Y-m-d', strtotime("$start_cdate"))?>">
             </div>
 			<? if (!empty($o_branches) && count($o_branches) >= 2): ?>
 				<div class="k_br" style="flex: 0 0 auto; width: auto;">

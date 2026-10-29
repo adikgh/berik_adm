@@ -27,17 +27,19 @@
 								<? $an_act = in_array($menu_name, ['order_product', 'order_comp', 'order_user', 'stats']) || strpos((string)$menu_name, 'client') === 0; ?>
 								<!-- Аналитика мен Статистика: компьютерде бір батырма, ішінен екі бет ашылады. Телефондағы төменгі мәзір .mp_topi сілтемелерін бөлек көшіреді. -->
 								<div class="mp_dd <?=$an_act?'mp_dd_act':''?>">
-									<a class="mp_dd_t" href="javascript:;" tabindex="0"><i class="fal fa-chart-pie"></i><span><?=t::w('Analytics', 'Аналитика')?></span><i class="far fa-angle-down mp_dd_ar"></i></a>
+									<a class="mp_dd_t" href="/stats/" tabindex="0"><i class="fal fa-chart-pie"></i><span><?=t::w('Analytics', 'Аналитика')?></span><i class="far fa-angle-down mp_dd_ar"></i></a>
 									<div class="mp_dd_c">
+										<!-- Статистика негізгі бет: Аналитиканы басқанда осы ашылады -->
+										<a class="mp_dd_i <?=($menu_name=='stats'?'mp_dd_i_act':'')?>" href="/stats/"><i class="fal fa-chart-line"></i><span><?=t::w('Statistics', 'Статистика')?></span></a>
+										<div class="mp_dd_sep"></div>
 										<a class="mp_dd_i <?=($menu_name=='order_product'?'mp_dd_i_act':'')?>" href="/dashboard/order_product.php?time=<?=$time_sort?>"><i class="fal fa-utensils"></i><span><?=t::w('Dishes', 'Тағамдар')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='order_comp'?'mp_dd_i_act':'')?>" href="/dashboard/order_comp.php?time=<?=$time_sort?>"><i class="fal fa-layer-group"></i><span><?=t::w('Ingredients', 'Құрамы')?></span></a>
-										<a class="mp_dd_i <?=($menu_name=='order_user'?'mp_dd_i_act':'')?>" href="/dashboard/order_user.php?time=<?=$time_sort?>"><i class="fal fa-user-headset"></i><span><?=t::w('Operator', 'Оператор')?></span></a>
 										<div class="mp_dd_sep"></div>
-										<a class="mp_dd_i <?=($menu_name=='stats'?'mp_dd_i_act':'')?>" href="/stats/"><i class="fal fa-chart-line"></i><span><?=t::w('Statistics', 'Статистика')?></span></a>
 										<a class="mp_dd_i <?=(strpos((string)$menu_name, 'client') === 0?'mp_dd_i_act':'')?>" href="/clients/"><i class="fal fa-users"></i><span><?=t::w('Clients', 'Клиенттер')?></span></a>
+										<a class="mp_dd_i <?=($menu_name=='order_user'?'mp_dd_i_act':'')?>" href="/dashboard/order_user.php?time=<?=$time_sort?>"><i class="fal fa-user-headset"></i><span><?=t::w('Operator', 'Оператор')?></span></a>
 									</div>
 									<!-- телефондағы төменгі мәзір үшін (компьютерде көрінбейді) -->
-									<a class="mp_topi mp_dd_m <?=(in_array($menu_name, ['order_product', 'order_comp', 'order_user'])?'mp_topi_act':'')?>" href="/dashboard/order_product.php?time=<?=$time_sort?>"><i class="fal fa-chart-bar"></i><span><?=t::w('Analytics', 'Аналитика')?></span></a>
+									<a class="mp_topi mp_dd_m <?=(in_array($menu_name, ['order_product', 'order_comp', 'order_user'])?'mp_topi_act':'')?>" href="/stats/"><i class="fal fa-chart-bar"></i><span><?=t::w('Analytics', 'Аналитика')?></span></a>
 									<a class="mp_topi mp_dd_m <?=($menu_name=='stats'?'mp_topi_act':'')?>" href="/stats/"><i class="fal fa-chart-line"></i><span><?=t::w('Statistics', 'Статистика')?></span></a>
 								</div>
 								<style>
@@ -116,6 +118,12 @@
 									<div class="menu_cin"><i class="fal fa-user-headset"></i></div>
 									<div class="menu_cih"><?=t::w('Staff', 'Жұмысшылар')?></div>
 								</a>
+								<? if (@$user_right['positions_id'] != 3): ?>
+									<a class="menu_ci" href="/delivery/">
+										<div class="menu_cin"><i class="fal fa-map-marked-alt"></i></div>
+										<div class="menu_cih"><?=t::w('Delivery zones', 'Жеткізу аймақтары')?></div>
+									</a>
+								<? endif ?>
 								<a class="menu_ci" href="#/acc/">
 									<div class="menu_cin"><i class="fal fa-user"></i></div>
 									<div class="menu_cih"><?=t::w('Account', 'Аккаунт')?></div>

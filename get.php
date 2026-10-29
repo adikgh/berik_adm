@@ -19,7 +19,7 @@
 
 	// sign in phone
 	if(isset($_GET['sign'])) {
-		$phone = strip_tags($_POST['phone']);
+		$phone = substr(preg_replace('/\D/', '', (string)@$_POST['phone']), -10);
 		$password = strip_tags($_POST['password']);
 		$user = db::query("SELECT * FROM user WHERE `phone` = '$phone' and `password` = '$password' and `right` = 1");
 		if (mysqli_num_rows($user)) {
@@ -60,7 +60,7 @@
 		$sex = strip_tags($_POST['sex']);
 		$age = strip_tags($_POST['age']);
 		$mail = strip_tags($_POST['mail']);
-		$phone = strip_tags($_POST['phone']);
+		$phone = substr(preg_replace('/\D/', '', (string)@$_POST['phone']), -10);
 		$password = strip_tags($_POST['password']);
 		
 		$upd = db::query("UPDATE `user` SET `name`='$n_name', `surname`='$surname', `sex`='$sex', `age`='$age', `mail`='$mail', `phone`='$phone', `password`='$password', `upd_dt`='$datetime' WHERE id = '$user_id'");

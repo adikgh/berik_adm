@@ -1,0 +1,35 @@
+
+<div class="">
+   <!-- компьютерде бұл беттер жоғарғы «Аналитика» мәзірінде, бұл қатар тек телефонда көрінеді -->
+   <div class="tg1_top an_tabs_m">
+      <div class="tg1_topc">
+         <a class="tg1_topi <?=($menu_name=='order_product'?'tg1_topi_act':'')?>" href="order_product.php?time=<?=$time_sort?>"><?=t::w('Dishes', 'Тағамдар')?></a>
+         <a class="tg1_topi <?=($menu_name=='order_comp'?'tg1_topi_act':'')?>" href="order_comp.php?time=<?=$time_sort?>"><?=t::w('Ingredients', 'Құрамы')?></a>
+         <a class="tg1_topi <?=($menu_name=='order_user'?'tg1_topi_act':'')?>" href="order_user.php?time=<?=$time_sort?>"><?=t::w('Operator', 'Оператор')?></a>
+      </div>
+   </div>
+   <div class="">
+
+   </div>
+</div>
+
+
+<br>
+
+      <div class="">
+         <div class="uc_ui69">
+
+            <div class="">
+               <input class="form_dt on_sort_time" type="date" name="" id="" value="<?=date('Y-m-d', strtotime("$start_cdate"))?>">
+            </div>
+			<? if (!empty($o_branches) && count($o_branches) >= 2): ?>
+				<div class="k_br">
+					<a class="k_br_i <?=(!$f_branch?'k_br_act':'')?>" href="?<?=htmlspecialchars(http_build_query(array_merge($_GET, ['branch' => 0])))?>"><i class="fal fa-store"></i><span><?=t::w('Branch: all', 'Барлық точка')?></span></a>
+					<? foreach ($o_branches as $ob): ?>
+						<a class="k_br_i <?=($f_branch == $ob['id']?'k_br_act':'')?>" href="?<?=htmlspecialchars(http_build_query(array_merge($_GET, ['branch' => $ob['id']])))?>"><span><?=htmlspecialchars($ob['name'])?></span></a>
+					<? endforeach ?>
+				</div>
+			<? endif ?>
+            
+         </div>
+      </div>

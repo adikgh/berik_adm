@@ -6,7 +6,7 @@
 
 	// лауазымдар (құрушы тізімде шықпайды)
 	$positions = [];
-	$pq = db::query("select * from user_staff_positions where id != 1 order by number asc");
+	$pq = db::query("select * from company_staff_positions where id != 1 order by number asc");
 	while ($p = mysqli_fetch_assoc($pq)) $positions[$p['id']] = $p;
 	// рет: Директор, Басқарушы, Маркетолог, Раздача, Кассир, Аспазшы, Поставщик, Курьер (Менеджер — ескі, тек бар болса шығады)
 	$pos_kz = [2 => 'Директор', 3 => 'Басқарушы', 7 => 'Маркетолог', 8 => 'Раздача', 5 => 'Кассир', 9 => 'Аспазшы', 10 => 'Поставщик', 6 => 'Курьер', 4 => 'Менеджер'];
@@ -26,7 +26,7 @@
 	$groups = [];
 	foreach ($positions as $pid => $p) $groups[$pid] = [];
 	$sq = db::query("select s.id staff_id, s.positions_id, s.branch_id, s.ins_dt staff_dt, u.id uid, u.name, u.surname, u.phone, u.img
-		from user_staff s inner join user u on u.id = s.user_id
+		from company_staff s inner join user u on u.id = s.user_id
 		where s.company_id = '$company' and s.positions_id != 1 order by u.name asc");
 	$all_cnt = 0;
 	while ($r = mysqli_fetch_assoc($sq)) { $groups[$r['positions_id']][] = $r; $all_cnt++; }
@@ -115,6 +115,7 @@
 						<div class="form_span">Телефон:</div>
 						<input type="tel" class="form_txt tm_in_phone" placeholder="87001234567">
 						<i class="fal fa-phone form_icon"></i>
+						<div class="tm_hint"></div>
 					</div>
 					<div class="form_im">
 						<div class="form_span">Лауазымы:</div>

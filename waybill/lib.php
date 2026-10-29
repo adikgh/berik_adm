@@ -5,6 +5,7 @@
 
 	class wb {
 
+		// негізгі жиын fun::$units-пен бірдей (кг, г, л, мл, шт), қаптама өлшемдері қосымша
 		public static $units = ['кг', 'г', 'л', 'мл', 'шт', 'қап', 'қорап', 'бума'];
 
 		// Кестелерді жасау (бір рет, кейін ештеңе істемейді)
@@ -143,11 +144,28 @@
 		}
 
 		// Қабылдау: әр жолды шикізатқа байланыстырып, қалдыққа қосу
+		public static $err = '';
+
 		public static function post($id, $cmp) {
+			self::$err = '';
 			$w = self::get($id, $cmp);
 			if (!$w || $w['status'] == 1) return false;
 			$items = self::items($id);
 			if (!$items) return false;
+			// өлшем сәйкес келмесе (қалдық кг-мен, накладнойда шт), қалдыққа қоспаймыз
+			foreach ($items as $i) {
+				if (!(int)$i['raw_id']) continue;
+				$q = db::query("select r.name_kz, r.name_ru, r.unit, IFNULL(s.quantity, 0) q from product_raw r
+					left join product_raw_stock s on s.raw_id = r.id and s.company_id = r.company_id and s.branch_id = '".(int)$w['branch_id']."'
+					where r.id = '".(int)$i['raw_id']."' limit 1");
+				$r = $q ? mysqli_fetch_assoc($q) : null;
+				if (!$r) continue;
+				$ru = fun::unit_norm($r['unit']); $iu = fun::unit_norm($i['unit']);
+				if ($ru !== '' && $iu !== '' && $ru !== $iu && (float)$r['q'] != 0) {
+					self::$err = '«'.($r['name_kz'] ?: $r['name_ru']).'» қалдығы '.$ru.'-мен саналады, накладнойда '.$iu.'. Өлшемін '.$ru.' етіп, санын аударыңыз.';
+					return false;
+				}
+			}
 			$ok = true;
 			mysqli_begin_transaction(db::$connect);
 			foreach ($items as $i) {

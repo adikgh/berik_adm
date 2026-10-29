@@ -11,7 +11,7 @@
 		$name = $esc(@$_POST['name']);
 		$address = $esc(@$_POST['address']);
 		$note = $esc(@$_POST['note']);
-		$upd = db::query("update client set
+		$upd = db::query("update company_client set
 				name = ".($name !== '' ? "'$name'" : "NULL").",
 				address = ".($address !== '' ? "'$address'" : "NULL").",
 				note = ".($note !== '' ? "'$note'" : "NULL").",
@@ -24,6 +24,6 @@
 	if (isset($_GET['client_archive'])) {
 		$id = (int)@$_POST['id'];
 		$v = (int)@$_POST['v'] ? 1 : 0;
-		$upd = db::query("update client set archive = '$v', upd_dt = '$datetime' where id = '$id' and company_id = '$cmp'");
+		$upd = db::query("update company_client set archive = '$v', upd_dt = '$datetime' where id = '$id' and company_id = '$cmp'");
 		exit($upd ? 'yes' : 'error');
 	}

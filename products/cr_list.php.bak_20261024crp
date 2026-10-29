@@ -1,0 +1,153 @@
+<?
+	// Құрамы (product_comp) және Шикізат (product_raw) беттеріне ортақ тізім.
+	// Шақыратын бет $cr береді: kind (comp|raw), table, add_key, add_kz, empty_key, empty_kz.
+	if (!$user_id) { header('location: /'); exit(); }
+
+	$cmp = (int)$company;
+	$cr_unit = $cr['kind'] == 'raw' && fun::has_col('product_raw', 'unit');
+	$list = db::query("select * from {$cr['table']} where company_id = '$cmp' order by name_kz asc, id asc");
+	$page_result = $list ? mysqli_num_rows($list) : 0;
+
+	// site setting
+	$menu_name = 'products';
+	$pod_menu_name = $cr['kind'];
+	$css = ['products/main'];
+	$js = ['products/main'];
+?>
+<? include "../../block/header.php"; ?>
+
+	<div class="bl_c">
+
+		<div class="ucours_t">
+			<div class="ucours_tl">
+				<div class="ucours_tm">
+					<div class="btn btn_cl cr_add_pop">
+						<i class="fal fa-plus"></i>
+						<span><?=t::w($cr['add_key'], $cr['add_kz'])?></span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<? include "../aheader.php"; ?>
+
+		<? if ($page_result): ?>
+			<div class="uc_u">
+				<div class="uc_us">
+					<div class="form_im uc_usn">
+						<input type="text" placeholder="<?=t::w('Search', 'Іздеу')?>" class="cr_search">
+						<i class="fal fa-search form_icon"></i>
+					</div>
+				</div>
+
+				<div class="tscroll">
+					<div class="uc_uc">
+						<div class="uc_uh">
+							<div class="uc_uhn">
+								<div class="uc_uh_number">#</div>
+								<div class="uc_uh_other"><?=t::w('Name', 'Атауы')?></div>
+								<? if ($cr_unit): ?><div class="uc_uh_other"><?=t::w('Unit', 'Өлшем')?></div><? endif ?>
+								<div class="uc_uh_other"><?=t::w('Price', 'Бағасы')?></div>
+							</div>
+							<div class="uc_uh_cn"></div>
+						</div>
+						<div class="uc_uc">
+							<? $number = 0; while ($r = mysqli_fetch_assoc($list)): $number++; $nm = $r['name_kz'] ?: $r['name_ru']; ?>
+								<div class="uc_ui uc_ui2 cr_row" data-name="<?=htmlspecialchars(mb_strtolower($r['name_kz'].' '.$r['name_ru']))?>">
+									<div class="uc_uil">
+										<div class="uc_ui_number"><?=$number?></div>
+										<div class="uc_uin_other"><?=htmlspecialchars($nm)?></div>
+										<? if ($cr_unit): ?><div class="uc_uin_other"><?=htmlspecialchars((string)$r['unit'])?></div><? endif ?>
+										<div class="uc_uin_other"><?=($r['price'] ? (int)$r['price'].' тг' : '<m>'.t::w('No price', 'Бағасы жоқ').'</m>')?></div>
+									</div>
+									<div class="uc_uib"></div>
+								</div>
+							<? endwhile ?>
+						</div>
+					</div>
+				</div>
+			</div>
+		<? else: ?>
+			<div class="ds_nr">
+				<i class="fal fa-ghost"></i>
+				<p><?=t::w($cr['empty_key'], $cr['empty_kz'])?></p>
+			</div>
+		<? endif ?>
+
+	</div>
+
+<? include "../../block/footer.php"; ?>
+
+	<div class="pop_bl pop_bl2 cr_add_block">
+		<div class="pop_bl_a cr_add_back"></div>
+		<div class="pop_bl_c">
+			<div class="head_c">
+				<h4><?=t::w($cr['add_key'], $cr['add_kz'])?></h4>
+				<div class="btn btn_dd cr_add_back"><i class="fal fa-times"></i></div>
+			</div>
+			<div class="pop_bl_cl">
+				<div class="form_c">
+					<div class="form_im">
+						<div class="form_span"><?=t::w('Name', 'Атауы')?>:</div>
+						<input type="text" class="form_txt cr_name" maxlength="255" placeholder="<?=t::w('Enter name', 'Атауын жазыңыз')?>">
+						<i class="fal fa-text form_icon"></i>
+					</div>
+					<? if ($cr_unit): ?>
+						<div class="form_im">
+							<div class="form_span"><?=t::w('Unit', 'Өлшем')?>:</div>
+							<input type="text" class="form_txt cr_unit" maxlength="20" placeholder="кг, л, дана">
+							<i class="fal fa-balance-scale form_icon"></i>
+						</div>
+					<? endif ?>
+					<div class="form_im">
+						<div class="form_span"><?=t::w('Price', 'Бағасы')?>:</div>
+						<input type="tel" class="form_txt cr_price" inputmode="numeric" placeholder="0">
+						<i class="fal fa-tenge form_icon"></i>
+					</div>
+				</div>
+				<div class="form_c">
+					<div class="form_im">
+						<div class="btn cr_add_btn"><span><?=t::w('Add', 'Қосу')?></span></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		(function () {
+			var pop = document.querySelector('.cr_add_block'), busy = false;
+			var msg = function (t) { if (window.mess) mess(t); else alert(t); };
+			document.querySelectorAll('.cr_add_pop').forEach(function (b) {
+				b.addEventListener('click', function () { pop.classList.add('pop_bl_act'); pop.querySelector('.cr_name').focus(); });
+			});
+			pop.querySelectorAll('.cr_add_back').forEach(function (b) {
+				b.addEventListener('click', function () { pop.classList.remove('pop_bl_act'); });
+			});
+			pop.querySelector('.cr_add_btn').addEventListener('click', function () {
+				if (busy) return;
+				var name = pop.querySelector('.cr_name').value.trim(), unit = pop.querySelector('.cr_unit');
+				if (!name) { msg(<?=json_encode(t::w('Enter name', 'Атауын жазыңыз'), JSON_UNESCAPED_UNICODE)?>); return; }
+				var fd = new FormData();
+				fd.append('name', name);
+				fd.append('price', pop.querySelector('.cr_price').value);
+				if (unit) fd.append('unit', unit.value);
+				busy = true;
+				fetch('/products/get.php?<?=$cr['kind']?>_add', { method: 'POST', body: fd, credentials: 'same-origin' })
+					.then(function (r) { return r.text(); })
+					.then(function (t) {
+						busy = false;
+						t = t.trim();
+						if (t == 'yes') { msg(<?=json_encode(t::w('Added', 'Қосылды'), JSON_UNESCAPED_UNICODE)?>); setTimeout(function () { location.reload(); }, 400); }
+						else if (t == 'exists') msg(<?=json_encode(t::w('Already exists', 'Мұндай атау бар'), JSON_UNESCAPED_UNICODE)?>);
+						else msg(<?=json_encode(t::w('Error, try again', 'Қате, қайта көріңіз'), JSON_UNESCAPED_UNICODE)?>);
+					})
+					.catch(function () { busy = false; msg(<?=json_encode(t::w('Error, try again', 'Қате, қайта көріңіз'), JSON_UNESCAPED_UNICODE)?>); });
+			});
+			var s = document.querySelector('.cr_search');
+			if (s) s.addEventListener('input', function () {
+				var q = s.value.trim().toLowerCase();
+				document.querySelectorAll('.cr_row').forEach(function (r) { r.style.display = !q || r.dataset.name.indexOf(q) > -1 ? '' : 'none'; });
+			});
+		})();
+	</script>

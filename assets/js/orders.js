@@ -62,23 +62,30 @@ $(document).ready(function() {
 
    // 
 	$('.on_status').on('change', function () {
-      // id = $(this).children('option:selected').attr('data-id')
-		btn = $(this)
-      $.ajax({
-         url: "/orders/get.php?change_status",
-         type: "POST",
-         dataType: "html",
-         data: ({ 
-            id: btn.children('option:selected').attr('data-id'),
-            order_id: btn.attr('data-order-id'),
-         }),
-         success: function(data){ 
-            if (data == 'yes') location.reload();
-            console.log(data);
-         },
-         beforeSend: function(){ },
-         error: function(data){ }
-      })
+		var btn = $(this), opt = btn.children('option:selected'), card = btn.closest('.or_card')
+		var kept = opt.attr('data-kept'), need_r = opt.attr('data-refuse') == '1' // Отказ: себебі міндетті, Отказ вне: бізде қалған сома
+		var cancel = function(){ location.reload() }
+		var step2 = function(k){
+			if (!need_r) return go(k, '')
+			or_ask({ kind: 'reason', title: 'Отказ себебі', text: '№' + ($.trim(card.find('.uc_uil2_nmb').first().text()) || '') + ' тапсырысқа отказ қойылады. Себебін жазыңыз.', quick: ['Клиент бас тартты', 'Клиент телефон алмады', 'Мекенжай қате', 'Ұзақ күтті', 'Тағам біткен'], ok: 'Отказ қою' }, function(r){ go(k, r) }, cancel)
+		}
+		if (kept !== undefined) or_ask({ kind: 'sum', title: 'Бізде қалған сома', text: 'Тапсырыстан бізде қанша ақша қалды?', value: kept, ok: 'Растау' }, function(v){ step2(String(v).replace(/\D/g, '') || '0') }, cancel)
+		else step2(undefined)
+		function go(k, reason) {
+			var c = opt.attr('data-clr'); if (c && card.length) card[0].style.setProperty('--st', c)
+			card.addClass('or_busy')
+			$.ajax({
+				url: "/orders/get.php?change_status",
+				type: "POST",
+				dataType: "html",
+				data: ({ id: opt.attr('data-id'), order_id: btn.attr('data-order-id'), reason: reason, kept: k === undefined ? '' : k }),
+				success: function(data){
+					if (data == 'yes') location.reload()
+					else { mess(data == 'need_reason' ? 'Отказ себебін жазыңыз' : 'Өзгерту мүмкін болмады'); setTimeout(cancel, 900) }
+				},
+				error: function(){ mess('Байланыс қатесі'); setTimeout(cancel, 900) }
+			})
+		}
 	})
 
 

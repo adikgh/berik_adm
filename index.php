@@ -19,6 +19,7 @@
 		<div class="bl_c">
 			<div class="usign_c">
 
+				<div class="bp_brand" style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:18px"><img src="/assets/img/logo/berik-icon.svg" alt="BERIK POS" width="64" height="64" style="display:block;width:64px;height:64px"><span style="font-family:'Nunito',sans-serif;font-style:italic;font-weight:900;font-size:24px;letter-spacing:.3px;line-height:1">BERIK <b style="color:#0EA768;font-weight:800">POS</b></span></div>
 				<div class="usign_head"><h3 class="usign_h">Админ</h3></div>
 				<div class="usign_cn">
 					<div class="form_im form_im_ph">

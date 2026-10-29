@@ -1,0 +1,290 @@
+<? include "../../config/core.php";
+
+	// 
+	if (!$user_id) { header('location: /'); exit(); }
+
+	// product
+	if (intval(@$_GET['id'])) {
+		$product_id = intval($_GET['id']);
+		$product = db::query("select * from product where id = '$product_id' and company_id = '$company'");
+		if (mysqli_num_rows($product)) {
+			$product_d = mysqli_fetch_assoc($product);
+
+			// catalog
+			$catalog_id = $product_d['catalog_id'];
+			$catalog_d = product::pr_catalog($product_d['catalog_id']);
+			
+		} else { header('location: /products/'); exit(); }
+	} else { header('location: /products/'); exit(); }
+
+
+	// site setting
+	$menu_name = 'products';
+	$pod_menu_name = 'main';
+	$page_name = $product_d['name_ru'] ?: $product_d['name_kz'];
+	$site_set['header'] = true;
+	$site_set['menu'] = true;
+	$site_set['atops'] = true;
+	$site_set['footer'] = false;
+	$site_set['utop_bk'] = 'products';
+	$site_set['utop_type'] = 'item';
+	$site_set['utop_nm'] = $product_d['name_ru'];
+	$css = ['products/main', 'products/item'];
+	$js = ['products/main', 'products/item'];
+?>
+<? include "../../block/header.php"; ?>
+
+	<div class="bl_c">
+
+		<? include "../aheader.php"; ?>
+
+		<div class="pitem">
+
+			<? $pc_cats = db::query("select id, name_kz, name_ru, color from product_catalog where company_id = '$company' and (arh is null or arh = 0) order by number asc, id asc"); ?>
+			<div class="pcard" data-id="<?=$product_id?>">
+				<div class="pcard_top">
+					<div class="pcard_clr" style="background:<?=htmlspecialchars(($catalog_d['color'] ?? '') ?: '#b3bac7')?>"><i class="fal fa-utensils"></i></div>
+					<div class="pcard_ttl">
+						<div class="pcard_name"><?=htmlspecialchars($product_d['name_kz'] ?: $product_d['name_ru'])?></div>
+						<div class="pcard_sub">
+							<span><i class="fal fa-folder"></i> <?=($catalog_d ? htmlspecialchars($catalog_d['name_'.$lang] ?: $catalog_d['name_ru']) : t::w('No catalog', 'Каталогсыз'))?></span>
+							<span class="pcard_price"><?=number_format((int)$product_d['price'], 0, '', ' ')?> тг</span>
+							<? if ($product_d['arh']): ?><span class="pcard_arh"><i class="fal fa-archive"></i> <?=t::w('In archive', 'Архивте')?></span><? endif ?>
+						</div>
+					</div>
+				</div>
+				<div class="pcard_form">
+					<label class="pcard_f">
+						<span class="pcard_l"><?=t::w('Name (kazakh)', 'Атауы (қазақша)')?></span>
+						<input type="text" class="pcard_in pc_name_kz" maxlength="255" value="<?=htmlspecialchars((string)$product_d['name_kz'])?>">
+					</label>
+					<label class="pcard_f">
+						<span class="pcard_l"><?=t::w('Name (russian)', 'Атауы (орысша)')?></span>
+						<input type="text" class="pcard_in pc_name_ru" maxlength="255" value="<?=htmlspecialchars((string)$product_d['name_ru'])?>" placeholder="<?=t::w('If empty, kazakh name is used', 'Бос қалса, қазақшасы жазылады')?>">
+					</label>
+					<label class="pcard_f">
+						<span class="pcard_l"><?=t::w('Catalog', 'Каталог')?></span>
+						<select class="pcard_in pc_catalog">
+							<option value="0"><?=t::w('No catalog', 'Каталогсыз')?></option>
+							<? while ($pc = mysqli_fetch_assoc($pc_cats)): ?>
+								<option value="<?=$pc['id']?>" <?=($pc['id'] == $product_d['catalog_id'] ? 'selected' : '')?>><?=htmlspecialchars($pc['name_'.$lang] ?: $pc['name_ru'])?></option>
+							<? endwhile ?>
+						</select>
+					</label>
+					<label class="pcard_f">
+						<span class="pcard_l"><?=t::w('Price', 'Бағасы')?>, тг</span>
+						<input type="text" class="pcard_in pc_price" inputmode="numeric" value="<?=(int)$product_d['price']?>">
+					</label>
+				</div>
+				<div class="pcard_btns">
+					<div class="btn pc_save"><i class="far fa-check"></i><span><?=t::w('Save', 'Сақтау')?></span></div>
+					<? if (!$product_d['arh']): ?><div class="btn btn_cl pit_del pr_delete" data-id="<?=$product_id?>"><i class="fal fa-archive"></i><span><?=t::w('Send to archive', 'Архивке жіберу')?></span></div><? endif ?>
+				</div>
+			</div>
+
+
+			<? $pitem = db::query("select * from product_item where product_id = '$product_id' order by ins_dt desc"); ?>
+			<div class="item_c">
+				<div class="item_is">Тағам құрамы</div>
+				<div class="uc_u">
+					<div class="tscroll">
+						<table class="uc_u2q  uc_uc">
+							<thead class="">
+								<tr class="thead">
+									<td class="td_number">#</td>
+									<? if (mysqli_num_rows($pitem) > 1): ?> <td class=""><div class="uc_uin_cn"></div></td> <? endif ?>
+									<td class="td_other">Атауы</td>
+									<td class="td_other">Саны</td>
+									<td class="uc_uh_cn"></td>
+								</tr>
+							</thead>
+							<tbody class="tbody">
+								<? $sum = 0; ?>
+								<? while ($buy_d = mysqli_fetch_assoc($pitem)): ?>
+									<? $sum++; $buy_id = $buy_d['id']; ?>
+									<? $comp_d = product::comp($buy_d['comp_id']) ?>
+			
+									<tr class="uc_ui uc_ui2">
+										<td class="td_number"><div class="uc_ui_number"><?=$sum?></div></td>
+										<? if (mysqli_num_rows($pitem) > 1): ?>
+											<td class="">
+												<div class="uc_uin_cn uc_uib_del pitem_btn_delete" data-title2="Удалить товар" data-id="<?=$buy_d['id']?>">
+													<div class="menu_cin"><i class="fal fa-trash-alt"></i></div>
+												</div>
+											</td>
+										<? endif ?>
+										<td class="td_other"><?=$comp_d['name_kz']?></td>
+										<td class="td_other">
+											<div class="uc_uin_other">
+												<input type="tel" class="uc_uin_calc_q fr_number3 view_updq_qn" data-id="<?=$buy_d['id']?>" value="<?=$buy_d['quantity']?>" data-lenght="1" />
+											</div>
+										</td>
+									</tr>
+								<? endwhile ?>
+							</tbody>
+						</table>
+					</div>
+					<div class="uc_ub">
+						<div class="pit_add pitem_add_pop">
+							<div class="pit_add_i"><i class="far fa-plus"></i></div>
+							<span>Құрамға қосу</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+<? include "../../block/footer.php"; ?>
+
+   <!-- тағам карточкасын сақтау (ескі «Обновить вид товара» панелінің орнына) -->
+   <script>
+      (function () {
+         var card = document.querySelector('.pcard'), busy = false;
+         if (!card) return;
+         var msg = function (t) { if (window.mess) mess(t); else alert(t); };
+         var val = function (c) { return card.querySelector(c).value; };
+         card.querySelector('.pc_price').addEventListener('input', function () { this.value = this.value.replace(/\D+/g, ''); });
+         card.querySelector('.pc_save').addEventListener('click', function () {
+            if (busy) return;
+            if (!val('.pc_name_kz').trim() && !val('.pc_name_ru').trim()) { msg(<?=json_encode(t::w('Enter name', 'Атауын жазыңыз'), JSON_UNESCAPED_UNICODE)?>); return; }
+            var fd = new FormData();
+            fd.append('card', 1);
+            fd.append('id', card.dataset.id);
+            fd.append('name_kz', val('.pc_name_kz'));
+            fd.append('name_ru', val('.pc_name_ru'));
+            fd.append('catalog', val('.pc_catalog'));
+            fd.append('price', val('.pc_price'));
+            busy = true;
+            fetch('/products/item/get.php?pr_upd', { method: 'POST', body: fd, credentials: 'same-origin' })
+               .then(function (r) { return r.text(); })
+               .then(function (t) {
+                  busy = false;
+                  if (t.trim() == 'yes') { msg(<?=json_encode(t::w('Saved', 'Сақталды'), JSON_UNESCAPED_UNICODE)?>); setTimeout(function () { location.reload(); }, 600); }
+                  else msg(<?=json_encode(t::w('Error, try again', 'Қате, қайта көріңіз'), JSON_UNESCAPED_UNICODE)?>);
+               })
+               .catch(function () { busy = false; msg(<?=json_encode(t::w('Error, try again', 'Қате, қайта көріңіз'), JSON_UNESCAPED_UNICODE)?>); });
+         });
+      })();
+   </script>
+
+
+   <!-- add item -->
+   <div class="pop_bl pop_bl3 pitem_add_block">
+      	<div class="pop_bl_a pitem_add_back"></div>
+      	<div class="pop_bl_c">
+			<div class="head_c">
+				<h4>Құрамға қосу</h4>
+				<div class="btn btn_dd pitem_add_back"><i class="fal fa-times"></i></div>
+			</div>
+			<div class="form_span pit_hint">Ингредиентті таңдаңыз:</div>
+			<div class="ec_c">
+				<? $pcomp = db::query("select * from product_comp where company_id = '$company' order by ins_dt desc"); ?>
+				<? while ($pcomp_d = mysqli_fetch_assoc($pcomp)): ?>
+					<div class="ec_ci comp_sel" data-id="<?=$pcomp_d['id']?>"><?=$pcomp_d['name_kz']?></div>
+				<? endwhile ?>
+			</div>
+			<div class="form_c">
+				<div class="form_im">
+					<div class="form_span">Саны:</div>
+					<i class="fal fa-hashtag form_icon"></i>
+					<input type="tel" class="form_txt fr_number pitem_quantity" placeholder="0" data-lenght="1">
+				</div>
+				<div class="form_im">
+					<div class="btn pitem_add" data-id="<?=$product_id?>" data-comp=""><i class="far fa-check"></i><span>Қосу</span></div>
+				</div>
+			</div>
+      	</div>
+   </div>
+
+
+   <!-- upd item -->
+	<div class="pop_bl pop_bl2 pitem_upd_block">
+      <div class="pop_bl_a pitem_upd_back"></div>
+      <div class="pop_bl_c">
+         <div class="head_c">
+            <h4>Обновить вид товара</h4>
+            <div class="btn btn_dd pitem_upd_back"><i class="fal fa-times"></i></div>
+         </div>
+         <div class="pop_bl_cl lazy_c"></div>
+      </div>
+   </div>
+
+	<!-- upd item quantity -->
+	<div class="pop_bl pop_bl2 pitem_updq_block">
+      <div class="pop_bl_a pitem_updq_back"></div>
+      <div class="pop_bl_c">
+         <div class="head_c">
+            <h4>Корректировка количество</h4>
+            <div class="btn btn_dd pitem_updq_back"><i class="fal fa-times"></i></div>
+         </div>
+         <div class="pop_bl_cl lazy_c"></div>
+      </div>
+   </div>
+
+   <!-- view_add_pop -->
+   <div class="pop_bl pop_bl2 view_add_block">
+      <div class="pop_bl_a view_add_back"></div>
+      <div class="pop_bl_c">
+         <div class="head_c">
+            <h4>Добавить вид товара</h4>
+            <div class="btn btn_dd view_add_back"><i class="fal fa-times"></i></div>
+         </div>
+         <div class="pop_bl_cl">
+            <div class="form_c">
+               <div class="form_im form_sel">
+                  <div class="form_span">Склады:</div>
+                  <i class="fal fa-warehouse-alt form_icon"></i>
+                  <div class="form_im_txt sel_clc views_warehouses" data-val="">Выберите склад</div>
+                  <i class="fal fa-caret-down form_icon_sel"></i>
+                  <div class="form_im_sel sel_clc_i">
+                     <? $warehouses = db::query("select * from product_warehouses"); ?>
+                     <? while ($warehouses_d = mysqli_fetch_assoc($warehouses)): ?>
+                        <div class="form_im_seli" data-val="<?=$warehouses_d['id']?>"><?=$warehouses_d['name']?></div>
+                     <? endwhile ?>
+                  </div>
+               </div>
+               <div class="form_im">
+                  <div class="form_span">Количество:</div>
+                  <i class="fal fa-hashtag form_icon"></i>
+                  <input type="tel" class="form_im_txt fr_number views_quantity" placeholder="0" data-lenght="1">
+               </div>
+               <div class="form_im">
+                  <div class="form_span">Комментарий:</div>
+                  <i class="fal fa-text form_icon"></i>
+                  <input type="text" class="form_im_txt views_comment" placeholder="" data-lenght="1">
+               </div>
+            </div>
+            <div class="form_c">
+					<div class="form_im">
+						<div class="btn view_add" data-product-id="<?=$product_id?>" data-item-id=""><span>Добавить</span></div>
+					</div>
+				</div>
+         </div>
+      </div>
+   </div>
+
+
+   <!-- imgs b -->
+   <div class="pop_bl pop_bl2 imgs_add_block">
+      <div class="pop_bl_a imgs_add_back"></div>
+      <div class="pop_bl_c">
+         <div class="head_c">
+            <h4>Добавить фото товара</h4>
+            <div class="btn btn_dd imgs_add_back"><i class="fal fa-times"></i></div>
+         </div>
+         <div class="pop_bl_cl lazy_c">
+            <div class="form_c">
+               <div class="form_head">Добавить изображение товара:</div>
+               <div class="uacc_ic">
+                  <div class="upl_logo upl_logo2">
+                     <input type="file" class="item_file2 file" multiple accept=".png, .jpeg, .jpg" data-id="<?=$product_id?>" data-item-id="">
+                     <div class="upl_logo_c item_ava_clc2">Добавить фото</div>
+                  </div>
+                  <div class="upl_lv lazy_c"></div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>

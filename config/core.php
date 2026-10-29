@@ -28,7 +28,7 @@
          $user_ps = false;
 
          if (isset($_COOKIE['uph']) && isset($_COOKIE['ups'])) {
-            $user_ph = $_COOKIE['uph'];
+            $user_ph = substr(preg_replace('/\D/', '', (string)$_COOKIE['uph']), -10);
             $user_ps = $_COOKIE['ups'];
          }
          if ($user_ph && $user_ps) {

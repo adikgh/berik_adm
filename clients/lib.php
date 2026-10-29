@@ -1,16 +1,16 @@
 <?
 	// Клиенттер: база, тапсырыстармен байланыс, көмекші функциялар.
-	// Клиенттер `client` кестесінде, жұмысшылардың `user` кестесінен бөлек сақталады.
+	// Клиенттер `company_client` кестесінде, жұмысшылардың `user` кестесінен бөлек сақталады.
 	// Тапсырыс клиентке retail_orders.client_id арқылы байланысады (телефон бойынша).
 
 	class clients {
 
 		// Төленген және қайтарылмаған тапсырыс
-		const OK = "ro.paid = 1 and ro.order_status not in (5, 6)";
+		const OK = "ro.paid = 1 and ro.order_status not in (5, 6, 10)";
 
 		// Кестені және client_id бағанын жасау (бір рет, кейін ештеңе істемейді)
 		public static function install() {
-			db::query("CREATE TABLE IF NOT EXISTS `client` (
+			db::query("CREATE TABLE IF NOT EXISTS `company_client` (
 				`id` int(11) NOT NULL AUTO_INCREMENT,
 				`company_id` int(11) NOT NULL,
 				`phone` varchar(15) NOT NULL,
@@ -33,6 +33,14 @@
 				db::query("ALTER TABLE `retail_orders` ADD COLUMN `client_id` int(11) DEFAULT NULL AFTER `phone`");
 				db::query("ALTER TABLE `retail_orders` ADD KEY `client_id` (`client_id`)");
 			}
+		}
+
+		// user_id жоқ клиенттерге user жасап, байлау (user = барлық адам, логин = телефон)
+		public static function link_users() {
+			db::query("insert ignore into `user` (`name`, `phone`, `ins_dt`)
+				select COALESCE(MAX(NULLIF(TRIM(c.name), '')), ''), c.phone, MIN(c.ins_dt)
+				from company_client c where c.user_id is null group by c.phone");
+			db::query("update company_client c join `user` u on u.phone = c.phone set c.user_id = u.id where c.user_id is null");
 		}
 
 		// Телефонды 10 санға келтіру: "8 (705) 893-77-45", "87058937745", "+77058937745" -> "7058937745"
@@ -88,7 +96,7 @@
 
 			// Соңғы 3 күнде телефоны өзгерген тапсырыстарды қайта байланыстыру
 			$rc = db::query("select ro.id, ro.phone, ro.client_id, c.phone cphone from retail_orders ro
-				left join client c on c.id = ro.client_id
+				left join company_client c on c.id = ro.client_id
 				where ro.client_id is not null and ro.ins_dt > NOW() - INTERVAL 3 DAY");
 			while ($rc && $r = mysqli_fetch_assoc($rc)) {
 				if (self::norm_phone($r['phone']) !== (string)$r['cphone']) db::query("update retail_orders set client_id = NULL where id = '".(int)$r['id']."'");
@@ -110,26 +118,27 @@
 				if ($rows) db::query("insert into tmp_cl values ".implode(',', $rows));
 
 				// жаңа клиенттер (ph бос болса телефон дұрыс емес)
-				db::query("insert ignore into client (company_id, phone, ins_dt)
+				db::query("insert ignore into company_client (company_id, phone, ins_dt)
 					select company_id, ph, MIN(dt) from tmp_cl where ph <> '' group by company_id, ph");
+				self::link_users();
 				// тапсырысқа client_id қою (0 = телефон дұрыс емес)
 				db::query("update retail_orders ro
 					join tmp_cl t on t.oid = ro.id
-					left join client c on c.company_id = t.company_id and c.phone = t.ph and t.ph <> ''
+					left join company_client c on c.company_id = t.company_id and c.phone = t.ph and t.ph <> ''
 					set ro.client_id = IFNULL(c.id, 0)
 					where ro.client_id is null");
 				db::query("DROP TEMPORARY TABLE IF EXISTS tmp_cl");
 			}
 
 			// Кэш: саны, сомасы, алғашқы/соңғы күн, соңғы мекенжай
-			db::query("update client c left join (
+			db::query("update company_client c left join (
 					select ro.client_id, COUNT(*) cnt, SUM(ro.total) s, MIN(ro.ins_dt) f, MAX(ro.ins_dt) l
 					from retail_orders ro where ro.company_id = '$company' and ro.client_id > 0 and ".self::OK."
 					group by ro.client_id
 				) a on a.client_id = c.id
 				set c.orders_cnt = IFNULL(a.cnt, 0), c.total_sum = IFNULL(a.s, 0), c.first_dt = a.f, c.last_dt = a.l
 				where c.company_id = '$company'");
-			db::query("update client c set c.address = (
+			db::query("update company_client c set c.address = (
 					select ro.address from retail_orders ro where ro.client_id = c.id and ro.address is not null and ro.address <> '' order by ro.ins_dt desc limit 1
 				) where c.company_id = '$company' and (c.address is null or c.address = '')");
 		}

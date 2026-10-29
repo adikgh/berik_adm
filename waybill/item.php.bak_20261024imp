@@ -1,0 +1,174 @@
+<? include "../config/core.php";
+	include "lib.php";
+
+	if (!$user_id) { header('location: /'); exit; }
+	if (@$user_right['positions_id'] == 3) { header('location: /kassa/'); exit; }
+
+	wb::install();
+	$cmp = (int)$company;
+
+	$id = (int)@$_GET['id'];
+	$w = $id ? wb::get($id, $cmp) : null;
+	if ($id && !$w) { header('location: /waybill/'); exit; }
+	$items = $w ? wb::items($id) : [];
+	$posted = $w && $w['status'] == 1;
+	if (!$w) $w = ['id' => 0, 'number' => wb::next_number($cmp), 'supplier_id' => 0, 'supplier_name' => '', 'doc_no' => '', 'doc_date' => date('Y-m-d'), 'total' => 0, 'paid' => 0, 'status' => 0, 'comment' => '', 'posted_dt' => null, 'ins_dt' => null, 'user_id' => 0];
+	if (!$items && !$posted) $items = [['raw_id' => '', 'name' => '', 'unit' => 'кг', 'quantity' => '', 'price' => '', 'sum' => '']];
+
+	// шикізат тізімі (атауды жазғанда ұсыну үшін)
+	$raw = [];
+	$rq = db::query("select id, name_kz, name_ru, ".(fun::has_col('product_raw', 'unit') ? 'unit' : "'' unit").", price from product_raw where company_id = '$cmp' order by name_kz");
+	while ($rq && $r = mysqli_fetch_assoc($rq)) {
+		$n = trim($r['name_kz'] ?: $r['name_ru']);
+		if ($n !== '') $raw[] = ['id' => (int)$r['id'], 'n' => $n, 'u' => (string)$r['unit'], 'p' => (float)$r['price']];
+	}
+	$suppliers = db::query("select id, name from supplier where company_id = '$cmp' and (archive = 0 or id = '".(int)$w['supplier_id']."') order by name");
+	if (@$_GET['s'] && !$w['id']) $w['supplier_id'] = (int)$_GET['s'];
+
+	$author = $w['user_id'] ? fun::user($w['user_id']) : null;
+	$st = wb::status($w);
+
+	// site setting
+	$menu_name = 'waybill';
+	$page_name = 'Накладной';
+	$wb_tab = 'list';
+	$css = ['waybill'];
+	$js = ['waybill'];
+?>
+<? include "../block/header.php"; ?>
+
+<div class="bl_c wb_page">
+
+	<a class="wb_back" href="/waybill/"><i class="fal fa-arrow-left"></i> Накладнойлар</a>
+
+	<div class="wb_doc" data-id="<?=$w['id']?>" data-posted="<?=($posted ? 1 : 0)?>">
+
+		<!-- Негізгі деректер -->
+		<div class="wb_box">
+			<div class="wb_box_h">
+				<div>№ <?=$w['number']?> <span class="wb_st wb_st_<?=$st[0]?>"><?=$st[1]?></span></div>
+				<? if ($w['id']): ?>
+					<div class="wb_small">
+						<?=($author ? wb::h(trim($author['name'].' '.$author['surname'])).' · ' : '')?>жасалды <?=wb::dt($w['ins_dt'], true)?>
+						<?=($posted ? ' · қабылданды '.wb::dt($w['posted_dt'], true) : '')?>
+					</div>
+				<? endif ?>
+			</div>
+
+			<div class="wb_grid">
+				<label class="wb_fld">
+					<span class="wb_lbl">Жеткізуші</span>
+					<select class="wb_inp wb_f_supplier" <?=($posted ? 'disabled' : '')?>>
+						<option value="0">Таңдаңыз</option>
+						<? while ($s = mysqli_fetch_assoc($suppliers)): ?>
+							<option value="<?=$s['id']?>" <?=($w['supplier_id'] == $s['id'] ? 'selected' : '')?>><?=wb::h($s['name'])?></option>
+						<? endwhile ?>
+						<? if (!$posted): ?><option value="new">+ Жаңа жеткізуші</option><? endif ?>
+					</select>
+					<input type="text" class="wb_inp wb_f_supplier_new dsp_n" placeholder="Жаңа жеткізушінің аты">
+				</label>
+				<label class="wb_fld">
+					<span class="wb_lbl">Күні</span>
+					<input type="date" class="wb_inp wb_f_date" value="<?=wb::h($w['doc_date'])?>" <?=($posted ? 'disabled' : '')?>>
+				</label>
+				<label class="wb_fld">
+					<span class="wb_lbl">Жеткізушінің накладной нөмірі</span>
+					<input type="text" class="wb_inp wb_f_docno" value="<?=wb::h($w['doc_no'])?>" placeholder="Міндетті емес" <?=($posted ? 'disabled' : '')?>>
+				</label>
+				<label class="wb_fld">
+					<span class="wb_lbl">Түсініктеме</span>
+					<input type="text" class="wb_inp wb_f_comment" value="<?=wb::h($w['comment'])?>" placeholder="Міндетті емес" <?=($posted ? 'disabled' : '')?>>
+				</label>
+			</div>
+		</div>
+
+		<!-- Тауарлар -->
+		<div class="wb_box wb_table">
+			<div class="wb_box_h"><div>Тауарлар</div><? if (!$posted): ?><div class="wb_small">Атауын жазыңыз, «Шикізат» тізімінен ұсынады</div><? endif ?></div>
+			<div class="wb_tr wb_th">
+				<div class="wb_td wb_td_n">#</div>
+				<div class="wb_td wb_td_name">Атауы</div>
+				<div class="wb_td wb_td_unit">Өлшемі</div>
+				<div class="wb_td">Саны</div>
+				<div class="wb_td">Бағасы, ₸</div>
+				<div class="wb_td">Сомасы, ₸</div>
+				<? if (!$posted): ?><div class="wb_td wb_td_x"></div><? endif ?>
+			</div>
+			<div class="wb_rows">
+				<? foreach ($items as $k => $i): ?>
+					<? if ($posted): ?>
+						<div class="wb_tr">
+							<div class="wb_td wb_td_n"><?=$k + 1?></div>
+							<div class="wb_td wb_td_name"><div class="wb_name"><?=wb::h($i['name'])?></div></div>
+							<div class="wb_td wb_td_unit" data-h="Өлшемі"><?=wb::h($i['unit'])?></div>
+							<div class="wb_td" data-h="Саны"><?=wb::qty($i['quantity'])?></div>
+							<div class="wb_td" data-h="Бағасы"><?=wb::sum($i['price'])?></div>
+							<div class="wb_td" data-h="Сомасы"><b><?=wb::sum($i['sum'])?></b></div>
+						</div>
+					<? else: ?>
+						<div class="wb_tr wb_row">
+							<div class="wb_td wb_td_n wb_row_n"><?=$k + 1?></div>
+							<div class="wb_td wb_td_name">
+								<input type="text" class="wb_inp wb_r_name" list="wb_raw_list" value="<?=wb::h($i['name'])?>" data-raw="<?=(int)$i['raw_id']?>" placeholder="Мысалы: Күріш">
+							</div>
+							<div class="wb_td wb_td_unit" data-h="Өлшемі">
+								<select class="wb_inp wb_r_unit">
+									<? foreach (wb::$units as $u): ?><option <?=($i['unit'] == $u ? 'selected' : '')?>><?=$u?></option><? endforeach ?>
+									<? if ($i['unit'] && !in_array($i['unit'], wb::$units)): ?><option selected><?=wb::h($i['unit'])?></option><? endif ?>
+								</select>
+							</div>
+							<div class="wb_td" data-h="Саны"><input type="text" inputmode="decimal" class="wb_inp wb_r_qty" value="<?=($i['quantity'] !== '' ? wb::qty($i['quantity']) : '')?>" placeholder="0"></div>
+							<div class="wb_td" data-h="Бағасы"><input type="text" inputmode="decimal" class="wb_inp wb_r_price" value="<?=($i['price'] !== '' ? (float)$i['price'] : '')?>" placeholder="0"></div>
+							<div class="wb_td" data-h="Сомасы"><input type="text" inputmode="decimal" class="wb_inp wb_r_sum" value="<?=($i['sum'] !== '' ? (float)$i['sum'] : '')?>" placeholder="0"></div>
+							<div class="wb_td wb_td_x"><div class="wb_x" title="Жолды өшіру"><i class="fal fa-times"></i></div></div>
+						</div>
+					<? endif ?>
+				<? endforeach ?>
+			</div>
+			<div class="wb_foot">
+				<? if (!$posted): ?>
+					<div class="wb_btn wb_btn_light wb_add_row"><i class="fal fa-plus"></i> Жол қосу</div>
+				<? else: ?><div></div><? endif ?>
+				<div class="wb_total">Барлығы: <b class="wb_total_v"><?=wb::sum($w['total'])?></b></div>
+			</div>
+		</div>
+
+		<!-- Төлем -->
+		<div class="wb_box">
+			<div class="wb_box_h"><div>Жеткізушіге төлем</div></div>
+			<div class="wb_pay">
+				<label class="wb_fld">
+					<span class="wb_lbl">Төленді, ₸</span>
+					<input type="text" inputmode="decimal" class="wb_inp wb_f_paid" value="<?=((float)$w['paid'] ?: '')?>" placeholder="0">
+				</label>
+				<div class="wb_btn wb_btn_light wb_pay_full">Толық төленді</div>
+				<div class="wb_pay_debt">Қарыз: <b class="wb_debt_v wb_c_red"><?=wb::sum(wb::debt($w))?></b></div>
+				<? if ($posted): ?><div class="wb_btn wb_pay_save"><i class="fal fa-check"></i> Төлемді сақтау</div><? endif ?>
+			</div>
+		</div>
+
+		<!-- Батырмалар -->
+		<div class="wb_actions">
+			<? if (!$posted): ?>
+				<div class="wb_btn wb_btn_green wb_save" data-post="1"><i class="fal fa-check-double"></i> Қабылдау (қалдыққа қосу)</div>
+				<div class="wb_btn wb_save" data-post="0"><i class="fal fa-save"></i> Жоба ретінде сақтау</div>
+				<? if ($w['id']): ?>
+					<a class="wb_btn wb_btn_light" target="_blank" href="/waybill/print.php?id=<?=$w['id']?>"><i class="fal fa-print"></i> Басып шығару</a>
+					<div class="wb_btn wb_btn_red wb_delete"><i class="fal fa-trash-alt"></i> Өшіру</div>
+				<? endif ?>
+			<? else: ?>
+				<a class="wb_btn" target="_blank" href="/waybill/print.php?id=<?=$w['id']?>"><i class="fal fa-print"></i> Басып шығару</a>
+				<div class="wb_btn wb_btn_light wb_unpost"><i class="fal fa-undo"></i> Қабылдауды болдырмау</div>
+				<div class="wb_small">Өзгерту үшін алдымен қабылдауды болдырмаңыз, қалдық қайта азаяды.</div>
+			<? endif ?>
+		</div>
+	</div>
+
+	<datalist id="wb_raw_list">
+		<? foreach ($raw as $r): ?><option value="<?=wb::h($r['n'])?>"></option><? endforeach ?>
+	</datalist>
+	<script>window.wb_raw = <?=json_encode($raw, JSON_UNESCAPED_UNICODE)?>;</script>
+
+</div>
+
+<? include "../block/footer.php"; ?>

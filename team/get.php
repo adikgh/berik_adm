@@ -6,19 +6,36 @@
 	function tm_esc($v) { return mysqli_real_escape_string(db::$connect, trim(strip_tags($v))); }
 
 
+	// нөмір бойынша базадағы адамды табу (қосу формасы үшін)
+	if (isset($_GET['find'])) {
+		header('Content-Type: application/json; charset=utf-8');
+		$phone = substr(preg_replace('/\D/', '', (string)@$_POST['phone']), -10);
+		if (strlen($phone) < 10) { echo '{}'; exit(); }
+		$u = mysqli_fetch_assoc(db::query("select id, name, surname from user where phone = '$phone' limit 1"));
+		if (!$u) { echo '{}'; exit(); }
+		$st = mysqli_fetch_assoc(db::query("select company_id, positions_id from company_staff where user_id = '".(int)$u['id']."' limit 1"));
+		echo json_encode([
+			'name' => $u['name'], 'surname' => (string)$u['surname'],
+			'staff' => $st ? ($st['company_id'] == $company ? 'here' : 'other') : '',
+			'pos' => $st ? (int)$st['positions_id'] : 0,
+		], JSON_UNESCAPED_UNICODE);
+		exit();
+	}
+
+
 	// қосу / өзгерту
 	if (isset($_GET['save'])) {
 		$staff_id = intval(@$_POST['id']);
 		$name = tm_esc(@$_POST['name']);
 		$surname = tm_esc(@$_POST['surname']);
-		$phone = preg_replace('/\D/', '', @$_POST['phone']);
+		$phone = substr(preg_replace('/\D/', '', (string)@$_POST['phone']), -10);
 		$pos = intval(@$_POST['pos']);
 		$branch_id = intval(@$_POST['branch']);
 		$code = preg_replace('/\D/', '', @$_POST['code']);
 		$pass = tm_esc(@$_POST['pass']);
 		if ($name == '') { echo 'name'; exit(); }
 		if (strlen($phone) < 10) { echo 'phone'; exit(); }
-		if ($pos < 2 || !mysqli_num_rows(db::query("select id from user_staff_positions where id = '$pos'"))) { echo 'pos'; exit(); }
+		if ($pos < 2 || !mysqli_num_rows(db::query("select id from company_staff_positions where id = '$pos'"))) { echo 'pos'; exit(); }
 		if ($code != '' && strlen($code) != 4) { echo 'code'; exit(); }
 		$br = $branch_id ? "'$branch_id'" : "NULL";
 		$set_code = $code != '' ? ", `code` = '$code'" : "";
@@ -26,13 +43,14 @@
 
 		if ($staff_id) {
 			// өзгерту: тек өз компаниясындағы жұмысшы
-			$st = mysqli_fetch_assoc(db::query("select * from user_staff where id = '$staff_id' and company_id = '$company' and positions_id != 1"));
+			$st = mysqli_fetch_assoc(db::query("select * from company_staff where id = '$staff_id' and company_id = '$company' and positions_id != 1"));
 			if (!$st) { echo 'error'; exit(); }
 			$uid = $st['user_id'];
 			$other = mysqli_fetch_assoc(db::query("select id from user where phone = '$phone' and id != '$uid' limit 1"));
 			if ($other) { echo 'phone_busy'; exit(); }
-			db::query("UPDATE `user` SET `name` = '$name', `surname` = '$surname', `phone` = '$phone' $set_code $set_pass, `upd_dt` = '".date('Y-m-d H:i:s')."' WHERE id = '$uid'");
-			$upd = db::query("UPDATE `user_staff` SET `positions_id` = '$pos', `branch_id` = $br WHERE id = '$staff_id'");
+			db::query("UPDATE `user` SET `name` = '$name', `surname` = '$surname', `phone` = '$phone' $set_pass, `upd_dt` = '".date('Y-m-d H:i:s')."' WHERE id = '$uid'");
+			// POS коды company_staff кестесінде
+			$upd = db::query("UPDATE `company_staff` SET `positions_id` = '$pos', `branch_id` = $br $set_code WHERE id = '$staff_id'");
 			echo $upd ? 'yes' : 'error';
 			exit();
 		}
@@ -41,17 +59,17 @@
 		$u = mysqli_fetch_assoc(db::query("select * from user where phone = '$phone' limit 1"));
 		if ($u) {
 			$uid = $u['id'];
-			$busy = mysqli_fetch_assoc(db::query("select * from user_staff where user_id = '$uid' limit 1"));
+			$busy = mysqli_fetch_assoc(db::query("select * from company_staff where user_id = '$uid' limit 1"));
 			if ($busy) { echo ($busy['company_id'] == $company ? 'already' : 'other_company'); exit(); }
-			db::query("UPDATE `user` SET `name` = '$name', `surname` = '$surname', `right` = 1 $set_code $set_pass WHERE id = '$uid'");
+			db::query("UPDATE `user` SET `name` = '$name', `surname` = '$surname', `right` = 1 $set_pass WHERE id = '$uid'");
 		} else {
 			$uid = (mysqli_fetch_assoc(db::query("SELECT max(id) m FROM `user`")))['m'] + 1;
-			if ($code == '') $code = rand(1000, 9999);
-			$ins = db::query("INSERT INTO `user` (`id`, `name`, `surname`, `phone`, `password`, `code`, `right`) VALUES ('$uid', '$name', '$surname', '$phone', '$pass', '$code', 1)");
+			$ins = db::query("INSERT INTO `user` (`id`, `name`, `surname`, `phone`, `password`, `right`) VALUES ('$uid', '$name', '$surname', '$phone', '$pass', 1)");
 			if (!$ins) { echo 'error'; exit(); }
 		}
-		$sid = (mysqli_fetch_assoc(db::query("SELECT max(id) m FROM `user_staff`")))['m'] + 1;
-		$ins = db::query("INSERT INTO `user_staff` (`id`, `user_id`, `positions_id`, `company_id`, `branch_id`) VALUES ('$sid', '$uid', '$pos', '$company', $br)");
+		if ($code == '') $code = rand(1000, 9999);
+		$sid = (mysqli_fetch_assoc(db::query("SELECT max(id) m FROM `company_staff`")))['m'] + 1;
+		$ins = db::query("INSERT INTO `company_staff` (`id`, `user_id`, `positions_id`, `code`, `company_id`, `branch_id`) VALUES ('$sid', '$uid', '$pos', '$code', '$company', $br)");
 		echo $ins ? 'yes' : 'error';
 		exit();
 	}
@@ -60,10 +78,10 @@
 	// тізімнен шығару: тек компаниямен байланысы алынады, адамның аккаунты өшпейді
 	if (isset($_GET['remove'])) {
 		$staff_id = intval(@$_POST['id']);
-		$st = mysqli_fetch_assoc(db::query("select * from user_staff where id = '$staff_id' and company_id = '$company' and positions_id != 1"));
+		$st = mysqli_fetch_assoc(db::query("select * from company_staff where id = '$staff_id' and company_id = '$company' and positions_id != 1"));
 		if (!$st) { echo 'error'; exit(); }
 		if ($st['user_id'] == $user_id) { echo 'self'; exit(); }
-		$del = db::query("DELETE FROM `user_staff` WHERE id = '$staff_id'");
+		$del = db::query("DELETE FROM `company_staff` WHERE id = '$staff_id'");
 		echo $del ? 'yes' : 'error';
 		exit();
 	}

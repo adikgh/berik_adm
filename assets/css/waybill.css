@@ -100,3 +100,58 @@ a.wb_tr:hover{ background: #fafbfc; color: #222; }
 	.wb_pay .wb_fld{ width: 100%; }
 	.wb_actions .wb_btn{ flex: 1 1 100%; }
 }
+
+/* ---- Файлдан жүктеу ---- */
+.wb_bar_btns{ display: flex; flex-wrap: wrap; gap: 8px; }
+.wb_imp_bar{ display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.wb_imp_bar .wb_btn{ height: 38px; padding: 0 14px; font-size: 13px; }
+body.wbi_lock{ overflow: hidden; }
+.wbi_bg{ position: fixed; inset: 0; z-index: 9990; background: rgba(20,24,32,.45); display: flex; align-items: flex-start; justify-content: center; padding: 30px 16px; overflow-y: auto; }
+.wbi{ --g: var(--bp-green, #0EA768); --b: var(--bp-blue, #1f75a8); --line: var(--bp-line, #e7e7e7); --mut: var(--bp-muted, #8a8f98);
+	width: 100%; max-width: 980px; background: #f6f7f9; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.25); padding: 18px; }
+.wbi *{ box-sizing: border-box; }
+.wbi_h{ display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 800; margin-bottom: 14px; }
+.wbi_drop{ display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 46px 20px; background: #fff; border: 2px dashed var(--line); border-radius: 14px; cursor: pointer; text-align: center; transition: .15s; }
+.wbi_drop:hover, .wbi_drop_on{ border-color: var(--b); background: #f1f7fb; }
+.wbi_drop i{ font-size: 40px; color: var(--b); }
+.wbi_drop b{ font-size: 16px; }
+.wbi_drop span{ font-size: 13px; color: var(--mut); font-weight: 600; }
+.wbi_drop input{ display: none; }
+.wbi_drop_wait{ pointer-events: none; opacity: .7; }
+.wbi_info{ display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; background: #fff; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.wbi_info .wbi_sheet{ width: auto; height: 38px; }
+.wbi_file_n{ font-weight: 800; }
+.wbi_file_n i{ color: var(--g); margin-right: 4px; }
+.wbi_meta{ display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; }
+.wbi_meta i, .wbi_src i{ font-style: normal; font-weight: 700; font-size: 12px; }
+.wbi_ok{ color: var(--g); } .wbi_new{ color: var(--b); } .wbi_warn_t{ color: #b07800; } .wbi_mut{ color: var(--mut); }
+.wbi_map{ background: #fff; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.wbi_cols{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 8px; }
+.wbi_cols .wb_inp{ height: 40px; font-size: 13px; }
+.wbi_list{ background: #fff; border-radius: 12px; padding: 6px 14px 12px; max-height: 52vh; overflow-y: auto; }
+.wbi_tr{ padding: 10px 6px; }
+.wbi_tr .wb_td_unit{ flex: 0 0 70px; }
+.wbi_td_c{ flex: 0 0 26px; display: flex; align-items: center; justify-content: center; }
+.wbi_td_c input{ width: 18px; height: 18px; }
+.wbi_row .wb_inp{ height: 40px; }
+.wbi_src{ margin-top: 4px; font-size: 12px; color: var(--mut); font-weight: 600; }
+.wbi_warn .wbi_r_name{ border-color: #e6b800; background: #fffbea; }
+.wbi_total{ text-align: right; padding-top: 12px; font-size: 15px; }
+.wbi_foot{ display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.wbi_chk{ display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.wbi_chk input{ width: 18px; height: 18px; }
+.wbi_btns{ display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 760px){
+	.wbi_bg{ padding: 10px; }
+	.wbi{ padding: 12px; }
+	.wbi_cols{ grid-template-columns: repeat(2, 1fr); }
+	.wbi_tr .wb_td_name{ flex: 1 1 calc(100% - 40px); }
+	.wbi_tr .wb_td[data-h]{ flex: 1 1 20%; margin-left: 0; }
+	.wbi_row .wb_td_unit{ flex: 1 1 20%; }
+}
+.wbi_hint{ margin: 8px 0 4px; padding: 10px 12px; background: #fff7e0; border-radius: 10px; font-size: 13px; font-weight: 600; color: #8a6200; }
+.wbi_row .wbi_r_qty{ max-width: 90px; }
+.wbi_conv{ display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-size: 13px; font-weight: 700; color: #8a6200; }
+.wbi_conv:empty{ display: none; }
+.wbi_conv .wbi_r_f{ width: 80px; height: 34px; padding: 0 8px; }
+.wbi_cv_t{ color: var(--g); }

@@ -48,7 +48,8 @@
 
 	// site setting
 	$menu_name = 'waybill';
-	$page_name = 'Накладной';
+	$page_name = 'Кіріс тауарлары';
+	$page_key = 'Incoming goods';
 	$wb_tab = 'list';
 	$css = ['waybill'];
 	$js = ['waybill'];

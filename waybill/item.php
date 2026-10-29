@@ -20,7 +20,14 @@
 	$rq = db::query("select id, name_kz, name_ru, ".(fun::has_col('product_raw', 'unit') ? 'unit' : "'' unit").", price from product_raw where company_id = '$cmp' order by name_kz");
 	while ($rq && $r = mysqli_fetch_assoc($rq)) {
 		$n = trim($r['name_kz'] ?: $r['name_ru']);
-		if ($n !== '') $raw[] = ['id' => (int)$r['id'], 'n' => $n, 'u' => (string)$r['unit'], 'p' => (float)$r['price']];
+		$ru = trim((string)$r['name_ru']);
+		if ($n !== '') $raw[] = ['id' => (int)$r['id'], 'n' => $n, 'u' => fun::unit_norm($r['unit']), 'p' => (float)$r['price']] + ($ru !== '' && $ru !== $n ? ['r' => $ru] : []);
+	}
+	// жеткізуші тауары → шикізат (1 шт = factor), supplier_item кестесі болса
+	$alias = [];
+	if (fun::has_col('supplier_item', 'factor')) {
+		$aq = db::query("select name, raw_id, factor from supplier_item where company_id = '$cmp'");
+		while ($aq && $a = mysqli_fetch_assoc($aq)) $alias[] = ['n' => $a['name'], 'id' => (int)$a['raw_id'], 'f' => (float)$a['factor']];
 	}
 	$suppliers = db::query("select id, name from supplier where company_id = '$cmp' and (archive = 0 or id = '".(int)$w['supplier_id']."') order by name");
 	if (@$_GET['s'] && !$w['id']) $w['supplier_id'] = (int)$_GET['s'];
@@ -33,7 +40,7 @@
 	$page_name = 'Накладной';
 	$wb_tab = 'list';
 	$css = ['waybill'];
-	$js = ['waybill'];
+	$js = ['waybill', 'waybill_import'];
 ?>
 <? include "../block/header.php"; ?>
 
@@ -41,7 +48,7 @@
 
 	<a class="wb_back" href="/waybill/"><i class="fal fa-arrow-left"></i> Накладнойлар</a>
 
-	<div class="wb_doc" data-id="<?=$w['id']?>" data-posted="<?=($posted ? 1 : 0)?>">
+	<div class="wb_doc" data-id="<?=$w['id']?>" data-posted="<?=($posted ? 1 : 0)?>" data-cmp="<?=$cmp?>">
 
 		<!-- Негізгі деректер -->
 		<div class="wb_box">
@@ -84,7 +91,15 @@
 
 		<!-- Тауарлар -->
 		<div class="wb_box wb_table">
-			<div class="wb_box_h"><div>Тауарлар</div><? if (!$posted): ?><div class="wb_small">Атауын жазыңыз, «Шикізат» тізімінен ұсынады</div><? endif ?></div>
+			<div class="wb_box_h">
+				<div>Тауарлар</div>
+				<? if (!$posted): ?>
+					<div class="wb_imp_bar">
+						<div class="wb_small">Атауын жазыңыз, «Шикізат» тізімінен ұсынады</div>
+						<div class="wb_btn wb_btn_light wb_imp_open"><i class="fal fa-file-import"></i> Файлдан жүктеу (Excel, PDF)</div>
+					</div>
+				<? endif ?>
+			</div>
 			<div class="wb_tr wb_th">
 				<div class="wb_td wb_td_n">#</div>
 				<div class="wb_td wb_td_name">Атауы</div>
@@ -100,7 +115,7 @@
 						<div class="wb_tr">
 							<div class="wb_td wb_td_n"><?=$k + 1?></div>
 							<div class="wb_td wb_td_name"><div class="wb_name"><?=wb::h($i['name'])?></div></div>
-							<div class="wb_td wb_td_unit" data-h="Өлшемі"><?=wb::h($i['unit'])?></div>
+							<div class="wb_td wb_td_unit" data-h="Өлшемі"><?=wb::h(fun::unit_norm($i['unit']))?></div>
 							<div class="wb_td" data-h="Саны"><?=wb::qty($i['quantity'])?></div>
 							<div class="wb_td" data-h="Бағасы"><?=wb::sum($i['price'])?></div>
 							<div class="wb_td" data-h="Сомасы"><b><?=wb::sum($i['sum'])?></b></div>
@@ -113,8 +128,8 @@
 							</div>
 							<div class="wb_td wb_td_unit" data-h="Өлшемі">
 								<select class="wb_inp wb_r_unit">
-									<? foreach (wb::$units as $u): ?><option <?=($i['unit'] == $u ? 'selected' : '')?>><?=$u?></option><? endforeach ?>
-									<? if ($i['unit'] && !in_array($i['unit'], wb::$units)): ?><option selected><?=wb::h($i['unit'])?></option><? endif ?>
+									<? $iu = fun::unit_norm($i['unit']); foreach (wb::$units as $u): ?><option <?=($iu == $u ? 'selected' : '')?>><?=$u?></option><? endforeach ?>
+									<? if ($iu && !in_array($iu, wb::$units)): ?><option selected><?=wb::h($iu)?></option><? endif ?>
 								</select>
 							</div>
 							<div class="wb_td" data-h="Саны"><input type="text" inputmode="decimal" class="wb_inp wb_r_qty" value="<?=($i['quantity'] !== '' ? wb::qty($i['quantity']) : '')?>" placeholder="0"></div>
@@ -167,7 +182,7 @@
 	<datalist id="wb_raw_list">
 		<? foreach ($raw as $r): ?><option value="<?=wb::h($r['n'])?>"></option><? endforeach ?>
 	</datalist>
-	<script>window.wb_raw = <?=json_encode($raw, JSON_UNESCAPED_UNICODE)?>;</script>
+	<script>window.wb_raw = <?=json_encode($raw, JSON_UNESCAPED_UNICODE)?>; window.wb_alias = <?=json_encode($alias, JSON_UNESCAPED_UNICODE)?>;</script>
 
 </div>
 

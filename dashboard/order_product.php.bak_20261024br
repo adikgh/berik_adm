@@ -1,0 +1,161 @@
+<? include "../config/core.php";
+
+   if (!$user_id) { header('location: /'); exit(); }
+
+
+   	$type = @$_GET['type'];
+
+	// $start_cdate = date('Y-m-d 06:00:00', strtotime("20.01.2025"));
+	// $end_cdate = date('Y-m-d 06:00:00', strtotime("$start_cdate +1 day"));
+
+    // if (@$_GET['time']) {
+	// 	$time_sort = $_GET['time'];
+	// 	$start_cdate = date('Y-m-d 06:00:00', strtotime("$time_sort"));
+	// 	$end_cdate = date('Y-m-d 06:00:00', strtotime("$start_cdate +1 day"));
+	// }
+    // if (@$_GET['catalog']) {
+	// 	$sort_catalog = $_GET['catalog'];
+	// }
+
+
+    // if (@$_GET['company']) {
+	// 	$sort_company = $_GET['company'];
+    //     $_SESSION['company'] = $_GET['company'];
+	// }
+    
+    // Сатылым: тек осы компанияның, нөмірі бар, отказ емес тапсырыстары
+    $sale_cond = "o.ins_dt BETWEEN '$start_cdate' and '$end_cdate' and o.company_id = '$company' and o.number is not null and o.order_status not in (5, 6)";
+
+    // тағам бойынша: саны (quantity қосындысы) және сомасы
+    $cashboxp = db::query("select p.product_id, max(p.price) price, SUM(p.quantity) AS quantity, SUM(p.quantity * p.price) AS total
+        from retail_orders_products p inner join retail_orders o on o.id = p.order_id
+        where $sale_cond GROUP BY p.product_id order by quantity desc");
+
+    // каталог бойынша
+    $cat_sum = [];
+    $cq = db::query("select pr.catalog_id, SUM(p.quantity) AS quantity, SUM(p.quantity * p.price) AS total
+        from retail_orders_products p inner join retail_orders o on o.id = p.order_id inner join product pr on pr.id = p.product_id
+        where $sale_cond GROUP BY pr.catalog_id");
+    while ($r = mysqli_fetch_assoc($cq)) $cat_sum[$r['catalog_id']] = $r;
+    $all_qn = 0; $all_total = 0;
+    foreach ($cat_sum as $r) { $all_qn += $r['quantity']; $all_total += $r['total']; }
+    $number = 0;
+
+
+
+	// site setting
+	$menu_name = 'order_product';
+    $page_name = 'Көрсеткіштер';
+	$site_set['view_dt'] = 1;
+	$css = ['order_product'];
+	$js = ['order_product'];
+?>
+<? include "../block/header.php"; ?>
+
+	<div class="bl_c">
+        
+		<? include "aheader.php"; ?>
+
+	</div>
+
+	<div class="">
+        <div class="bl_c">
+            <div class="uc_u">
+        
+                <div class="uc_uh">
+                    <div class="uc_uhn">
+                        <div class="uc_uh_number">#</div>
+                        <div class="uc_uh_name">Каталог атауы</div>
+                        <div class="uc_uh_other">Тағам саны</div>
+                        <div class="uc_uh_other">Сатылым саны</div>
+                        <div class="uc_uh_other">Жалпы суммасы</div>
+                        <div class="uc_uh_other">Үлесі</div>
+                    </div>
+                </div>
+                <div class="uc_uc">
+                    <? $catl = db::query("select * from product_catalog where company_id = '$company' and type = 'main' and (arh is null or arh = 0) order by number asc"); ?>
+                    <? $number = 0; ?>
+                    <? while ($catl_d = mysqli_fetch_assoc($catl)): ?>
+                        <?
+                            $number++;
+                            $catalog_id = $catl_d['id'];
+                            $pr_cnt = mysqli_fetch_assoc(db::query("select count(*) c from product where catalog_id = '$catalog_id' and arh = 0"))['c'];
+                            $c_qn = intval(@$cat_sum[$catalog_id]['quantity']);
+                            $c_total = intval(@$cat_sum[$catalog_id]['total']);
+                        ?>
+                        <div class="uc_ui">
+                            <div class="uc_uil">
+                                <div class="uc_ui_number"><?=$number?></div>
+                                <div class="uc_uiln">
+                                    <div class="uc_uinu">
+                                        <div class="uc_ui_name"><?=$catl_d['name_kz']?></div>
+                                    </div>
+                                </div>
+                                <div class="uc_uin_other"><?=$pr_cnt?> тағам</div>
+                                <div class="uc_uin_other"><b><?=$c_qn?></b> шт</div>
+                                <div class="uc_uin_other fr_price"><?=$c_total?></div>
+                                <div class="uc_uin_other"><?=($all_total ? round($c_total * 100 / $all_total) : 0)?>%</div>
+                            </div>
+                        </div>
+                    <? endwhile ?>
+                    <div class="uc_ui op_total">
+                        <div class="uc_uil">
+                            <div class="uc_ui_number"></div>
+                            <div class="uc_uiln"><div class="uc_uinu"><div class="uc_ui_name"><b>Барлығы</b></div></div></div>
+                            <div class="uc_uin_other"></div>
+                            <div class="uc_uin_other"><b><?=$all_qn?></b> шт</div>
+                            <div class="uc_uin_other fr_price"><b><?=$all_total?></b></div>
+                            <div class="uc_uin_other">100%</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    
+	<div class="">
+        <div class="bl_c">
+            <div class="uc_u">
+        
+                <div class="uc_uh">
+                    <div class="uc_uhn">
+                        <div class="uc_uh_number">#</div>
+                        <div class="uc_uh_name">Тауар атауы</div>
+                        <div class="uc_uh_other">Каталог</div>
+                        <div class="uc_uh_other">Тауар бағасы</div>
+                        <div class="uc_uh_other">Сатылым саны</div>
+                        <div class="uc_uh_other">Жалпы суммасы</div>
+                        <div class="uc_uh_other">Үлесі</div>
+                    </div>
+                </div>
+                <div class="uc_uc">
+                    <? while ($cashboxp_d = mysqli_fetch_assoc($cashboxp)): ?>
+                        <? $product_d = product::product($cashboxp_d['product_id']) ?>
+                        <? $catalog_d = product::pr_catalog($product_d['catalog_id']) ?>
+                        <? if ($product_d): ?>
+                            <? $number++; ?>
+                            <div class="uc_ui">
+                                <div class="uc_uil">
+                                    <div class="uc_ui_number"><?=$number?></div>
+                                    <a class="uc_uiln" href="/products/item/?id=<?=$product_d['id']?>">
+                                        <div class="uc_uinu">
+                                            <div class="uc_ui_name"><?=$product_d['name_kz']?></div>
+                                        </div>
+                                    </a>
+                                    <div class="uc_uin_other"><?=$catalog_d['name_kz']?></div>
+                                    <div class="uc_uin_other fr_price"><?=$cashboxp_d['price']?></div>
+                                    <div class="uc_uin_other "><?=$cashboxp_d['quantity']?> шт</div>
+                                    <div class="uc_uin_other fr_price"><?=$cashboxp_d['total']?></div>
+                                    <div class="uc_uin_other"><?=($all_total ? round($cashboxp_d['total'] * 100 / $all_total, 1) : 0)?>%</div>
+                                </div>
+                            </div>
+                        <? endif ?>
+                    <? endwhile ?>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+<? include "../block/footer.php"; ?>

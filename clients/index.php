@@ -25,12 +25,12 @@
 	// ---- Кезең карточкалары ----
 	$st = mysqli_fetch_assoc(db::query("select COUNT(DISTINCT ro.client_id) act, COUNT(*) cnt, IFNULL(SUM(ro.total), 0) s,
 			COUNT(DISTINCT CASE WHEN c.first_dt >= '$ps' THEN ro.client_id END) nw
-		from retail_orders ro join client c on c.id = ro.client_id
+		from retail_orders ro join company_client c on c.id = ro.client_id
 		where ro.company_id = '$cmp' and ro.client_id > 0 and $OK and ro.ins_dt >= '$ps' and ro.ins_dt < '$pe'$BR"));
 	$all_cnt = (int)mysqli_fetch_assoc(db::query("select COUNT(*) n from retail_orders ro where ro.company_id = '$cmp' and $OK and ro.ins_dt >= '$ps' and ro.ins_dt < '$pe'$BR"))['n'];
 	$base = mysqli_fetch_assoc(db::query("select COUNT(*) total,
 			SUM(orders_cnt >= 2 and last_dt < NOW() - INTERVAL 30 DAY) sleep
-		from client c where c.company_id = '$cmp' and c.archive = 0 and c.orders_cnt > 0$BRC"));
+		from company_client c where c.company_id = '$cmp' and c.archive = 0 and c.orders_cnt > 0$BRC"));
 	$back = (int)$st['act'] - (int)$st['nw'];
 	$avg = $st['cnt'] ? round($st['s'] / $st['cnt']) : 0;
 	$share = $all_cnt ? round($st['cnt'] * 100 / $all_cnt) : 0;
@@ -42,7 +42,7 @@
 	$mq = db::query("select DATE_FORMAT(ro.ins_dt - INTERVAL 6 HOUR, '%Y-%m') m, COUNT(DISTINCT ro.client_id) act,
 			COUNT(DISTINCT CASE WHEN DATE_FORMAT(c.first_dt - INTERVAL 6 HOUR, '%Y-%m') = DATE_FORMAT(ro.ins_dt - INTERVAL 6 HOUR, '%Y-%m') THEN ro.client_id END) nw,
 			SUM(ro.total) s
-		from retail_orders ro join client c on c.id = ro.client_id
+		from retail_orders ro join company_client c on c.id = ro.client_id
 		where ro.company_id = '$cmp' and ro.client_id > 0 and $OK and ro.ins_dt >= '$m_start'$BR
 		group by m");
 	while ($mq && $r = mysqli_fetch_assoc($mq)) if (isset($months[$r['m']])) $months[$r['m']] = $r;
@@ -79,8 +79,8 @@
 	if ($per['p'] == 'all' || !$in_period) $orders = ['sum' => 'c.total_sum desc', 'cnt' => 'c.orders_cnt desc', 'last' => 'c.last_dt desc', 'new' => 'c.first_dt desc'];
 	if (!isset($orders[$sort])) $sort = 'sum';
 
-	$found = (int)mysqli_fetch_assoc(db::query("select COUNT(*) n from client c $join where $where"))['n'];
-	$list = db::query("select c.*, IFNULL(p.pc,0) pc, IFNULL(p.psum,0) psum from client c $join where $where order by {$orders[$sort]} limit $off, $lim");
+	$found = (int)mysqli_fetch_assoc(db::query("select COUNT(*) n from company_client c $join where $where"))['n'];
+	$list = db::query("select c.*, IFNULL(p.pc,0) pc, IFNULL(p.psum,0) psum from company_client c $join where $where order by {$orders[$sort]} limit $off, $lim");
 	$pages = max(1, ceil($found / $lim));
 
 	// URL көмекшісі

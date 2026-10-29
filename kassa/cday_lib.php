@@ -35,8 +35,13 @@
 			$has_cpay = fun::has_col('retail_orders', 'courier_method');
 
 			$r = ['orders' => 0, 'total' => 0, 'pay_qr' => 0, 'pay_cash' => 0, 'c_cash' => 0, 'c_kaspi' => 0, 'salary' => 0];
-			$q = db::query("select * from retail_orders where ins_dt BETWEEN '$start' and '$end' and сourier_id = '$uid' and company_id = '$cmp' and number is not null and order_status in (1, 2, 3, 4)");
+			$q = db::query("select * from retail_orders where ins_dt BETWEEN '$start' and '$end' and сourier_id = '$uid' and company_id = '$cmp' and number is not null and order_status in (1, 8, 2, 11, 3, 4, 6)");
 			while ($o = mysqli_fetch_assoc($q)) {
+				if ((int)$o['order_status'] == 6) { // Отказ при получение: тек бізде қалған ақша
+					$k = intval($o['kept_sum']); $k_pre = min(intval($o['pay_qr']), $k);
+					$r['total'] += $k; $r['pay_qr'] += $k_pre; $r['pay_cash'] += $k - $k_pre;
+					continue;
+				}
 				$r['orders']++;
 				$r['total'] += intval($o['total']);
 				$r['pay_qr'] += intval($o['pay_qr']);
@@ -116,7 +121,7 @@
 		// компанияның курьерлері
 		public static function couriers($cmp) {
 			$cmp = (int)$cmp; $l = [];
-			$q = db::query("select s.user_id, u.name from user_staff s left join user u on u.id = s.user_id where s.positions_id = 6 and s.company_id = '$cmp' order by u.name");
+			$q = db::query("select s.user_id, u.name from company_staff s left join user u on u.id = s.user_id where s.positions_id = 6 and s.company_id = '$cmp' order by u.name");
 			while ($r = mysqli_fetch_assoc($q)) $l[$r['user_id']] = $r['name'];
 			return $l;
 		}

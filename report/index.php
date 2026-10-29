@@ -26,7 +26,7 @@
     $onw['rask'] = 0;
     $onw['cash'] = 0;
     $onw['kaspi'] = 0;
-    $staff = db::query("select * from user_staff where positions_id = 6 and company_id = '$branch'");
+    $staff = db::query("select * from company_staff where positions_id = 6 and company_id = '$branch'");
 
     $number = 0;
 

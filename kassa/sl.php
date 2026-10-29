@@ -86,7 +86,7 @@
 							<option data-id="" value="">Барлығы</option>
 							<? $orders_status = db::query("select * from retail_orders_status"); ?>
 							<? while ($orders_status_d = mysqli_fetch_assoc($orders_status)): ?>
-								<option data-id="<?=$orders_status_d['id']?>" <?=(@$_GET['status'] == $orders_status_d['id']?'selected':'')?> value="" ><?=$orders_status_d['name_kz']?></option>
+								<option data-id="<?=$orders_status_d['id']?>" <?=(@$_GET['status'] == $orders_status_d['id']?'selected':'')?> value="" ><?=htmlspecialchars(t::w('st:'.trim($orders_status_d['name_ru']), $orders_status_d['name_kz']))?></option>
 							<? endwhile ?>
 						</select>
 					</div>
@@ -95,7 +95,7 @@
 							<option data-id="" value="">Барлығы</option>
 							<option data-id="soboi" <?=(@$_GET['staff'] == 'soboi'?'selected':'')?> value="">Собой</option>
 							<option data-id="off" <?=(@$_GET['staff'] == 'off'?'selected':'')?> value="">Таңдалмаған</option>
-							<? $staff = db::query("select * from user_staff where positions_id = 6 and company_id = '$company'"); ?>
+							<? $staff = db::query("select * from company_staff where positions_id = 6 and company_id = '$company'"); ?>
 							<? while ($staff_d = mysqli_fetch_assoc($staff)): ?>
 								<? $staff_user_d = fun::user($staff_d['user_id']); ?>
 								<option data-id="<?=$staff_d['user_id']?>" <?=(@$_GET['staff'] == $staff_d['user_id']?'selected':'')?> value=""><?=$staff_user_d['name']?></option>

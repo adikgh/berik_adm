@@ -269,3 +269,26 @@ tr.k_cr_det > td{ height: auto; padding: 10px 20px 16px; background: #fafbfc; }
 .nm_ce{min-height:46px;display:flex;align-items:center;flex-wrap:wrap;white-space:pre-wrap;outline:none;cursor:text;border:1px solid var(--bp-line,#e6e9ef);border-radius:10px;padding:10px 12px;background:#fff;font-size:15px;line-height:1.4}
 .nm_ce:focus{border-color:#1f75a8;box-shadow:0 0 0 3px rgba(31,117,168,.12)}
 .nm_ce:empty:before{content:attr(data-ph);color:#a3abb9}
+
+/* ---------- Өз күнтізбеміз (браузердікі емес), кассадағыдай ---------- */
+.bdt_open .bdt_main{ background: var(--bp-pill); }
+.bcal{ position: fixed; z-index: 100000; width: 320px; padding: 14px; background: #fff; border: 1px solid var(--bp-line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.12); opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .15s, transform .15s, visibility .15s; box-sizing: border-box; }
+.bcal.pop_on{ opacity: 1; visibility: visible; transform: none; }
+.bcal_head{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.bcal_head b{ font-size: 16px; font-weight: 800; color: var(--bp-text); }
+.bcal_nav{ width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--bp-text); font-size: 17px; }
+.bcal_nav:hover{ background: var(--bp-pill); }
+.bcal_grid{ display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.bcal_wd{ height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #8a8f98; text-transform: uppercase; }
+.bcal_we{ color: #e5484d; opacity: .8; }
+.bcal_d{ height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--bp-text); cursor: pointer; user-select: none; transition: background .12s; }
+.bcal_d:hover{ background: var(--bp-pill); }
+.bcal_out{ color: #c3c8cf; font-weight: 600; }
+.bcal_tod{ box-shadow: inset 0 0 0 2px var(--bp-green); color: var(--bp-green); }
+.bcal_sel, .bcal_sel:hover{ background: var(--bp-blue); color: #fff; box-shadow: none; }
+.bcal_foot{ display: flex; justify-content: flex-end; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--bp-line); }
+.bcal_today{ height: 36px; padding: 0 16px; border-radius: 8px; display: flex; align-items: center; background: #e3f5ec; color: var(--bp-green); font-weight: 700; font-size: 14px; cursor: pointer; }
+.bcal_today:hover{ background: #d3efe1; }
+.bcal_grid3{ grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.bcal_grid3 .bcal_d{ height: 46px; font-size: 14px; }
+@media (max-width: 768px){ .bcal{ width: 290px; } }

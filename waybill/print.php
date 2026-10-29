@@ -45,7 +45,7 @@
 			<tr>
 				<td><?=$k + 1?></td>
 				<td><?=wb::h($i['name'])?></td>
-				<td><?=wb::h($i['unit'])?></td>
+				<td><?=wb::h(fun::unit_norm($i['unit']))?></td>
 				<td class="r"><?=wb::qty($i['quantity'])?></td>
 				<td class="r"><?=wb::sum($i['price'])?></td>
 				<td class="r"><?=wb::sum($i['sum'])?></td>
