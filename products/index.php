@@ -79,7 +79,8 @@
 								data-name-kz="<?=htmlspecialchars(fun::name_save($pr_d['name_kz']))?>"
 								data-name-ru="<?=htmlspecialchars(fun::name_save($pr_d['name_ru']))?>"
 								data-catalog="<?=(int)$pr_d['catalog_id']?>"
-								data-price="<?=(int)$pr_d['price']?>">
+								data-price="<?=(int)$pr_d['price']?>"
+								data-desc="<?=htmlspecialchars((string)@$pr_d['description'])?>">
 								<div class="ctg_num"><?=$number?></div>
 								<div class="ctg_clr" style="background:<?=htmlspecialchars($clr)?>"></div>
 								<a class="ctg_name" href="item/?id=<?=$pr_d['id']?>">
@@ -144,6 +145,10 @@
 						<div class="form_span"><?=t::w('Price', 'Бағасы')?>, тг:</div>
 						<input type="text" class="form_txt pre_price" inputmode="numeric" placeholder="0">
 						<i class="fal fa-tenge form_icon"></i>
+					</div>
+					<div class="form_im">
+						<div class="form_span"><?=t::w('Description', 'Сипаттамасы')?>:</div>
+						<textarea class="form_txt pre_desc" rows="5" maxlength="1000" placeholder="<?=t::w('Description hint', 'Мысалы: тауық еті, сыр, помидор, соус. Кассада тағамды ұзақ басқанда көрінеді.')?>"></textarea>
 					</div>
 				</div>
 				<div class="form_c">
@@ -239,6 +244,7 @@
 					nameEd.set(f('.pre_ru').parentNode, row.dataset.nameRu);
 					pick(pop.querySelector('.cat_pick'), row.dataset.catalog);
 					f('.pre_price').value = row.dataset.price;
+					f('.pre_desc').value = row.dataset.desc || '';
 					pop.classList.add('pop_bl_act');
 					f('.pre_kz').parentNode.querySelector('.nm_ce').focus();
 				});
@@ -255,6 +261,7 @@
 				fd.append('name_ru', f('.pre_ru').value);
 				fd.append('catalog', f('.pre_cat').value);
 				fd.append('price', f('.pre_price').value);
+				fd.append('description', f('.pre_desc').value);
 				busy = true;
 				fetch('/products/item/get.php?pr_upd', { method: 'POST', body: fd, credentials: 'same-origin' })
 					.then(function (r) { return r.text(); })
@@ -269,6 +276,7 @@
 						if (!nameEd.text(kz)) kz = ru; if (!nameEd.text(ru)) ru = kz;
 						var p = parseInt(f('.pre_price').value || '0', 10);
 						row.dataset.nameKz = kz; row.dataset.nameRu = ru; row.dataset.price = p;
+						row.dataset.desc = f('.pre_desc').value.replace(/<[^>]*>/g, '').trim();
 						row.dataset.name = (nameEd.text(kz) + ' ' + nameEd.text(ru)).toLowerCase();
 						row.querySelector('.pr_nm_kz').innerHTML = kz; // clean() тек рұқсат етілген тегтерді қалдырады
 						row.querySelector('.pr_nm_ru').innerHTML = nameEd.text(ru) != nameEd.text(kz) ? ru : '';

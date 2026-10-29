@@ -151,7 +151,14 @@
 			try {
 				$cat = intval(@$_POST['catalog']);
 				if ($cat && !mysqli_num_rows(db::query("select id from product_catalog where id = '$cat' and company_id = '$cmp'"))) $cat = 0;
-				$upd = db::query("UPDATE `product` SET `name_kz` = '$nkz', `name_ru` = '$nru', `catalog_id` = ".($cat ? "'$cat'" : "NULL").", `price` = '$price', `upd_dt` = '$datetime' WHERE id = '$id' and company_id = '$cmp'");
+				// сипаттама: тек мәтін (тегтерсіз), 1000 таңбаға дейін, бос болса NULL
+				$desc_sql = '';
+				if (isset($_POST['description']) && fun::has_col('product', 'description')) {
+					$d = trim(preg_replace("/[ 	]+/u", ' ', strip_tags((string)$_POST['description'])));
+					$d = mb_substr($d, 0, 1000);
+					$desc_sql = ", `description` = ".($d === '' ? "NULL" : "'".mysqli_real_escape_string(db::$connect, $d)."'");
+				}
+				$upd = db::query("UPDATE `product` SET `name_kz` = '$nkz', `name_ru` = '$nru', `catalog_id` = ".($cat ? "'$cat'" : "NULL").", `price` = '$price'$desc_sql, `upd_dt` = '$datetime' WHERE id = '$id' and company_id = '$cmp'");
 				exit($upd ? 'yes' : 'error');
 			} catch (Throwable $e) { exit('error'); }
 		}

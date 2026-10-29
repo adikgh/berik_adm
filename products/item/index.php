@@ -86,6 +86,12 @@
 						<span class="pcard_l"><?=t::w('Price', 'Бағасы')?>, тг</span>
 						<input type="text" class="pcard_in pc_price" inputmode="numeric" value="<?=(int)$product_d['price']?>">
 					</label>
+					<? if (fun::has_col('product', 'description')): ?>
+						<label class="pcard_f pcard_f_wide">
+							<span class="pcard_l"><?=t::w('Description', 'Сипаттамасы')?></span>
+							<textarea class="pcard_in pcard_ta pc_desc" rows="3" maxlength="1000" placeholder="<?=t::w('Description hint', 'Мысалы: тауық еті, сыр, помидор, соус. Кассада тағамды ұзақ басқанда көрінеді.')?>"><?=htmlspecialchars((string)$product_d['description'])?></textarea>
+						</label>
+					<? endif ?>
 				</div>
 				<div class="pcard_btns">
 					<div class="btn pc_save"><i class="far fa-check"></i><span><?=t::w('Save', 'Сақтау')?></span></div>
@@ -197,6 +203,7 @@
             fd.append('name_ru', val('.pc_name_ru'));
             fd.append('catalog', val('.pc_catalog'));
             fd.append('price', val('.pc_price'));
+            if (card.querySelector('.pc_desc')) fd.append('description', val('.pc_desc'));
             busy = true;
             fetch('/products/item/get.php?pr_upd', { method: 'POST', body: fd, credentials: 'same-origin' })
                .then(function (r) { return r.text(); })

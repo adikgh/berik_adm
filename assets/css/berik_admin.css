@@ -292,3 +292,7 @@ tr.k_cr_det > td{ height: auto; padding: 10px 20px 16px; background: #fafbfc; }
 .bcal_grid3{ grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .bcal_grid3 .bcal_d{ height: 46px; font-size: 14px; }
 @media (max-width: 768px){ .bcal{ width: 290px; } }
+
+/* тағам карточкасы: сипаттама өрісі */
+.pcard_ta{height:auto;min-height:84px;padding:10px 12px;line-height:1.45;resize:vertical}
+.form_im textarea.pre_desc{ height: auto; min-height: 120px; padding: 14px 16px; line-height: 1.45; resize: vertical; font: inherit; width: 100%; box-sizing: border-box; }
