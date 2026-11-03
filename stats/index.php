@@ -8,7 +8,7 @@
 
 
 	// ---------- Кезең: ай немесе жыл ----------
-	$mode = in_array(@$_GET['mode'], ['d', 'm', 'y'], true) ? $_GET['mode'] : 'm';
+	$mode = in_array(@$_GET['mode'], ['d', 'w', 'm', 'y'], true) ? $_GET['mode'] : 'd'; // ашылғанда — бүгінгі күн
 	$now_ts = time();
 	$now_dt = date('Y-m-d H:i:s', $now_ts);
 	$today_bd = date('Y-m-d', $now_ts - 6 * 3600); // бүгінгі жұмыс күні (06:00-ден)
@@ -28,6 +28,18 @@
 		$prev_link = '?mode=d&d='.$prev_d;
 		$next_link = '?mode=d&d='.$p_end_d;
 		$prev_name = 'өткен күн';
+	} elseif ($mode == 'w') {
+		// апта: дүйсенбіден жексенбіге дейін (?w=YYYY-MM-DD — аптаның кез келген күні)
+		$wd0 = (preg_match('/^20\d{2}-\d{2}-\d{2}$/', (string)@$_GET['w']) && strtotime($_GET['w'])) ? $_GET['w'] : $today_bd;
+		$p_start_d = date('Y-m-d', strtotime($wd0) - (date('N', strtotime($wd0)) - 1) * 86400);
+		$p_end_d   = date('Y-m-d', strtotime("$p_start_d +7 day"));
+		$prev_d    = date('Y-m-d', strtotime("$p_start_d -7 day"));
+		$step      = '7 day';
+		$w_last    = date('Y-m-d', strtotime("$p_start_d +6 day"));
+		$title     = intval(substr($p_start_d, 8, 2)).(substr($p_start_d, 5, 2) != substr($w_last, 5, 2) ? ' '.$m_low[intval(substr($p_start_d, 5, 2))] : '').' – '.intval(substr($w_last, 8, 2)).' '.$m_low[intval(substr($w_last, 5, 2))].($today_bd >= $p_start_d && $today_bd <= $w_last ? ', осы апта' : '');
+		$prev_link = '?mode=w&w='.$prev_d;
+		$next_link = '?mode=w&w='.$p_end_d;
+		$prev_name = 'өткен апта';
 	} elseif ($mode == 'm') {
 		$ym = preg_match('/^20\d{2}-(0[1-9]|1[0-2])$/', (string)@$_GET['m']) ? $_GET['m'] : substr($today_bd, 0, 7);
 		$p_start_d = $ym.'-01';
@@ -73,7 +85,7 @@
 	if (!isset($branches[$f_branch])) $f_branch = 0;
 	$br_cond = $f_branch ? " and branch_id = '$f_branch'" : "";
 	$q_branch = $f_branch ? '&branch='.$f_branch : '';
-	$q_period = $mode == 'd' ? 'mode=d&d='.$dd : ($mode == 'm' ? 'mode=m&m='.$ym : 'mode=y&y='.$yy);
+	$q_period = $mode == 'd' ? 'mode=d&d='.$dd : ($mode == 'w' ? 'mode=w&w='.$p_start_d : ($mode == 'm' ? 'mode=m&m='.$ym : 'mode=y&y='.$yy));
 
 
 	// ---------- Бағандар бар-жоғы (жаңа бағандар барлық базада болмауы мүмкін) ----------
@@ -102,18 +114,45 @@
 	}
 
 
+	// ---------- Өткен күндер — 06:00-де сақталған касса есебінен (kassa/ksnap_lib.php), бүгін — тапсырыстардан ----------
+	include_once "../kassa/ksnap_lib.php";
+	$ks_on = class_exists('ksnap', false) && ksnap::ready();
+	$ks_to = min($p_end_d, $today_bd); // сақталған бөлік: [p_start_d, ks_to)
+	$ks_days = ($ks_on && $p_start_d < $ks_to) ? ksnap::agg($company, $f_branch, $p_start_d, $ks_to, 'day') : [];
+	$ks_sum = [];
+	foreach ($ks_days as $ks_d) ksnap::merge($ks_sum, 's', $ks_d);
+	$ks = isset($ks_sum['s']) ? $ks_sum['s'] : ksnap::empty_day();
+	// тапсырыстардан тек бүгінгі бөлік: [live_start, p_to)
+	$live_start = $ks_on ? max($p_start, "$today_bd 06:00:00") : $p_start;
+	// салыстыру кезеңі толық өткен болса — ол да сақталғаннан
+	$ks_prv = ($ks_on && !$is_current && $p_start_d <= $today_bd) ? ksnap::agg($company, $f_branch, $prev_d, $p_start_d, 'all') : false;
+	$ks_prv = $ks_prv !== false ? (isset($ks_prv['all']) ? $ks_prv['all'] : ksnap::empty_day()) : false;
+
+
 	// ---------- Негізгі сандар ----------
 	$cur = st_row("select COUNT(*) as cnt, COALESCE(SUM(total), 0) as total,
 		".$sum('pay_qr')." as pay_qr, ".$sum('pay_cash')." as pay_cash, ".$sum('pay_transfer')." as pay_transfer,
 		".$sum('pay_red')." as pay_red, ".$sum('pay_prepay')." as pay_prepay, ".$sum('pay_delivery')." as pay_delivery
-		from retail_orders where $base and $ok_st and ins_dt >= '$p_start' and ins_dt < '$p_to'");
+		from retail_orders where $base and $ok_st and ins_dt >= '$live_start' and ins_dt < '$p_to'");
 	$prv = st_row("select COUNT(*) as cnt, COALESCE(SUM(total), 0) as total
 		from retail_orders where $base and $ok_st and ins_dt >= '$c_start' and ins_dt < '$c_to'");
 	$otk = st_row("select COUNT(*) as cnt, COALESCE(SUM(total), 0) as total, COALESCE(SUM(IF(order_status in (6, 10), kept_sum, 0)), 0) as kept
-		from retail_orders where $base and $otk_st and ins_dt >= '$p_start' and ins_dt < '$p_to'");
+		from retail_orders where $base and $otk_st and ins_dt >= '$live_start' and ins_dt < '$p_to'");
 	$otk_prv = st_row("select COUNT(*) as cnt from retail_orders where $base and $otk_st and ins_dt >= '$c_start' and ins_dt < '$c_to'");
 	$future = $is_current ? st_row("select COUNT(*) as cnt, COALESCE(SUM(total), 0) as total
 		from retail_orders where $base and $ok_st and ins_dt >= '$now_dt' and ins_dt < '$p_end'") : [];
+
+	// сақталған өткен күндерді қосу
+	$cur['cnt'] = intval(@$cur['cnt']) + $ks['f']['all']['number'];
+	$cur['total'] = intval(@$cur['total']) + $ks['f']['all']['total'] - $ks['f']['all']['kept'];
+	foreach (['pay_qr', 'pay_cash', 'pay_transfer', 'pay_red', 'pay_prepay', 'pay_delivery'] as $pk) $cur[$pk] = intval(@$cur[$pk]) + $ks['f']['all'][$pk];
+	$otk['cnt'] = intval(@$otk['cnt']) + $ks['f']['otk']['number'];
+	$otk['total'] = intval(@$otk['total']) + $ks['f']['otk']['refused'];
+	$otk['kept'] = intval(@$otk['kept']) + $ks['f']['otk']['kept'];
+	if ($ks_prv) {
+		$prv = ['cnt' => $ks_prv['f']['all']['number'], 'total' => $ks_prv['f']['all']['total'] - $ks_prv['f']['all']['kept']];
+		$otk_prv = ['cnt' => $ks_prv['f']['otk']['number']];
+	}
 
 	$cnt = intval(@$cur['cnt']);
 	$total = intval(@$cur['total']) + intval(@$otk['kept']); // + отказтан бізде қалған ақша
@@ -137,23 +176,31 @@
 		}
 		$g_q = db::query("select HOUR(ins_dt) as k, SUM($ok_st) as cnt, COALESCE(SUM(IF($ok_st, total, IF(order_status in (6, 10), kept_sum, 0))), 0) as total, SUM($otk_st) as otk from retail_orders
 			where $base and ($ok_st or $otk_st) and ins_dt >= '$p_start' and ins_dt < '$p_to' group by k");
-	} elseif ($mode == 'm') {
+	} elseif ($mode == 'w' || $mode == 'm') {
 		for ($t = strtotime($p_start_d); $t < strtotime($p_end_d); $t += 86400) {
 			$d = date('Y-m-d', $t);
-			$series[$d] = ['label' => intval(date('j', $t)), 'cnt' => 0, 'total' => 0, 'link' => '?mode=d&d='.$d.$q_branch, 'name' => date('j', $t).' '.$m_low[intval(date('n', $t))], 'today' => $d == $today_bd, 'wk' => date('N', $t) >= 6];
+			$series[$d] = ['label' => intval(date('j', $t)), 'cnt' => 0, 'total' => 0, 'link' => '?mode=d&d='.$d.$q_branch, 'name' => ($mode == 'w' ? $w_names[date('N', $t)].', ' : '').date('j', $t).' '.$m_low[intval(date('n', $t))], 'today' => $d == $today_bd, 'wk' => date('N', $t) >= 6];
 		}
 		$g_q = db::query("select $bd as k, SUM($ok_st) as cnt, COALESCE(SUM(IF($ok_st, total, IF(order_status in (6, 10), kept_sum, 0))), 0) as total, SUM($otk_st) as otk from retail_orders
-			where $base and ($ok_st or $otk_st) and ins_dt >= '$p_start' and ins_dt < '$p_to' group by k");
+			where $base and ($ok_st or $otk_st) and ins_dt >= '$live_start' and ins_dt < '$p_to' group by k");
 	} else {
 		for ($i = 1; $i <= 12; $i++) {
 			$k = sprintf('%s-%02d', $yy, $i);
 			$series[$k] = ['label' => $m_short[$i], 'cnt' => 0, 'total' => 0, 'link' => '?mode=m&m='.$k.$q_branch, 'name' => $m_names[$i], 'today' => $k == substr($today_bd, 0, 7), 'wk' => false];
 		}
 		$g_q = db::query("select DATE_FORMAT($bd, '%Y-%m') as k, SUM($ok_st) as cnt, COALESCE(SUM(IF($ok_st, total, IF(order_status in (6, 10), kept_sum, 0))), 0) as total, SUM($otk_st) as otk from retail_orders
-			where $base and ($ok_st or $otk_st) and ins_dt >= '$p_start' and ins_dt < '$p_to' group by k");
+			where $base and ($ok_st or $otk_st) and ins_dt >= '$live_start' and ins_dt < '$p_to' group by k");
 	}
 	while ($g_q && $g_d = mysqli_fetch_assoc($g_q)) {
 		if (isset($series[$g_d['k']])) { $series[$g_d['k']]['cnt'] = intval($g_d['cnt']); $series[$g_d['k']]['total'] = intval($g_d['total']); $series[$g_d['k']]['otk'] = intval($g_d['otk']); }
+	}
+	// сақталған өткен күндер (сағат графигі — тапсырыстардан)
+	if ($mode != 'd') foreach ($ks_days as $kd => $ks_d) {
+		$k = $mode == 'y' ? substr($kd, 0, 7) : $kd;
+		if (!isset($series[$k])) continue;
+		$series[$k]['cnt'] += $ks_d['f']['all']['number'];
+		$series[$k]['total'] += $ks_d['f']['all']['total'];
+		$series[$k]['otk'] = intval(@$series[$k]['otk']) + $ks_d['f']['otk']['number'];
 	}
 	$g_max = 0; $best = null;
 	foreach ($series as $k => $s) { if ($s['total'] > $g_max) { $g_max = $s['total']; $best = $k; } }
@@ -185,7 +232,7 @@
 			];
 		}
 	}
-	$g_minw = $mode == 'y' ? 44 : 22; // бағанның ең аз ені + аралық
+	$g_minw = ($mode == 'y' || $mode == 'w') ? 44 : 22; // бағанның ең аз ені + аралық
 
 
 	// ---------- Төлем түрлері ----------
@@ -208,10 +255,14 @@
 	];
 	foreach ($types as $k => $v) { $types[$k]['cnt'] = 0; $types[$k]['total'] = 0; }
 	$t_q = db::query("select order_type, COUNT(*) as cnt, COALESCE(SUM(total), 0) as total from retail_orders
-		where $base and $ok_st and ins_dt >= '$p_start' and ins_dt < '$p_to' group by order_type");
+		where $base and $ok_st and ins_dt >= '$live_start' and ins_dt < '$p_to' group by order_type");
 	while ($t_q && $t_d = mysqli_fetch_assoc($t_q)) {
 		$k = isset($types[$t_d['order_type']]) ? $t_d['order_type'] : 1;
 		$types[$k]['cnt'] += $t_d['cnt']; $types[$k]['total'] += $t_d['total'];
+	}
+	foreach ([1 => 'dl', 2 => 'yo', 4 => 'cf', 3 => 'sv'] as $k => $fk) {
+		$types[$k]['cnt'] += $ks['f'][$fk]['number'];
+		$types[$k]['total'] += $ks['f'][$fk]['total'] - $ks['f'][$fk]['kept'];
 	}
 
 
@@ -220,9 +271,15 @@
 	if (!$f_branch && count($branches) > 1) {
 		foreach ($branches as $id => $name) $by_branch[$id] = ['name' => $name, 'cnt' => 0, 'total' => 0];
 		$b_q = db::query("select branch_id, COUNT(*) as cnt, COALESCE(SUM(total), 0) as total from retail_orders
-			where $base and $ok_st and ins_dt >= '$p_start' and ins_dt < '$p_to' group by branch_id");
+			where $base and $ok_st and ins_dt >= '$live_start' and ins_dt < '$p_to' group by branch_id");
 		while ($b_q && $b_d = mysqli_fetch_assoc($b_q)) {
 			if (isset($by_branch[$b_d['branch_id']])) { $by_branch[$b_d['branch_id']]['cnt'] = $b_d['cnt']; $by_branch[$b_d['branch_id']]['total'] = $b_d['total']; }
+		}
+		if ($ks_on && $p_start_d < $ks_to) foreach ($by_branch as $id => $b) {
+			$kb = ksnap::agg($company, $id, $p_start_d, $ks_to, 'all');
+			if (!isset($kb['all'])) continue;
+			$by_branch[$id]['cnt'] += $kb['all']['f']['all']['number'];
+			$by_branch[$id]['total'] += $kb['all']['f']['all']['total'] - $kb['all']['f']['all']['kept'];
 		}
 	}
 
@@ -231,15 +288,20 @@
 	$wdays = [];
 	foreach ($w_names as $k => $n) $wdays[$k] = ['name' => $n, 'total' => 0, 'days' => 0];
 	foreach ($series as $k => $s) {
-		if ($mode != 'm') break;
+		if ($mode != 'm' && $mode != 'w') break;
 		if ($k > $today_bd) continue;
 		$w = date('N', strtotime($k));
 		$wdays[$w]['total'] += $s['total']; $wdays[$w]['days']++;
 	}
 	if ($mode == 'y') {
 		$w_q = db::query("select WEEKDAY($bd) + 1 as w, COUNT(DISTINCT $bd) as days, COALESCE(SUM(total), 0) as total from retail_orders
-			where $base and $ok_st and ins_dt >= '$p_start' and ins_dt < '$p_to' group by w");
-		while ($w_q && $w_d = mysqli_fetch_assoc($w_q)) { $wdays[$w_d['w']]['total'] = $w_d['total']; $wdays[$w_d['w']]['days'] = $w_d['days']; }
+			where $base and $ok_st and ins_dt >= '$live_start' and ins_dt < '$p_to' group by w");
+		while ($w_q && $w_d = mysqli_fetch_assoc($w_q)) { $wdays[$w_d['w']]['total'] += $w_d['total']; $wdays[$w_d['w']]['days'] += $w_d['days']; }
+		foreach ($ks_days as $kd => $ks_d) {
+			if (!$ks_d['f']['all']['number']) continue;
+			$w = date('N', strtotime($kd));
+			$wdays[$w]['total'] += $ks_d['f']['all']['total'] - $ks_d['f']['all']['kept']; $wdays[$w]['days']++;
+		}
 	}
 	$w_max = 0;
 	foreach ($wdays as $k => $w) { $wdays[$k]['avg'] = $w['days'] ? intval($w['total'] / $w['days']) : 0; $w_max = max($w_max, $wdays[$k]['avg']); }
@@ -263,21 +325,23 @@
 	$menu_name = 'stats';
 	$page_name = 'Статистика';
 	$css = ['stats'];
+	$js = ['st_pick'];
 ?>
 <? include "../block/header.php"; ?>
 
-	<div class="bl_c st_page">
+	<div class="bl_c st_page" data-ajx-nav=".st_page">
 
 		<!-- сүзгілер -->
 		<div class="st_bar">
 			<div class="st_seg">
 				<a class="st_seg_i <?=$mode=='d'?'st_seg_act':''?>" href="?mode=d<?=$q_branch?>">Күн</a>
+				<a class="st_seg_i <?=$mode=='w'?'st_seg_act':''?>" href="?mode=w<?=$q_branch?>">Апта</a>
 				<a class="st_seg_i <?=$mode=='m'?'st_seg_act':''?>" href="?mode=m<?=$q_branch?>">Ай</a>
 				<a class="st_seg_i <?=$mode=='y'?'st_seg_act':''?>" href="?mode=y<?=$q_branch?>">Жыл</a>
 			</div>
 			<div class="st_nav">
 				<a class="st_nav_b" href="<?=$prev_link.$q_branch?>"><i class="far fa-chevron-left"></i></a>
-				<div class="st_nav_t"><?=$title?></div>
+				<div class="st_nav_t" data-pick="1" data-kind="stats" data-mode="<?=$mode?>" data-d="<?=$p_start_d?>" data-today="<?=$today_bd?>" data-q="<?=$q_branch?>"><?=$title?></div>
 				<a class="st_nav_b" href="<?=$next_link.$q_branch?>"><i class="far fa-chevron-right"></i></a>
 			</div>
 			<? if (count($branches) > 1): ?>
@@ -328,7 +392,7 @@
 		<!-- график -->
 		<div class="st_card">
 			<div class="st_card_h">
-				<div><?=$mode=='d'?'Сағат бойынша':($mode=='m'?'Күндер бойынша':'Айлар бойынша')?> <span id="st_g_m" class="st_g_m"></span></div>
+				<div><?=$mode=='d'?'Сағат бойынша':($mode=='m'||$mode=='w'?'Күндер бойынша':'Айлар бойынша')?> <span id="st_g_m" class="st_g_m"></span></div>
 				<div class="st_card_hr">
 					<? if ($trend): ?><div class="st_card_hs st_trend_lg"><span></span>Тренд: <?=$trend['pct'] > 0 ? 'өсу +'.$trend['pct'].'%' : ($trend['pct'] < 0 ? 'төмендеу '.$trend['pct'].'%' : 'тұрақты')?></div><? endif ?>
 					<? if ($best !== null && $g_max): ?><div class="st_card_hs" id="st_g_best">Ең жақсы: <?=$series[$best]['name']?>, <?=st_money($g_max)?></div><? endif ?>
@@ -463,7 +527,8 @@
 		.st_chart_otk .st_col_f { background: #e5484d; }
 	</style>
 	<script>
-	(function () {
+	// AJAX-пен кезең ауысқанда (fun.js ajx) қайта іске қосылады
+	function stKpi() {
 		var box = document.getElementById('st_kpis'), chart = document.getElementById('st_chart');
 		if (!box || !chart) return;
 		var names = {cnt: 'сатылым саны', total: '', avg: 'орташа чек', otk: 'отказ'};
@@ -489,7 +554,9 @@
 			box.querySelectorAll('.st_kpi').forEach(function (k) { k.classList.toggle('st_kpi_act', k.dataset.m == m); });
 		}
 		box.addEventListener('click', function (e) { var k = e.target.closest('.st_kpi'); if (k && k.dataset.m) show(k.dataset.m); });
-	})();
+	}
+	stKpi();
+	$(document).on('ajx:done', stKpi);
 	</script>
 
 <? include "../block/footer.php"; ?>

@@ -1,5 +1,122 @@
 <? include "../../config/core.php";
 
+	// Сет ішіндегі құрамды мәзірдегі позицияға байлау (Кола → «Кола 1л» позициясы). Позицияның құрамы бос болса, 1 шт сол құрам жазылады.
+	if (isset($_GET['si_link'])) {
+		if (!$user_id) exit('error');
+		$cmp = (int)$company; $id = (int)@$_POST['id']; $pid = (int)@$_POST['product'];
+		try {
+			$q = db::query("select si.id, si.set_id, si.comp_id from product_set_item si join product p on p.id = si.set_id where si.id = '$id' and p.company_id = '$cmp'");
+			$si = $q ? mysqli_fetch_assoc($q) : null;
+			$q = db::query("select id from product where id = '$pid' and company_id = '$cmp'");
+			if (!$si || !$si['comp_id'] || !$q || !mysqli_num_rows($q) || $pid == $si['set_id']) exit('error');
+			$cid = (int)$si['comp_id'];
+			$q = db::query("select id from product_item where product_id = '$pid' and comp_id > 0 limit 1");
+			if (!$q || !mysqli_num_rows($q)) db::query("insert into product_item (product_id, comp_id, quantity) values ('$pid', '$cid', '1')");
+			$ok = db::query("update product_set_item set product_id = '$pid', comp_id = NULL where id = '$id'");
+			exit($ok ? 'yes' : 'error');
+		} catch (Throwable $e) { exit('error'); }
+	}
+
+	// Сет құрамы (product_set_item): қосу / санын өзгерту / өшіру (тек осы компанияның сеті)
+	if (isset($_GET['si_add']) || isset($_GET['si_qty']) || isset($_GET['si_del'])) {
+		if (!$user_id) exit('error');
+		$cmp = (int)$company;
+		$has = function ($sql) { $q = db::query($sql); return $q && mysqli_num_rows($q) > 0; };
+		$dec = function ($v) { $v = round((float)str_replace(',', '.', trim((string)$v)), 3); return $v > 0 ? rtrim(rtrim(number_format($v, 3, '.', ''), '0'), '.') : ''; };
+		try {
+			if (isset($_GET['si_add'])) {
+				$sid = (int)@$_POST['id']; $it = (string)@$_POST['item']; $qty = $dec(@$_POST['quantity']);
+				if ($qty === '') exit('qty');
+				if (!$has("select id from product where id = '$sid' and company_id = '$cmp'")) exit('error');
+				$iid = (int)substr($it, 1);
+				if ($it[0] === 'p' && $iid != $sid && $has("select id from product where id = '$iid' and company_id = '$cmp'"))
+					$q = db::query("insert into product_set_item (set_id, product_id, quantity) values ('$sid', '$iid', '$qty')");
+				elseif ($it[0] === 'r' && $has("select id from product_raw where id = '$iid' and company_id = '$cmp'")) {
+					// тауар сетке тікелей: сол тауарға байланған құрам болмаса, өзі жасалады
+					$cq = db::query("select id from product_comp where company_id = '$cmp' and raw_id = '$iid' order by id limit 1");
+					if ($cq && ($cr = mysqli_fetch_assoc($cq))) $cid = (int)$cr['id'];
+					else {
+						$rw = mysqli_fetch_assoc(db::query("select name_kz, name_ru, unit, price from product_raw where id = '$iid'"));
+						$nk = mysqli_real_escape_string(db::$connect, (string)($rw['name_kz'] ?: $rw['name_ru'])); $nr = mysqli_real_escape_string(db::$connect, (string)($rw['name_ru'] ?: $rw['name_kz']));
+						$un = mysqli_real_escape_string(db::$connect, (string)$rw['unit']); $pr = (int)$rw['price'];
+						db::query("insert into product_comp (company_id, name_kz, name_ru, unit, kind, price, raw_id) values ('$cmp', '$nk', '$nr', '$un', 'raw', '$pr', '$iid')");
+						$cid = (int)mysqli_insert_id(db::$connect);
+					}
+					$q = $cid ? db::query("insert into product_set_item (set_id, comp_id, quantity) values ('$sid', '$cid', '$qty')") : false;
+				}
+				elseif ($it[0] === 'c' && $has("select id from product_comp where id = '$iid' and company_id = '$cmp'"))
+					$q = db::query("insert into product_set_item (set_id, comp_id, quantity) values ('$sid', '$iid', '$qty')");
+				else exit('error');
+			} else {
+				$id = (int)@$_POST['id'];
+				if (!$has("select si.id from product_set_item si join product p on p.id = si.set_id where si.id = '$id' and p.company_id = '$cmp'")) exit('error');
+				if (isset($_GET['si_qty'])) {
+					$qty = $dec(@$_POST['quantity']);
+					if ($qty === '') exit('qty');
+					$q = db::query("update product_set_item set quantity = '$qty' where id = '$id'");
+				} else $q = db::query("delete from product_set_item where id = '$id'");
+			}
+			exit($q ? 'yes' : 'error');
+		} catch (Throwable $e) { exit('error'); }
+	}
+
+	// Тағамдар тізіміндегі «Құрамы» попапы: тағамның/сеттің құрамын JSON-мен береді
+	if (isset($_GET['comp_load'])) {
+		header('Content-Type: application/json; charset=utf-8');
+		if (!$user_id) exit('{"ok":0}');
+		$cmp = (int)$company; $pid = (int)@$_GET['id'];
+		try {
+			$pq = db::query("select id, name_kz, name_ru, price from product where id = '$pid' and company_id = '$cmp'");
+			$p = $pq ? mysqli_fetch_assoc($pq) : null;
+			if (!$p) exit('{"ok":0}');
+			if (!class_exists('cost')) include __DIR__."/../cost/lib.php";
+			$ready = cost::ready();
+			$all = $ready ? cost::comps($cmp) : [];
+			if (!$ready) { $q = db::query("select * from product_comp where company_id = '$cmp'"); while ($r = mysqli_fetch_assoc($q)) { $r['parts'] = []; $r['cost'] = (float)$r['price']; $all[$r['id']] = $r; } }
+			$comps = [];
+			foreach ($all as $id => $c) {
+				$u = fun::unit_norm($c['unit'] ?? '');
+				$comps[$id] = [
+					'id' => (int)$id, 'nm' => (string)($c['name_kz'] ?: $c['name_ru']),
+					'pu' => $u !== '' ? $u : 'шт', 'qu' => ['кг' => 'г', 'л' => 'мл'][$u] ?? ($u !== '' ? $u : 'шт'),
+					'div' => in_array($u, ['кг', 'л']) ? 1000 : 1, 'price' => round((float)$c['cost'], 2), 'prep' => !empty($c['parts']) ? 1 : 0,
+				];
+			}
+			$rows = [];
+			$q = db::query("select id, comp_id, quantity from product_item where product_id = '$pid' and comp_id > 0 order by ins_dt asc, id asc");
+			while ($r = mysqli_fetch_assoc($q)) {
+				$c = $comps[$r['comp_id']] ?? null;
+				$rows[] = ['id' => (int)$r['id'], 'comp' => (int)$r['comp_id'], 'qty' => (float)$r['quantity'], 'cost' => $c ? $r['quantity'] * $c['price'] / $c['div'] : 0];
+			}
+			$set = []; $over = 0; $dishes = []; $raws = [];
+			if ($ready) {
+				$dc = cost::dishes($cmp, $all);
+				// мәзірдегі позициялар атауы бойынша (сет ішіндегі «Кола» → «Кола 1л / КОЛА» позициясы)
+				$menu = []; $menu_nm = []; $is_set = [];
+				$q = db::query("select distinct si.set_id from product_set_item si join product p on p.id = si.set_id where p.company_id = '$cmp'");
+				while ($x = mysqli_fetch_assoc($q)) $is_set[$x['set_id']] = 1;
+				$q = db::query("select id, name_kz, name_ru from product where company_id = '$cmp' and arh = 0 and id <> '$pid'");
+				while ($x = mysqli_fetch_assoc($q)) { if (isset($is_set[$x['id']])) continue; $menu_nm[$x['id']] = strip_tags((string)($x['name_kz'] ?: $x['name_ru'])); foreach ([$x['name_kz'], $x['name_ru']] as $n) { $k = mb_strtolower(trim(strip_tags((string)$n))); if ($k !== '' && !isset($menu[$k])) $menu[$k] = (int)$x['id']; } }
+				$q = db::query("select si.*, d.name_ru d_ru, d.name_kz d_kz from product_set_item si left join product d on d.id = si.product_id where si.set_id = '$pid' order by si.id");
+				while ($r = mysqli_fetch_assoc($q)) {
+					if ($r['product_id']) { $u = $dc[$r['product_id']] ?? 0; $nm = strip_tags((string)($r['d_kz'] ?: $r['d_ru'])); }
+					else { $c = $comps[$r['comp_id']] ?? null; $u = $c ? $c['price'] : 0; $nm = $c ? $c['nm'] : '?'; }
+					$mp = 0;
+					if (!$r['product_id'] && $c) { $k = mb_strtolower(trim($c['nm'])); $mp = $menu[$k] ?? 0; }
+					$set[] = ['id' => (int)$r['id'], 'nm' => $nm, 'pid' => (int)$r['product_id'], 'qty' => (float)$r['quantity'], 'unit' => $u, 'cost' => $u * $r['quantity'], 'menu' => $mp, 'menu_nm' => $mp ? ($menu_nm[$mp] ?? '') : ''];
+				}
+				$over = cost::overhead(cost::setting($cmp));
+				$q = db::query("select id, name_kz, name_ru from product where company_id = '$cmp' and arh = 0 and id <> '$pid' order by name_kz, name_ru");
+				while ($r = mysqli_fetch_assoc($q)) $dishes[] = ['v' => 'p'.$r['id'], 'nm' => strip_tags((string)($r['name_kz'] ?: $r['name_ru'])), 'cost' => round($dc[$r['id']] ?? 0), 'set' => isset($is_set[$r['id']]) ? 1 : 0];
+				$q = db::query("select id, name_kz, name_ru, unit, price from product_raw where company_id = '$cmp' order by name_ru");
+				while ($r = mysqli_fetch_assoc($q)) $raws[] = ['v' => 'r'.$r['id'], 'nm' => (string)($r['name_ru'] ?: $r['name_kz']), 'cost' => (float)$r['price'], 'u' => fun::unit_norm($r['unit']) ?: 'шт'];
+			}
+			echo json_encode(['ok' => 1, 'ready' => $ready ? 1 : 0, 'id' => $pid, 'name' => strip_tags((string)($p['name_kz'] ?: $p['name_ru'])), 'price' => (int)$p['price'],
+				'rows' => $rows, 'comps' => array_values($comps), 'set' => $set, 'over' => $over, 'dishes' => $dishes, 'raws' => $raws], JSON_UNESCAPED_UNICODE);
+		} catch (Throwable $e) { echo '{"ok":0}'; }
+		exit;
+	}
+
 	// Тағам құрамы: қосу / санын өзгерту / өшіру (тек осы компанияның тағамы мен құрамы)
 	if (isset($_GET['ci_add']) || isset($_GET['ci_qty']) || isset($_GET['ci_del'])) {
 		if (!$user_id) exit('error');

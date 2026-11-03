@@ -92,7 +92,7 @@
 		return '/clients/'.($g ? '?'.http_build_query($g) : '');
 	}
 
-	$p_names = ['today' => 'Бүгін', 'yday' => 'Кеше', 'week' => '1 апта', 'month' => '1 ай', '3m' => '3 ай', '6m' => '6 ай', '12m' => '12 ай', 'all' => 'Барлығы'];
+	$p_names = ['d' => 'Күндік', 'w' => 'Апталық', 'm' => 'Айлық', 'y' => 'Жылдық'];
 	$seg_names = ['' => 'Барлығы', 'new' => 'Жаңа', 'back' => 'Қайта келген', 'loyal' => 'Тұрақты', 'sleep' => 'Ұйықтап қалған', 'archive' => 'Архив'];
 
 	// site setting
@@ -103,15 +103,24 @@
 ?>
 <? include "../block/header.php"; ?>
 
-<div class="bl_c cl_page">
+<div class="bl_c cl_page" data-ajx-nav=".cl_page">
 
 	<!-- Кезең -->
 	<div class="cl_bar">
 		<div class="cl_bar_l" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
 		<div class="cl_tabs">
 			<? foreach ($p_names as $k => $v): ?>
-				<a class="cl_tab <?=($per['p'] == $k ? 'cl_tab_act' : '')?>" href="<?=cl_url(['p' => $k, 'from' => null, 'to' => null, 'page' => null])?>"><?=$v?></a>
+				<a class="cl_tab <?=($per['p'] == $k ? 'cl_tab_act' : '')?>" href="<?=cl_url(['p' => $k, 'd' => null, 'page' => null])?>"><?=$v?></a>
 			<? endforeach ?>
+		</div>
+		<div class="cl_nav">
+			<a class="cl_nav_b" href="<?=cl_url(['p' => $per['p'], 'd' => $per['prev'], 'page' => null])?>" title="Алдыңғы"><i class="far fa-chevron-left"></i></a>
+			<div class="cl_nav_t"><?=$per['title']?></div>
+			<? if ($per['is_next']): ?>
+				<a class="cl_nav_b" href="<?=cl_url(['p' => $per['p'], 'd' => $per['next'], 'page' => null])?>" title="Келесі"><i class="far fa-chevron-right"></i></a>
+			<? else: ?>
+				<span class="cl_nav_b cl_nav_off"><i class="far fa-chevron-right"></i></span>
+			<? endif ?>
 		</div>
 			<? if (count($o_branches) >= 2): ?>
 				<div class="k_br">
@@ -122,16 +131,10 @@
 				</div>
 			<? endif ?>
 		</div>
-		<form class="cl_range" method="get" action="/clients/">
-			<? if (loyalty::on()): ?><a class="cl_btn cl_btn_light" href="/clients/loyalty.php"><i class="fal fa-gift"></i> Кэшбэк, сыйлық</a><? endif ?>
-			<? if ($f_branch): ?><input type="hidden" name="branch" value="<?=$f_branch?>"><? endif ?>
-			<input type="date" name="from" value="<?=($per['p'] == 'custom' ? $per['from'] : '')?>" class="cl_inp">
-			<span>—</span>
-			<input type="date" name="to" value="<?=($per['p'] == 'custom' ? $per['to'] : '')?>" class="cl_inp">
-			<button class="cl_btn" type="submit"><i class="fal fa-check"></i></button>
-		</form>
+		<? if (loyalty::on()): ?>
+			<a class="cl_go" href="/clients/loyalty.php"><i class="fal fa-gift"></i><span>Кэшбэк, сыйлық</span><i class="far fa-chevron-right cl_go_ar"></i></a>
+		<? endif ?>
 	</div>
-	<div class="cl_sub"><?=($per['p'] == 'all' ? 'Барлық уақыт' : ($per['from'] == $per['to'] ? clients::dt($per['from'], false) : clients::dt($per['from'], false).' — '.clients::dt($per['to'], false)))?></div>
 
 	<!-- Карточкалар -->
 	<div class="cl_cards">
@@ -195,10 +198,10 @@
 				<a class="cl_tab <?=((string)$seg === (string)$k ? 'cl_tab_act' : '')?>" href="<?=cl_url(['seg' => $k, 'page' => null])?>"><?=$v?></a>
 			<? endforeach ?>
 		</div>
-		<form class="cl_range" method="get" action="/clients/">
-			<? foreach (['p', 'from', 'to', 'seg', 'sort', 'branch'] as $k): if (@$_GET[$k]): ?><input type="hidden" name="<?=$k?>" value="<?=htmlspecialchars($_GET[$k])?>"><? endif; endforeach ?>
+		<form class="cl_range" method="get" action="/clients/" data-ajx=".cl_page">
+			<? foreach (['p', 'd', 'seg', 'sort', 'branch'] as $k): if (@$_GET[$k]): ?><input type="hidden" name="<?=$k?>" value="<?=htmlspecialchars($_GET[$k])?>"><? endif; endforeach ?>
 			<input type="text" name="q" value="<?=htmlspecialchars($q)?>" class="cl_inp cl_search" placeholder="Телефон, аты немесе мекенжай">
-			<select class="cl_inp" onchange="location.href=this.value">
+			<select class="cl_inp" onchange="ajxGo(this.value, '.cl_page')">
 				<? foreach (['sum' => 'Сома бойынша', 'cnt' => 'Тапсырыс саны', 'last' => 'Соңғы келгені', 'new' => 'Жаңалары'] as $k => $v): ?>
 					<option value="<?=cl_url(['sort' => $k, 'page' => null])?>" <?=($sort == $k ? 'selected' : '')?>><?=$v?></option>
 				<? endforeach ?>

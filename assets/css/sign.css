@@ -1,0 +1,97 @@
+/* Админ кіру беті (тек index.php-да жүктеледі). Форманың өзі: block/sign_form.php */
+body:has(.u_sign){ background: radial-gradient(1200px 600px at 10% 0%, #e3f5ec 0%, transparent 60%), radial-gradient(900px 500px at 100% 100%, #e6f0f7 0%, transparent 60%), #f4f6f5; }
+body:has(.u_sign) .app{ padding: 0; min-height: 100vh; min-height: 100svh; }
+
+.u_sign{
+	min-height: 100vh; min-height: 100svh;
+	display: flex; align-items: center; justify-content: center;
+	padding: 40px 24px;
+	box-sizing: border-box;
+}
+.lg_wrap{
+	width: 100%; max-width: 980px; min-height: 600px;
+	display: grid; grid-template-columns: 1fr 1fr;
+	background: #fff; border-radius: 24px; overflow: hidden;
+	box-shadow: 0 30px 80px rgba(14,60,40,.12), 0 2px 6px rgba(0,0,0,.04);
+}
+
+/* ---------- Бренд жағы ---------- */
+.lg_side{
+	position: relative; overflow: hidden;
+	display: flex; flex-direction: column; justify-content: space-between; gap: 32px;
+	padding: 44px 44px 36px;
+	color: #fff;
+	background: linear-gradient(150deg, #13b673 0%, #0EA768 45%, #0a7f50 100%);
+}
+.lg_side::before, .lg_side::after{ content: ''; position: absolute; border-radius: 50%; background: rgba(255,255,255,.08); pointer-events: none; }
+.lg_side::before{ width: 380px; height: 380px; right: -140px; top: -120px; }
+.lg_side::after{ width: 260px; height: 260px; left: -90px; bottom: -110px; background: rgba(255,255,255,.06); }
+.lg_side > *{ position: relative; z-index: 1; }
+
+.lg_brand{ display: flex; align-items: center; gap: 12px; }
+.lg_logo{ width: 56px; height: 56px; border-radius: 16px; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(0,0,0,.12); }
+.lg_logo img{ display: block; width: 40px; height: 40px; }
+.lg_name{ font-family: 'Nunito', sans-serif; font-style: italic; font-weight: 900; font-size: 26px; letter-spacing: .3px; line-height: 1; }
+.lg_name b{ font-weight: 800; color: #d8ffe9; }
+
+.lg_slogan{ margin: 0 0 26px; font-size: 32px; line-height: 1.2; font-weight: 800; color: #fff; }
+.lg_feats{ list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.lg_feats li{ display: flex; align-items: center; gap: 14px; font-size: 16px; font-weight: 600; color: rgba(255,255,255,.95); }
+.lg_feats i{ width: 40px; height: 40px; flex: none; border-radius: 12px; background: rgba(255,255,255,.16); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+.lg_side_f{ font-size: 13px; color: rgba(255,255,255,.7); }
+
+/* ---------- Форма жағы ---------- */
+.lg_main{ display: flex; flex-direction: column; justify-content: center; padding: 48px 52px 28px; }
+.u_sign .usign_c{ max-width: 380px; width: 100%; margin: auto; }
+.lg_head{ margin-bottom: 28px; }
+.lg_badge{ display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 30px; background: #e3f5ec; color: #0EA768; font-size: 13px; font-weight: 700; }
+.lg_h{ margin: 14px 0 6px; font-size: 30px; line-height: 1.2; font-weight: 800; color: #1d2330; }
+.lg_p{ margin: 0; font-size: 15px; line-height: 1.45; color: #7a818c; }
+
+.u_sign .usign_cn{ margin-top: 0; }
+.u_sign .form_im{ margin-top: 14px; }
+.u_sign .form_im:first-child{ margin-top: 0; }
+.u_sign .form_im .form_txt{ min-height: 56px; border-radius: 14px; background: #f6f8f7; border-color: #e3e8e5; font-size: 16px; }
+.u_sign .form_im .form_txt:hover{ background: #fff; border-color: #cfd8d3; }
+.u_sign .form_im .form_txt:focus{ background: #fff; border-color: #0EA768; box-shadow: 0 0 0 4px rgba(14,167,104,.14); }
+.u_sign .form_im:focus-within .form_icon{ color: #0EA768; }
+.u_sign .sg_otp{ padding-left: 16px !important; }
+
+.u_sign .sg_box .btn.sg_btn{
+	min-height: 56px; margin-top: 6px; border-radius: 14px;
+	background: #0EA768; color: #fff; font-size: 16px; font-weight: 700;
+	box-shadow: 0 10px 24px rgba(14,167,104,.28);
+	transition: background .15s, transform .1s, box-shadow .15s;
+}
+.u_sign .sg_box .btn.sg_btn:hover, .u_sign .sg_box .btn.sg_btn:focus-visible{ background: #0c8f59; color: #fff; box-shadow: 0 12px 28px rgba(14,167,104,.34); }
+.u_sign .sg_btn:active{ transform: scale(.985); }
+.u_sign .sg_btn i{ margin: 0; }
+
+.u_sign .si_blc_bn{ justify-content: center; margin-top: 18px; }
+.u_sign .sg_forgot{ min-height: 0; padding: 4px 8px; text-decoration: none; color: #6b7380; font-size: 14px; font-weight: 600; }
+.u_sign .sg_forgot:hover{ color: #0EA768; background: transparent; }
+
+.lg_made{ align-self: center; margin-top: 28px; font-size: 13px; color: #a0a6ae; }
+.lg_made i{ color: #e5484d; font-size: 11px; margin: 0 3px; }
+.lg_made:hover{ color: #0EA768; }
+
+/* ---------- Планшет ---------- */
+@media (max-width: 900px){
+	.lg_wrap{ grid-template-columns: 1fr; max-width: 480px; min-height: 0; }
+	.lg_side{ padding: 26px 28px; gap: 0; }
+	.lg_side_t, .lg_side_f{ display: none; }
+	.lg_brand{ justify-content: center; }
+	.lg_main{ padding: 34px 32px 22px; }
+	.lg_head{ text-align: center; }
+}
+
+/* ---------- Телефон ---------- */
+@media (max-width: 500px){
+	.u_sign{ align-items: flex-start; padding: 0; }
+	.lg_wrap{ border-radius: 0; box-shadow: none; min-height: 100vh; min-height: 100svh; background: #fff; display: flex; flex-direction: column; }
+	.lg_side{ padding: calc(34px + env(safe-area-inset-top)) 24px 54px; }
+	.lg_main{ flex: 1; margin-top: -28px; border-radius: 26px 26px 0 0; background: #fff; padding: 30px 20px calc(18px + env(safe-area-inset-bottom)); position: relative; z-index: 2; justify-content: flex-start; }
+	.u_sign .usign_c{ margin: 0 auto; }
+	.lg_h{ font-size: 26px; }
+	.lg_made{ margin-top: auto; padding-top: 24px; }
+}

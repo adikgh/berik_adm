@@ -1,5 +1,5 @@
-// Жеткізу аймақтары: іздеу, қосу, өңдеу, өшіру
-(function () {
+// Жеткізу аймақтары: іздеу, қосу, өңдеу, өшіру. Бет жаңармайды: .dz_page AJAX-пен қайта алынып, dzInit қайта іске қосылады (fun.js ajx)
+function dzInit() {
 	var page = document.querySelector('.dz_page');
 	if (!page) return;
 	var form = page.querySelector(".dz_form"), f = form.elements, q = page.querySelector('.dz_q');
@@ -52,7 +52,7 @@
 		post('save', new FormData(form), function (r) {
 			btn.classList.remove('cl_btn_wait');
 			mess(r.msg || 'Қате');
-			if (r.ok) setTimeout(function () { location.reload(); }, 400);
+			if (r.ok) ajx('.dz_page');
 		});
 	});
 
@@ -61,12 +61,15 @@
 		if (!b) return;
 		var r = b.closest('.dz_i');
 		if (b.classList.contains('dz_edit')) return open(r.dataset);
-		if (!confirm('«' + r.dataset.name + '» көшесін өшіру керек пе?')) return;
-		var d = new FormData();
-		d.append('id', r.dataset.id);
-		post('del', d, function (res) {
-			mess(res.msg || 'Қате');
-			if (res.ok) r.remove();
-		});
+		ask('«' + $('<i>').text(r.dataset.name).html() + '» көшесін өшіру керек пе?', function () {
+			var d = new FormData();
+			d.append('id', r.dataset.id);
+			post('del', d, function (res) {
+				mess(res.msg || 'Қате');
+				if (res.ok) ajx('.dz_page');
+			});
+		}, { ok: 'Өшіру', danger: true });
 	});
-})();
+}
+dzInit();
+$(document).on('ajx:done', dzInit);

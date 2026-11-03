@@ -14,3 +14,56 @@
 .lc_stamp_on{border:2px solid #28a745;background:rgba(40,167,69,.15)}
 .lc_stamp_gift{border-style:solid;border-color:#f0ad00;display:flex;align-items:center;justify-content:center;font-size:12px;color:#f0ad00}
 @media (max-width:760px){.lc_grid{grid-template-columns:1fr}}
+/* Сыйлық деңгейлері */
+.lc_set_wide{grid-column:1 / -1}
+.lc_tiers{display:flex;flex-direction:column;gap:8px;margin:6px 0 10px}
+.lc_tier{display:grid;grid-template-columns:90px minmax(160px,1.4fr) minmax(160px,1.4fr) 64px 90px 100px 34px;gap:8px;align-items:center}
+.lc_tier_h{font-size:12px;opacity:.6}
+.lc_tier_new{opacity:.75}
+.lc_del{display:flex;align-items:center;gap:4px;cursor:pointer;color:#dc3545;font-size:13px}
+@media (max-width:900px){.lc_tier{grid-template-columns:1fr 1fr}.lc_tier_h{display:none}}
+/* Кэшбэкті қолмен өзгерту */
+.lc_adj{margin-top:12px;padding-top:12px;border-top:1px dashed var(--gr2)}
+.lc_adj_r{display:grid;grid-template-columns:100px 110px 1fr auto;gap:8px}
+.lc_adj_msg{margin-bottom:6px;color:#dc3545}
+@media (max-width:600px){.lc_adj_r{grid-template-columns:1fr 1fr}}
+.lc_tier .lc_inp_w{display:flex;align-items:center;gap:4px;min-width:0;width:auto}
+.lc_tier .lc_inp_w input,.lc_tier > .cl_inp{min-width:0;width:100%;box-sizing:border-box}
+.lc_tier .lc_inp_w span{flex:none;position:static}
+.lc_adj_ok{color:#28a745}
+/* Сыйлық белгілері: сан не ✓ */
+.lc_stamp{display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:rgba(0,0,0,.35);box-sizing:border-box}
+.lc_stamp_on{background:#28a745;border:2px solid #28a745;color:#fff;font-size:13px;font-weight:700}
+.lc_stamp_due{background:#f0ad00;color:#fff}
+.lc_gift_now{margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(255,184,0,.14);font-size:13px}
+.lc_stamps{gap:5px}
+.lc_stamp_gift{position:relative}
+.lc_stamp_gift small{position:absolute;bottom:-14px;left:0;right:0;text-align:center;font-size:9px;color:#f0ad00}
+.lc_stamp_gift.lc_stamp_on{background:#28a745;border-color:#28a745;color:#fff}
+.lc_stamps{margin-bottom:14px}
+/* Толық цикл: 10 бағандық тор (20 тапсырыс = 2 қатар) */
+.lc_stamps{display:grid;grid-template-columns:repeat(10,1fr);gap:10px 8px;margin:6px 0 16px;max-width:520px}
+.lc_stamps .lc_stamp{width:100%;max-width:40px;height:auto;aspect-ratio:1;justify-self:center;font-size:12px}
+.lc_stamps .lc_stamp_on{font-size:15px}
+.lc_stamps .lc_stamp_gift i{font-size:15px}
+/* Берілген сыйлық: жасыл + ✓ белгісі */
+.lc_stamp_got::after{content:'✓';position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;background:#fff;color:#28a745;border:1.5px solid #28a745;font-size:10px;line-height:13px;text-align:center;font-weight:700}
+/* Сатылы кэшбэк */
+.lc_steps{display:flex;flex-direction:column;gap:6px}
+.lc_step{display:grid;grid-template-columns:auto 1fr 110px;gap:8px;align-items:center;font-size:13px}
+.lc_step > span{opacity:.6}
+.lc_step .lc_inp_w{max-width:none}
+.lc_step .lc_inp_w input{min-width:0;width:100%}
+.lc_step .lc_inp_w span{white-space:nowrap}
+.lc_mv_s{margin-top:2px}
+.lc_mv_total{border-top:2px solid var(--gr2);margin-top:4px;padding-top:10px}
+/* Сыйлық баптауы (2026-11-03) */
+.lc_tier{grid-template-columns:110px minmax(160px,1.3fr) minmax(180px,1.5fr) 70px 96px 110px 34px}
+.lc_tier_h{font-size:12px;font-weight:700;opacity:.55;text-transform:none;line-height:1.25}
+.lc_tier .lc_t_ord{font-size:14px;font-weight:700;color:#555}
+.lc_tier .cl_inp:disabled{background:#f3f3f3;color:#aaa;border-color:#eee;cursor:not-allowed}
+.lc_tier_new{opacity:1;padding:10px;margin-top:2px;border:1px dashed #cfd8e0;border-radius:12px;background:#fafcfe}
+.lc_tier_cap{margin-top:10px;font-size:13px;font-weight:700;color:var(--b);display:flex;align-items:center;gap:6px}
+.lc_help{margin:12px 0 6px;padding:12px 14px 12px 30px;background:#f7f8fa;border-radius:12px;font-size:13px;line-height:1.5;color:#555}
+.lc_help li{list-style:disc;margin:2px 0}
+@media (max-width:900px){.lc_tier{grid-template-columns:1fr 1fr}}

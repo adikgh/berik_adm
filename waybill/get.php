@@ -61,6 +61,18 @@
 		}
 		unset($i);
 
+		// factor (1 шт = 5 кг): формада жоқ, сондықтан ескі жолдан сақтаймыз (атауы, шикізаты, өлшемі сәйкес болса)
+		$old_f = [];
+		if ($id && fun::has_col('waybill_item', 'factor')) {
+			foreach (wb::items($id) as $o) $old_f[(int)$o['raw_id'].'|'.$o['name'].'|'.fun::unit_norm($o['unit'])] = (float)$o['factor'];
+		}
+		foreach ($items as &$i) {
+			$f = (float)@$old_f[$i['raw_id'].'|'.$i['name'].'|'.$i['unit']];
+			$i['factor'] = $f > 0 ? round($f, 4) : 1;
+		}
+		unset($i);
+		$has_f = fun::has_col('waybill_item', 'factor');
+
 		mysqli_begin_transaction(db::$connect);
 		$sup_sql = $sup ? "'$sup'" : 'NULL';
 		if ($id) {
@@ -78,9 +90,9 @@
 			$vals = [];
 			foreach ($items as $i) {
 				$n = wb::esc($i['name']); $u = wb::esc($i['unit']);
-				$vals[] = "('$id', ".($i['raw_id'] ? "'{$i['raw_id']}'" : 'NULL').", '$n', '$u', '{$i['qty']}', '{$i['price']}', '{$i['sum']}')";
+				$vals[] = "('$id', ".($i['raw_id'] ? "'{$i['raw_id']}'" : 'NULL').", '$n', '$u', '{$i['qty']}', '{$i['price']}', '{$i['sum']}'".($has_f ? ", '{$i['factor']}'" : '').")";
 			}
-			$ok = db::query("insert into waybill_item (waybill_id, raw_id, name, unit, quantity, price, sum) values ".implode(',', $vals));
+			$ok = db::query("insert into waybill_item (waybill_id, raw_id, name, unit, quantity, price, sum".($has_f ? ', factor' : '').") values ".implode(',', $vals));
 		}
 		if (!$ok || !$id) { mysqli_rollback(db::$connect); out(false, ['msg' => 'Сақтау кезінде қате шықты']); }
 		mysqli_commit(db::$connect);
@@ -90,6 +102,12 @@
 			out(true, ['id' => $id, 'msg' => 'Қабылданды, қалдыққа қосылды']);
 		}
 		out(true, ['id' => $id, 'msg' => 'Сақталды']);
+	}
+
+	// Сатылымды шикізаттан азайту (граммовка бойынша). Кейін cron осы адресті шақыра алады.
+	if (isset($_GET['sync_sales'])) {
+		$r = wb::sales_sync($cmp);
+		out(true, $r + ['missing_dishes' => count(wb::$sale_missing)]);
 	}
 
 	// Қабылдауды болдырмау

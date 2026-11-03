@@ -155,3 +155,106 @@ body.wbi_lock{ overflow: hidden; }
 .wbi_conv:empty{ display: none; }
 .wbi_conv .wbi_r_f{ width: 80px; height: 34px; padding: 0 8px; }
 .wbi_cv_t{ color: var(--g); }
+
+/* ---- Закуп топтап ---- */
+.wbg_nav{ align-items: center; }
+.wbg_nav_b{ width: 44px; justify-content: center; padding: 0; }
+.wbg_nav_t{ min-width: 150px; padding: 0 10px; text-align: center; font-size: 15px; font-weight: 700; }
+.wbg .wb_box_h{ font-size: 17px; }
+.wbg_sum{ text-align: right; }
+.wbg_it{ border-top: 1px solid #f0f0f0; }
+.wbg_it > summary{ list-style: none; cursor: pointer; border-top: 0; }
+.wbg_it > summary::-webkit-details-marker{ display: none; }
+.wbg_it > summary:hover{ background: #fafbfc; }
+.wbg_ar{ width: 14px; color: var(--mut); transition: .15s; }
+.wbg_it[open] .wbg_ar{ transform: rotate(90deg); }
+.wbg_it[open] > summary{ background: #f6faf8; }
+.wbg_lines{ padding: 4px 18px 10px 40px; background: #fbfcfd; }
+.wbg_ln{ display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px dashed #ececec; font-size: 13px; }
+.wbg_ln:first-child{ border-top: 0; }
+.wbg_ln_d{ flex: 0 0 96px; font-weight: 700; }
+.wbg_ln_n{ flex: 1; min-width: 0; }
+.wbg_ln_n a{ color: var(--b); font-weight: 700; }
+.wbg_ln_q{ flex: 0 0 auto; color: #444; white-space: nowrap; }
+.wbg_ln_s{ flex: 0 0 100px; text-align: right; font-weight: 700; white-space: nowrap; }
+.wbg_all{ display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; }
+.wbg_all b{ font-size: 22px; font-weight: 800; }
+@media (max-width: 768px){
+	.wbg_nav{ width: 100%; justify-content: space-between; }
+	.wbg_nav_t{ flex: 1; min-width: 0; }
+	.wbg_sum{ text-align: left; }
+	.wbg_lines{ padding: 4px 14px 10px 18px; }
+	.wbg_ln{ flex-wrap: wrap; gap: 4px 12px; }
+	.wbg_ln_d{ flex: 0 0 auto; }
+	.wbg_ln_n{ flex: 1 1 100%; order: 3; }
+	.wbg_ln_q{ order: 4; }
+	.wbg_ln_s{ flex: 1 0 auto; order: 2; }
+}
+
+/* ---- Шикізат карточкасы мен Бағалар ---- */
+.wbr_lnk{ display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; color: var(--b); }
+.wbr_lnk:hover{ text-decoration: underline; }
+.wbr_head{ display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin: 0 0 12px; padding: 16px 18px; background: #fff; border-radius: 14px; box-shadow: var(--sh); }
+.wbr_name{ font-size: 24px; font-weight: 800; line-height: 1.15; }
+.wbr_last{ text-align: right; }
+.wbr_last_v{ font-size: 28px; font-weight: 800; line-height: 1.1; }
+.wbr_last_v span{ font-size: 15px; color: var(--mut); font-weight: 700; }
+.wbr_chart{ display: block; width: 100%; height: auto; }
+.wbr_grid{ stroke: #eef0f2; stroke-width: 1; }
+.wbr_ax{ font-size: 11px; fill: #8a8f98; font-weight: 600; }
+.wbr_line{ fill: none; stroke: #c8ced6; stroke-width: 2; stroke-linejoin: round; }
+.wbr_pt{ stroke: #fff; stroke-width: 2; cursor: pointer; }
+.wbr_pt:hover{ r: 7; }
+.wbr_legend{ display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; font-weight: 600; color: #444; }
+.wbr_legend span{ display: inline-flex; align-items: center; gap: 6px; }
+.wbr_legend i, .wbr_dot{ display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.wbp_td_sp{ flex: 0 0 120px; }
+.wbp_spark{ display: block; width: 110px; height: 30px; }
+@media (max-width: 768px){
+	.wbr_last{ text-align: left; }
+	.wbr_name{ font-size: 20px; }
+	.wbr_last_v{ font-size: 22px; }
+	.wbp_td_sp{ flex: 1 1 40%; }
+	.wbr_chart text{ font-size: 30px; }
+}
+
+/* ---- Қалдық пен ревизия ---- */
+.wbs_from{ margin-top: 8px; }
+.wbs_from .wb_inp{ height: 40px; }
+.wbs_miss{ display: flex; flex-wrap: wrap; gap: 6px; }
+.wbs_miss .wb_st{ white-space: normal; }
+.wbv_inp{ max-width: 140px; height: 42px; text-align: right; }
+.wbv_foot{ flex-wrap: wrap; }
+@media (max-width: 768px){
+	.wbv_inp{ max-width: none; }
+	.wbv_foot .wb_actions{ width: 100%; }
+	.wbv_foot .wb_actions .wb_inp{ width: 100% !important; }
+}
+
+/* ---- Тізім: кезең бір жақта, атауын басқанда таңдау терезесі (assets/js/st_pick.js) ---- */
+.wb_per{ display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.wb_per_nav{ position: relative; }
+.wb_per_off, .wb_per_off:hover{ color: #ccc; background: none; cursor: default; }
+.st_pick_t{ cursor: pointer; border-radius: 10px; padding: 8px 10px; transition: .15s; }
+.st_pick_t:hover{ background: #e3f5ec; color: var(--g); }
+.st_pk{ position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 2147482500; width: 300px; padding: 14px; background: #fff; border-radius: 16px; box-shadow: 0 16px 40px rgba(0,0,0,.18); }
+.st_pk_h{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
+.st_pk_h b{ flex: 1; text-align: center; }
+.st_pk_n{ width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 22px; color: #222 !important; cursor: pointer; }
+.st_pk_n:hover{ background: #f5f5f5; }
+.st_pk_g{ display: grid; gap: 6px; }
+.st_pk_g3{ grid-template-columns: repeat(3, 1fr); }
+.st_pk_i{ height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #f6f6f6; font-weight: 700; color: #222 !important; cursor: pointer; }
+.st_pk_i:hover{ background: #e3f5ec; }
+.st_pk_wd, .st_pk_row{ display: grid; grid-template-columns: repeat(7, 1fr); }
+.st_pk_wd span{ text-align: center; font-size: 11px; font-weight: 700; color: #8a8f98; padding-bottom: 4px; }
+.st_pk_d{ height: 36px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; }
+.st_pk_out{ color: #b8bcc4; }
+.st_pk_today{ color: var(--g); font-weight: 800; }
+.st_pk_row:not(.st_pk_wk) .st_pk_d:hover{ background: #e3f5ec; }
+.st_pk_wk{ border-radius: 10px; cursor: pointer; }
+.st_pk_wk:hover{ background: #e3f5ec; }
+.st_pk_act.st_pk_wk, .st_pk_d.st_pk_act, .st_pk_i.st_pk_act{ background: #0EA768 !important; color: #fff !important; }
+.st_pk_act .st_pk_d{ color: #fff; }
+.st_pk_off{ opacity: .3; pointer-events: none; }
+@media (max-width: 600px){ .wb_per{ width: 100%; } .wb_per_nav{ flex: 1; justify-content: space-between; } .st_pk{ left: auto; right: 0; transform: none; } }

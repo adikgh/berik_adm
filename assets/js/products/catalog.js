@@ -42,7 +42,7 @@ $(document).ready(function() {
 			data: { id: btn.attr('data-id'), name_kz: $('.ctg_name_kz_in').val(), name_ru: $('.ctg_name_ru_in').val(), color: ctgColor },
 			beforeSend: function(){ mess('Сақталуда..') },
 			success: function(data){
-				if (data == 'yes') { mess('Сақталды'); setTimeout(function(){ location.reload() }, 400) }
+				if (data == 'yes') { mess('Сақталды'); ctgClose(); ajx('.ctg_c') }
 				else { mess('Қате!'); console.log(data) }
 			},
 		});
@@ -53,15 +53,14 @@ $(document).ready(function() {
 	$('html').on('click', '.ctg_del', function(){
 		var b = $(this), row = b.closest('.ctg_i');
 		var cnt = Number(b.attr('data-cnt'));
-		if (!confirm('Каталогты архивке жіберейік пе?' + (cnt > 0 ? '\nІшіндегі ' + cnt + ' тағам «Каталогсыз» тобына түседі.' : '') + '\nТолық өшпейді.')) return;
-		$.ajax({
+		ask('Каталогты архивке жіберейік пе?' + (cnt > 0 ? '<br>Ішіндегі ' + cnt + ' тағам «Каталогсыз» тобына түседі.' : '') + '<br>Толық өшпейді.', function(){ $.ajax({
 			url: '/products/catalog/get.php?delete', type: 'POST', dataType: 'html',
 			data: { id: row.attr('data-id') },
 			success: function(data){
-				if (data == 'yes') { row.remove(); ctgRenumber(); ctgSaveSort(); mess('Архивке жіберілді') }
+				if (data == 'yes') { row.remove(); ctgRenumber(); ctgSaveSort(); mess('Архивке жіберілді', 'ok') }
 				else { mess('Қате!'); console.log(data) }
 			},
-		});
+		}) }, { ok: 'Архивке' });
 	});
 
 	// рет

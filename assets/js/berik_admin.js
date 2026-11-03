@@ -44,18 +44,24 @@ $(document).ready(function() {
 	$(document).on('keydown', function(e) { if (e.key == 'Escape') bcal_close(); });
 	$(window).on('resize scroll', bcal_close);
 
-	$('input.on_sort_time').each(function() {
+	function bdt_init(scope) { $(scope).find('input.on_sort_time').each(function() {
 		var inp = $(this);
 		if (inp.closest('.bdt').length) return;
-		// кезең: day (әдепкі) | month | year — data-period арқылы
+		// кезең: day (әдепкі) | week | month | year — data-period арқылы
 		var per = inp.attr('data-period') || 'day';
+		function monday(v) { var d = parse(v); if (!d) return v; d.setDate(d.getDate() - (d.getDay() + 6) % 7); return ymd(d); }
 		function mname(m) { var n = (months_n[L] || months_n.kz)[m]; return n.charAt(0).toUpperCase() + n.slice(1); }
-		function key(v) { return per == 'year' ? v.slice(0, 4) : (per == 'month' ? v.slice(0, 7) : v); }
-		var t_cur = per == 'year' ? w('This year', 'Биыл') : (per == 'month' ? w('This month', 'Осы ай') : w('Today', 'Бүгін'));
-		var t_prev = per == 'year' ? w('Previous year', 'Алдыңғы жыл') : (per == 'month' ? w('Previous month', 'Алдыңғы ай') : w('Previous day', 'Алдыңғы күн'));
-		var t_next = per == 'year' ? w('Next year', 'Келесі жыл') : (per == 'month' ? w('Next month', 'Келесі ай') : w('Next day', 'Келесі күн'));
+		function key(v) { return per == 'year' ? v.slice(0, 4) : (per == 'month' ? v.slice(0, 7) : (per == 'week' ? monday(v) : v)); }
+		var t_cur = per == 'year' ? w('This year', 'Биыл') : (per == 'month' ? w('This month', 'Осы ай') : (per == 'week' ? w('This week', 'Осы апта') : w('Today', 'Бүгін')));
+		var t_prev = per == 'year' ? w('Previous year', 'Алдыңғы жыл') : (per == 'month' ? w('Previous month', 'Алдыңғы ай') : (per == 'week' ? w('Previous week', 'Алдыңғы апта') : w('Previous day', 'Алдыңғы күн')));
+		var t_next = per == 'year' ? w('Next year', 'Келесі жыл') : (per == 'month' ? w('Next month', 'Келесі ай') : (per == 'week' ? w('Next week', 'Келесі апта') : w('Next day', 'Келесі күн')));
 		function label(v) {
 			var d = parse(v); if (!d || per == 'day') return nice(v);
+			if (per == 'week') {
+				var a = parse(monday(v)), b = new Date(a); b.setDate(a.getDate() + 6);
+				var ma = (months[L] || months.kz)[a.getMonth()], mb = (months[L] || months.kz)[b.getMonth()];
+				return a.getDate() + (ma == mb ? '' : ' ' + ma) + ' – ' + b.getDate() + ' ' + mb;
+			}
 			return per == 'year' ? String(d.getFullYear()) : mname(d.getMonth()) + ' ' + d.getFullYear();
 		}
 		// құрылым: [←] [күнтізбе белгісі + мәтін + жасырын input] [→] [Бүгін]
@@ -72,7 +78,7 @@ $(document).ready(function() {
 		main.find('.bdt_txt').text((is_cur ? t_cur + ' · ' : '') + label(inp.val()));
 		// Браузердің күнтізбесі емес, өз күнтізбеміз (кассадағыдай). body-ге қойылады — карточкалардың астында қалмайды
 		var cal = $('<div class="bcal"></div>'), vm = null, sel = inp.val() || today;
-		$('body').append(cal);
+		$('body').append(cal); cal.data('inp', inp[0]);
 		// ай / жыл таңдау: 3 бағанды тор
 		function cell(v, txt) {
 			var c = 'bcal_d';
@@ -82,7 +88,7 @@ $(document).ready(function() {
 		}
 		function draw() {
 			var y = vm.getFullYear(), m = vm.getMonth(), mn = mname(m), h;
-			if (per != 'day') {
+			if (per != 'day' && per != 'week') {
 				var y0 = per == 'year' ? y - y % 12 : y;
 				h = '<div class="bcal_head"><div class="bcal_nav bcal_pm"><i class="far fa-angle-left"></i></div><b>' + (per == 'year' ? y0 + ' – ' + (y0 + 11) : y) + '</b><div class="bcal_nav bcal_nm"><i class="far fa-angle-right"></i></div></div><div class="bcal_grid bcal_grid3">';
 				for (var k = 0; k < 12; k++) h += per == 'year' ? cell((y0 + k) + '-01-01', y0 + k) : cell(y + '-' + ('0' + (k + 1)).slice(-2) + '-01', mname(k));
@@ -97,7 +103,7 @@ $(document).ready(function() {
 				var v = ymd(d), c = 'bcal_d';
 				if (d.getMonth() != m) c += ' bcal_out';
 				if (v == today) c += ' bcal_tod';
-				if (v == sel) c += ' bcal_sel';
+				if (per == 'week' ? key(v) == key(sel) : v == sel) c += ' bcal_sel';
 				h += '<div class="' + c + '" data-v="' + v + '">' + d.getDate() + '</div>';
 				if (i == 34 && d.getMonth() != m) break;
 			}
@@ -117,7 +123,7 @@ $(document).ready(function() {
 		cal.on('click', function(e) { e.stopPropagation(); });
 		cal.on('click', '.bcal_pm, .bcal_nm', function() {
 			var k = $(this).hasClass('bcal_nm') ? 1 : -1;
-			if (per == 'day') vm.setMonth(vm.getMonth() + k); else vm.setFullYear(vm.getFullYear() + k * (per == 'year' ? 12 : 1));
+			if (per == 'day' || per == 'week') vm.setMonth(vm.getMonth() + k); else vm.setFullYear(vm.getFullYear() + k * (per == 'year' ? 12 : 1));
 			draw();
 		});
 		cal.on('click', '.bcal_d', function() { bcal_close(); go($(this).attr('data-v')); });
@@ -126,11 +132,13 @@ $(document).ready(function() {
 		box.on('click', '.bdt_prev, .bdt_next', function() {
 			var d = parse(inp.val()) || new Date(), k = $(this).hasClass('bdt_next') ? 1 : -1;
 			if (per == 'day') d.setDate(d.getDate() + k);
+			else if (per == 'week') d.setDate(d.getDate() + 7 * k);
 			else { d.setDate(1); if (per == 'year') d.setFullYear(d.getFullYear() + k, 0, 1); else d.setMonth(d.getMonth() + k); }
 			go(ymd(d));
 		});
 		box.on('click', '.bdt_today', function() { go(today); });
-	});
+	}); }
+	bdt_init(document);
 
 
 	// ---------- Ашылмалы тізімдер: бір келкі әдемі ----------
@@ -151,7 +159,11 @@ $(document).ready(function() {
 			wrap.toggleClass('bsel_on', s.prop('selectedIndex') > 0);
 			list.empty();
 			s.find('option').each(function(i) {
-				list.append($('<div class="bsel_i"></div>').text($(this).text()).attr('data-i', i).toggleClass('bsel_act', this.selected));
+				var it = $('<div class="bsel_i"></div>').attr('data-i', i).toggleClass('bsel_act', this.selected);
+				var sub = $(this).attr('data-sub');
+				if (sub) it.addClass('bsel_i2').append($('<span></span>').text($(this).text())).append($('<small></small>').text(sub));
+				else it.text($(this).text());
+				list.append(it);
 			});
 		}
 		sync();
@@ -173,7 +185,23 @@ $(document).ready(function() {
 		s.on('change.bsel', sync);
 	}
 	$('.uc_ui69 select, .head_rk select').each(function() { enhance(this); });
+	// бет блогы AJAX-пен жаңарғанда (fun.js ajx) күнтізбе мен тізімдерді қайта безендіру
+	$(document).on('ajx:done', function() {
+		$('.bcal').each(function() { var i = $(this).data('inp'); if (i && !document.body.contains(i)) $(this).remove(); });
+		bdt_init(document);
+		$('.uc_ui69 select, .head_rk select').each(function() { enhance(this); });
+	});
 	$(document).on('click', function() { $('.bsel').removeClass('bsel_open'); });
+
+	// компания ауысқанда бүкіл бет жаңарады (шапка, мәзір сандары да сол компанияға ауысады)
+	$(document).on('change', 'select.on_sort_company', function(e) {
+		e.stopImmediatePropagation();
+		var val = this.value || $(this).find('option:selected').attr('value');
+		if (!val) return;
+		var url = new URL(window.location);
+		url.searchParams.set('company', val);
+		location.href = url;
+	});
 	$(document).on('keydown', function(e) { if (e.key == 'Escape') $('.bsel').removeClass('bsel_open'); });
 
 
@@ -213,7 +241,7 @@ $(document).ready(function() {
 	// касса: курьердің заказдарын ашу / жабу
 	$('html').on('click', '.k_cr_tg', function() {
 		var id = $(this).attr('data-id'), row = $('.k_cr_det[data-id="' + id + '"]');
-		if (row.hasClass('k_cr_open') && row.hasClass('k_cr_changed')) { location.reload(); return; }
+		if (row.hasClass('k_cr_open') && row.hasClass('k_cr_changed')) { ajxReload(this); return; }
 		row.toggleClass('k_cr_open');
 		$(this).toggleClass('k_cr_tg_open');
 	});

@@ -6,8 +6,14 @@
 
 	wb::install();
 	$cmp = (int)$company;
-	$per = wb::period();
-	$pf = $per['from']; $pt = $per['to'];
+	// бұл айда накладной әлі жоқ болса, бос тізім көрсетпей, бұл жылды ашамыз
+	if (!isset($_GET['mode'])) {
+		$m1 = date('Y-m-01');
+		if (!(int)mysqli_fetch_assoc(db::query("select COUNT(*) n from waybill where company_id = '$cmp' and doc_date >= '$m1'"))['n']) $_GET['mode'] = 'y';
+	}
+	// Күн | Апта | Ай | Жыл (басқа беттердегідей). «Барлығы» тек карточкадан келгенде шығады
+	$per = wb::per2('m', @$_GET['mode'] === 'a');
+	$pf = $per['pf']; $pt = $per['pt'];
 
 	// сүзгі
 	$sup = (int)@$_GET['s'];
@@ -43,7 +49,9 @@
 
 	$suppliers = db::query("select id, name from supplier where company_id = '$cmp' and archive = 0 order by name");
 
-	$p_names = ['month' => 'Бұл ай', 'prev' => 'Өткен ай', '3m' => '3 ай', 'year' => 'Бұл жыл', 'all' => 'Барлығы'];
+	// кезең ауыстырғышы басқан кезде сүзгі сақталады
+	$per_q = http_build_query(array_filter(['s' => $sup ?: '', 'st' => (string)$st, 'q' => $q], 'strlen'));
+	$per_q = $per_q ? '&'.$per_q : '';
 	$st_names = ['' => 'Барлығы', 'ok' => 'Қабылданған', 'draft' => 'Жоба', 'debt' => 'Қарызы бар'];
 
 	// site setting
@@ -52,30 +60,35 @@
 	$page_key = 'Incoming goods';
 	$wb_tab = 'list';
 	$css = ['waybill'];
-	$js = ['waybill'];
+	$js = ['waybill', 'st_pick'];
 ?>
 <? include "../block/header.php"; ?>
 
-<div class="bl_c wb_page">
+<div class="bl_c wb_page" data-ajx-nav=".wb_page">
 
 	<? include "tabs.php"; ?>
 
 	<!-- Кезең -->
 	<div class="wb_bar">
-		<div class="wb_tabs">
-			<? foreach ($p_names as $k => $v): ?>
-				<a class="wb_tab <?=($per['p'] == $k ? 'wb_tab_act' : '')?>" href="<?=wb::url('/waybill/', ['p' => $k, 'from' => null, 'to' => null, 'page' => null])?>"><?=$v?></a>
-			<? endforeach ?>
+		<div class="wb_per">
+			<div class="wb_tabs">
+				<? foreach (['d' => 'Күн', 'w' => 'Апта', 'm' => 'Ай', 'y' => 'Жыл'] + ($per['all'] ? ['a' => 'Барлығы'] : []) as $k => $v): ?>
+					<a class="wb_tab <?=($per['mode'] == $k ? 'wb_tab_act' : '')?>" href="?mode=<?=$k?><?=($k == 'a' ? '' : $per['keep'])?><?=wb::h($per_q)?>"><?=$v?></a>
+				<? endforeach ?>
+			</div>
+			<? if ($per['mode'] != 'a'): ?>
+				<div class="wb_tabs wbg_nav wb_per_nav">
+					<a class="wb_tab wbg_nav_b" href="?mode=<?=$per['mode']?>&d=<?=$per['prev']?><?=wb::h($per_q)?>" aria-label="Алдыңғы"><i class="far fa-chevron-left"></i></a>
+					<div class="st_nav_t wbg_nav_t" data-pick="1" data-mode="<?=$per['mode']?>" data-d="<?=$pf?>" data-today="<?=date('Y-m-d')?>" data-q="<?=wb::h($per_q)?>"><?=$per['title']?></div>
+					<? if ($per['next'] <= date('Y-m-d')): ?>
+						<a class="wb_tab wbg_nav_b" href="?mode=<?=$per['mode']?>&d=<?=$per['next']?><?=wb::h($per_q)?>" aria-label="Келесі"><i class="far fa-chevron-right"></i></a>
+					<? else: ?>
+						<span class="wb_tab wbg_nav_b wb_per_off"><i class="far fa-chevron-right"></i></span>
+					<? endif ?>
+				</div>
+			<? endif ?>
 		</div>
-		<form class="wb_range" method="get" action="/waybill/">
-			<? foreach (['s', 'st', 'q'] as $k): if (@$_GET[$k]): ?><input type="hidden" name="<?=$k?>" value="<?=wb::h($_GET[$k])?>"><? endif; endforeach ?>
-			<input type="date" name="from" value="<?=($per['p'] == 'custom' ? $pf : '')?>" class="wb_inp">
-			<span>—</span>
-			<input type="date" name="to" value="<?=($per['p'] == 'custom' ? $pt : '')?>" class="wb_inp">
-			<button class="wb_btn" type="submit"><i class="fal fa-check"></i></button>
-		</form>
 	</div>
-	<div class="wb_sub"><?=wb::dt($pf)?> — <?=wb::dt($pt)?></div>
 
 	<!-- Карточкалар -->
 	<div class="wb_cards">
@@ -89,12 +102,12 @@
 			<div class="wb_card_v"><?=wb::sum($sm['total'])?></div>
 			<div class="wb_card_s">төленгені <?=wb::sum($sm['paid'])?></div>
 		</div>
-		<a class="wb_card wb_card_link" href="<?=wb::url('/waybill/', ['st' => 'debt', 'p' => 'all', 'from' => null, 'to' => null, 'page' => null])?>">
+		<a class="wb_card wb_card_link" href="<?=wb::url('/waybill/', ['st' => 'debt', 'mode' => 'a', 'd' => null, 'page' => null])?>">
 			<div class="wb_card_h">Жеткізушілерге қарыз</div>
 			<div class="wb_card_v wb_c_red"><?=wb::sum($debt_all)?></div>
 			<div class="wb_card_s">барлық уақыт бойынша</div>
 		</a>
-		<a class="wb_card wb_card_link" href="<?=wb::url('/waybill/', ['st' => 'draft', 'p' => 'all', 'from' => null, 'to' => null, 'page' => null])?>">
+		<a class="wb_card wb_card_link" href="<?=wb::url('/waybill/', ['st' => 'draft', 'mode' => 'a', 'd' => null, 'page' => null])?>">
 			<div class="wb_card_h">Жоба күйінде</div>
 			<div class="wb_card_v wb_c_orange"><?=$drafts?></div>
 			<div class="wb_card_s">әлі қабылданбаған</div>
@@ -108,9 +121,9 @@
 				<a class="wb_tab <?=((string)$st === (string)$k ? 'wb_tab_act' : '')?>" href="<?=wb::url('/waybill/', ['st' => $k, 'page' => null])?>"><?=$v?></a>
 			<? endforeach ?>
 		</div>
-		<form class="wb_range" method="get" action="/waybill/">
-			<? foreach (['p', 'from', 'to', 'st'] as $k): if (@$_GET[$k]): ?><input type="hidden" name="<?=$k?>" value="<?=wb::h($_GET[$k])?>"><? endif; endforeach ?>
-			<select name="s" class="wb_inp" onchange="this.form.submit()">
+		<form class="wb_range" method="get" action="/waybill/" data-ajx=".wb_page">
+			<? foreach (['mode', 'd', 'st'] as $k): if (@$_GET[$k]): ?><input type="hidden" name="<?=$k?>" value="<?=wb::h($_GET[$k])?>"><? endif; endforeach ?>
+			<select name="s" class="wb_inp" onchange="this.form.requestSubmit()">
 				<option value="">Барлық жеткізуші</option>
 				<? while ($s = mysqli_fetch_assoc($suppliers)): ?>
 					<option value="<?=$s['id']?>" <?=($sup == $s['id'] ? 'selected' : '')?>><?=wb::h($s['name'])?></option>

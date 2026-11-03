@@ -186,6 +186,101 @@
 	.pop_bl2 .pop_bl_c{ border-radius: 22px 22px 0 0; }
 }
 
+
+/* ---------- 2026-11-03: барлық беттер, телефон (сүзгілер, кезең, чиптер, кестелер, карточкалар) ---------- */
+@media (max-width: 768px){
+
+	/* Кезең ауыстырғыш Күн | Апта | Ай | Жыл: бүкіл ені, тең бөлінеді */
+	.st_bar{ margin: 4px 0 14px; gap: 8px; }
+	.st_seg, .rnp_seg{ display: flex; flex-wrap: nowrap; width: 100%; }
+	.st_seg_i, .rnp_seg_i{ flex: 1 1 0; min-width: 0; justify-content: center; text-align: center; }
+	.st_nav{ display: flex; flex: 1 1 0; min-width: 0; }
+	.st_nav_t{ flex: 1 1 auto; min-width: 0; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.st_bar .rnp_info{ flex: 0 0 auto; }
+
+	/* Сүзгі жолағы: күн мен чиптер бүкіл енімен, select-тер қатар тұрады */
+	.uc_ui69{ display: flex; flex-wrap: wrap; align-items: stretch; }
+	.uc_ui69 > *{ flex: 1 1 140px; min-width: 0; }
+	.uc_ui69 > :has(> .bdt), .uc_ui69 > .bdt, .uc_ui69 > .k_br, .uc_ui69 > .rnp_seg, .uc_ui69 > .st_seg{ flex-basis: 100%; }
+	.uc_ui69 > div > select, .uc_ui69 > div > .bsel, .uc_ui69 > div > .bsel > .bsel_btn{ width: 100%; }
+	.bdt{ display: flex; width: 100%; height: 50px; }
+	.bdt_main{ flex: 1 1 auto; justify-content: center; }
+
+	/* Чип топтары мен бет ішіндегі қойындылар: бір жол, саусақпен көлденең айналады */
+	.k_br, .pr_seg, .wb_tabs, .cs_tabs, .st_tabs{
+		display: flex; flex-wrap: nowrap; max-width: 100%; overflow-x: auto;
+		scrollbar-width: none; -webkit-overflow-scrolling: touch;
+	}
+	.k_br::-webkit-scrollbar, .pr_seg::-webkit-scrollbar, .wb_tabs::-webkit-scrollbar, .cs_tabs::-webkit-scrollbar, .st_tabs::-webkit-scrollbar{ display: none; }
+	.k_br > *, .pr_seg > *, .wb_tabs > *, .cs_tabs > *, .st_tabs > *{ flex: 0 0 auto; white-space: nowrap; }
+	.wb_tabs{ width: 100%; }
+
+	/* Кестелер: бірінші баған тұрақты, қалғаны айналады */
+	.table4{ margin-left: 0; margin-right: 0; }
+	.table4 table{ border-collapse: separate; border-spacing: 0; }
+	.table4 td:first-child{ position: sticky; left: 0; z-index: 1; background: #fff; min-width: 96px; max-width: 120px; white-space: normal; font-weight: 700; box-shadow: 1px 0 0 #eef0f3; }
+	.table4 td{ height: 44px; font-size: 13px; padding: 0 8px; white-space: nowrap; }
+
+	/* Тағамдар тізімі: атау жоғарыда, баға мен батырмалар астында */
+	.ctg_i.pr_row{
+		display: grid; grid-template-columns: 22px 44px minmax(0,1fr) auto;
+		grid-template-areas: "n p name name" "n p price btns";
+		column-gap: 10px; row-gap: 6px; align-items: center; padding: 10px 10px 10px 6px;
+	}
+	.ctg_i.pr_row .ctg_num{ grid-area: n; width: auto; font-size: 12px; }
+	.ctg_i.pr_row .ctg_clr{ grid-area: p; align-self: start; }
+	.ctg_i.pr_row .ctg_name{ grid-area: name; min-width: 0; }
+	.ctg_i.pr_row .ctg_name_kz{ font-size: 15px; line-height: 1.3; word-break: break-word; }
+	.ctg_i.pr_row .ctg_cnt{ grid-area: price; display: block; font-size: 14px; font-weight: 700; color: var(--bp-text, #222); }
+	.ctg_i.pr_row .ctg_btns{ grid-area: btns; gap: 4px; }
+	.ctg_i.pr_row .ctg_b{ width: 36px; height: 36px; border-radius: 9px; font-size: 14px; }
+	.ctg_i.pr_row .ctg_drag{ display: none; }
+
+	/* Карточка торлары (статистика, себес, накладной): бос жер аз */
+	.st_card, .cs_card, .wb_card{ border-radius: 16px; }
+
+
+	/* Курьер есептері сияқты: артқа батырмасы кішкене, сүзгі формасы бір жолда */
+	.uc_ui69 > a.btn, .uc_ui69 > .cd_back{ flex: 0 0 auto; min-height: 48px; height: 48px; }
+	.uc_ui69 > form{ flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+	.uc_ui69 > form > *{ flex: 1 1 140px; min-width: 0; }
+	.uc_ui69 > form > .bsel > .bsel_btn{ width: 100%; }
+
+	/* Клиенттер: кезең чиптері бір жол, күндер кең */
+	.cl_bar, .cl_bar_l{ width: 100%; min-width: 0; max-width: 100%; }
+	.cl_tabs{ display: flex; flex-wrap: nowrap; width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+	.cl_tabs::-webkit-scrollbar{ display: none; }
+	.cl_tabs > *{ flex: 0 0 auto; white-space: nowrap; }
+	.cl_range > .cl_btn_light{ flex: 1 1 100%; justify-content: center; }
+	.cl_range .cl_inp{ flex: 1 1 0; min-width: 0; padding: 0 10px; }
+	.cl_col_v{ display: none; }
+
+	/* Каталог тізімі: атау толық көрінеді, батырмалар оң жақта астында */
+	.ctg_i:not(.pr_row){
+		display: grid; grid-template-columns: 22px 36px minmax(0,1fr);
+		grid-template-areas: "n p name" "n p btns"; column-gap: 10px; row-gap: 6px;
+	}
+	.ctg_i:not(.pr_row) .ctg_num{ grid-area: n; width: auto; }
+	.ctg_i:not(.pr_row) .ctg_clr{ grid-area: p; }
+	.ctg_i:not(.pr_row) .ctg_name{ grid-area: name; }
+	.ctg_i:not(.pr_row) .ctg_btns{ grid-area: btns; justify-self: end; gap: 4px; }
+	.ctg_i:not(.pr_row) .ctg_b{ width: 36px; height: 36px; }
+	.ctg_i:not(.pr_row) .ctg_cnt, .ctg_i:not(.pr_row) .ctg_drag{ display: none; }
+
+	/* Статус тарихы терезесі: телефонда төменнен шығатын парақ */
+	.oh_pop.oh_open{
+		position: fixed !important; left: 10px !important; right: 10px !important; top: auto !important;
+		bottom: calc(96px + env(safe-area-inset-bottom)) !important; width: auto !important;
+		max-height: 60vh; overflow-y: auto; z-index: 6950; border-radius: 18px; box-shadow: 0 -6px 30px rgba(0,0,0,.18);
+	}
+
+	/* Футер бар болса, бет астындағы бос орын қайталанбасын */
+	body:has(.footer) .app{ padding-bottom: 16px; }
+
+	/* Төменгі бетке футер шағындау */
+	.footer{ padding-top: 18px; }
+}
+
 @media (max-width: 420px){
 	.bm_nav{ left: 8px; right: 8px; }
 	.bm_nav_c{ padding: 5px; }

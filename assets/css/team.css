@@ -14,7 +14,13 @@
 .tm_chip{height:48px;padding:0 16px;border-radius:10px;border:1px solid #e1e4ea;background:#fff;display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:14px;user-select:none;transition:.15s}
 .tm_chip:hover{border-color:#1f75a8}
 .tm_chip_act,.tm_chip_act:hover{background:#e3f5ec;border-color:#0EA768;color:#0EA768}
+.tm_chips_lock .tm_chip:not(.tm_chip_act){opacity:.35;pointer-events:none}
 @media (max-width:700px){.tm_list{grid-template-columns:1fr}}
 .tm_hint{font-size:13px;margin-top:6px;color:#1f75a8}.tm_hint:empty{display:none}.tm_hint_warn{color:#d9534f}
 
-.tm_hint{margin:-6px 0 4px}
+/* нөмір астындағы жазу: өріске жабыспай, бөлек қорап болып тұрады */
+.tm_hint{position:relative;margin:10px 0 4px;padding:10px 12px;border-radius:10px;background:#eef6fb;line-height:1.45}
+.tm_hint_warn{background:#fdeeee}
+/* бекітулі өріс: басқа компаниядағы не жоғары лауазымды адамның аты-жөні */
+.tm_ro .form_txt{background:#f2f4f7;color:#667085;cursor:not-allowed}
+.tm_ro .form_span::after{content:" (өзгертілмейді)";color:#98a2b3;font-weight:400}

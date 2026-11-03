@@ -1,5 +1,5 @@
 <? include "../config/core.php";
-	include "cday_lib.php";
+	include_once "cday_lib.php";
 
 	if (!$user_id) { header('location: /'); exit(); }
 
@@ -48,13 +48,13 @@
 ?>
 <? include "../block/header.php"; ?>
 
-	<div class="bl_c">
+	<div class="bl_c cd_page" data-ajx-nav=".cd_page">
 
 		<div class="uc_ui69 cd_top">
 			<a class="btn btn_cl cd_back" href="/kassa/"><i class="fal fa-arrow-left"></i><span><?=t::w('Cashbox', 'Касса')?></span></a>
-			<form class="cd_flt" method="get">
-				<input class="form_dt" type="month" name="m" value="<?=$month?>" onchange="this.form.submit()">
-				<select class="form_txt" name="c" onchange="this.form.submit()">
+			<form class="cd_flt" method="get" data-ajx=".cd_page">
+				<input class="form_dt" type="month" name="m" value="<?=$month?>" onchange="this.form.requestSubmit()">
+				<select class="form_txt" name="c" onchange="this.form.requestSubmit()">
 					<option value="0"><?=t::w('All couriers', 'Барлық курьер')?></option>
 					<? foreach ($couriers as $k => $n): ?><option value="<?=$k?>" <?=($k == $cid ? 'selected' : '')?>><?=htmlspecialchars($n)?></option><? endforeach ?>
 				</select>

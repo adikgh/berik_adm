@@ -1,6 +1,6 @@
 <?php
 // Client cabinet personal link. The same file (same secret) lives in
-// my.berik.c/config and admin.pf.c/config. Changing the secret turns off all old links.
+// my.berik.c/config and adm.berik.c/config. Changing the secret turns off all old links.
 const CABINET_URL = 'http://my.berik.c';
 const CLIENT_LINK_SECRET = '';
 

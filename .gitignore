@@ -2,3 +2,16 @@
 /assets/pl/fontawesome/
 /config/client_link.php
 *.bak_2026*
+/config/ai.php
+/config/gdrive_token.php
+/config/auth_key.php
+/config/wa_conf.php
+/config/secret.php
+/config/map_key.php
+/config/smsc_api.php
+*.bak_*
+*.sql
+/assets/uploads/*
+!/assets/uploads/users/
+/assets/uploads/users/*
+!/assets/uploads/users/Sample_User_Icon.png

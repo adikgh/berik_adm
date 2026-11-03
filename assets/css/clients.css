@@ -102,3 +102,28 @@ a.cl_tr:hover{ background: #fafbfc; }
 	.cl_range{ width: 100%; }
 	.cl_range .cl_inp[type="date"]{ flex: 1; min-width: 0; }
 }
+
+/* Кезең: ‹ атауы › (2026-11-03) */
+.cl_nav{ display: inline-flex; align-items: center; gap: 4px; height: 54px; padding: 5px; background: #fff; border-radius: 14px; box-shadow: var(--sh); }
+.cl_nav_b{ width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #222; font-size: 14px; transition: .15s; }
+.cl_nav_b:hover{ background: #f5f5f5; }
+.cl_nav_off, .cl_nav_off:hover{ color: #ccc; background: none; cursor: default; }
+.cl_nav_t{ min-width: 130px; padding: 0 8px; text-align: center; font-size: 14px; font-weight: 700; white-space: nowrap; }
+/* «Кэшбэк, сыйлық» — басылатын батырма */
+.cl_go{ height: 54px; display: inline-flex; align-items: center; gap: 10px; padding: 0 16px 0 18px; background: #fff; border: 1px solid #f0d9a8; border-radius: 14px; box-shadow: var(--sh); font-size: 14px; font-weight: 700; color: #222; cursor: pointer; transition: .15s; }
+.cl_go .fa-gift{ font-size: 18px; color: #e08a00; }
+.cl_go_ar{ font-size: 12px; color: #999; transition: .15s; }
+.cl_go:hover{ background: #fff8e8; border-color: #e8b04a; }
+.cl_go:hover .cl_go_ar{ color: #e08a00; transform: translateX(3px); }
+@media (max-width: 700px) {
+	.cl_nav{ width: 100%; justify-content: space-between; }
+	.cl_go{ width: 100%; justify-content: center; }
+}
+/* Бет басындағы «← Артқа» сілтемесі (menu.php: $page_back) */
+.head_c.head_c_back{ flex-direction: column; align-items: flex-start; justify-content: flex-start; padding-top: 110px; padding-bottom: 22px; }
+.head_c.head_c_back h1{ font-size: 26px; line-height: 1.25; }
+/* телефонда ғана (компьютерде мәзір қатарында .aheader_bk) */
+.head_back{ height: 52px; display: inline-flex; align-items: center; gap: 10px; margin-bottom: 28px; padding: 0 22px 0 20px; background: #fff; border-radius: 14px; box-shadow: var(--sh); font-size: 15px; font-weight: 700; color: var(--b); transition: .15s; }
+.head_back:hover{ background: #eef5fb; }
+.head_back i{ font-size: 14px; transition: .15s; }
+.head_back:hover i{ transform: translateX(-3px); }

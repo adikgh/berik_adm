@@ -22,7 +22,7 @@
 ?>
 <? include "../block/header.php"; ?>
 
-<div class="bl_c wb_page">
+<div class="bl_c wb_page" data-ajx-nav=".wb_page">
 
 	<? include "tabs.php"; ?>
 

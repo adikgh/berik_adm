@@ -50,19 +50,19 @@
 .st_chart_in{ position: relative; display: flex; align-items: stretch; gap: 4px; height: 100%; }
 /* тренд сызығы: бағандардың үстінде, 75% мөлдір */
 .st_trend{ position: absolute; left: 0; top: 0; width: 100%; height: calc(100% - 17px); z-index: 2; pointer-events: none; overflow: visible; }
-.st_chart_y .st_trend{ height: calc(100% - 18px); }
+.st_chart_y .st_trend, .st_chart_w .st_trend{ height: calc(100% - 18px); }
 .st_trend line{ stroke: #222; stroke-opacity: .25; stroke-width: 3; stroke-linecap: round; }
 .st_card_hr{ display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
 .st_trend_lg{ display: flex; align-items: center; gap: 6px; }
 .st_trend_lg span{ width: 18px; height: 3px; border-radius: 2px; background: rgba(34,34,34,.25); }
 .st_col{ position: relative; flex: 1 1 0; min-width: 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
-.st_chart_y .st_col{ min-width: 40px; }
+.st_chart_y .st_col, .st_chart_w .st_col{ min-width: 40px; }
 .st_col_bar{ flex: 1; width: 100%; display: flex; align-items: flex-end; border-radius: 6px; background: #f4f5f6; overflow: hidden; }
 .st_col_f{ width: 100%; background: var(--st-blue); border-radius: 6px 6px 0 0; transition: .15s; }
 .st_col:hover .st_col_f{ background: var(--bp-blue-h, #18618b); }
 .st_col_today .st_col_f{ background: var(--st-green); }
 .st_col_l{ font-size: 11px; font-weight: 600; color: var(--st-muted); line-height: 1; }
-.st_chart_y .st_col_l{ font-size: 12px; }
+.st_chart_y .st_col_l, .st_chart_w .st_col_l{ font-size: 12px; }
 .st_col_wk .st_col_l{ color: #e5484d; }
 .st_col_today .st_col_l{ color: var(--st-green); font-weight: 800; }
 .st_tip{ display: none; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 5; padding: 8px 10px; background: #222; color: #fff; border-radius: 8px; font-size: 12px; white-space: nowrap; flex-direction: column; gap: 2px; pointer-events: none; }
@@ -106,3 +106,28 @@ a.st_li:hover .st_li_n{ color: var(--st-blue); }
 @media (max-width: 480px){
 	.st_kpis{ grid-template-columns: 1fr; }
 }
+
+/* кезең атауын басқанда ашылатын таңдау терезесі (assets/js/st_pick.js) */
+.st_nav{ position: relative; }
+.st_pick_t{ cursor: pointer; border-radius: 10px; padding: 8px 10px; transition: .15s; }
+.st_pick_t:hover{ background: #e3f5ec; color: var(--st-green, #0EA768); }
+.st_pk{ position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 2147482500; width: 300px; padding: 14px; background: #fff; border-radius: 16px; box-shadow: 0 16px 40px rgba(0,0,0,.18); }
+.st_pk_h{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
+.st_pk_h b{ flex: 1; text-align: center; }
+.st_pk_n{ width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 22px; color: #222 !important; cursor: pointer; }
+.st_pk_n:hover{ background: #f5f5f5; }
+.st_pk_g{ display: grid; gap: 6px; }
+.st_pk_g3{ grid-template-columns: repeat(3, 1fr); }
+.st_pk_i{ height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #f6f6f6; font-weight: 700; color: #222 !important; cursor: pointer; }
+.st_pk_i:hover{ background: #e3f5ec; }
+.st_pk_wd, .st_pk_row{ display: grid; grid-template-columns: repeat(7, 1fr); }
+.st_pk_wd span{ text-align: center; font-size: 11px; font-weight: 700; color: #8a8f98; padding-bottom: 4px; }
+.st_pk_d{ height: 36px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; }
+.st_pk_out{ color: #b8bcc4; }
+.st_pk_today{ color: var(--st-green, #0EA768); font-weight: 800; }
+.st_pk_row:not(.st_pk_wk) .st_pk_d:hover{ background: #e3f5ec; }
+.st_pk_wk{ border-radius: 10px; cursor: pointer; }
+.st_pk_wk:hover{ background: #e3f5ec; }
+.st_pk_act.st_pk_wk, .st_pk_d.st_pk_act, .st_pk_i.st_pk_act{ background: #0EA768 !important; color: #fff !important; }
+.st_pk_act .st_pk_d{ color: #fff; }
+.st_pk_off{ opacity: .3; pointer-events: none; }

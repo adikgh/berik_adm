@@ -165,7 +165,12 @@ body{ background: var(--bp-bg); }
 .bsel_company .bsel_btn::before{ content: "\f1ad"; font-family: "Font Awesome 5 Pro"; font-weight: 300; color: var(--bp-blue); font-size: 18px; }
 .bsel_company .bsel_txt{ flex: 1; }
 .bsel_company.bsel_on .bsel_btn{ background: #fff; color: var(--bp-text); }
-.bsel_company .bsel_list{ left: auto; right: 0; min-width: 240px; }
+.bsel_company .bsel_list{ left: auto; right: 0; top: calc(100% + 12px); min-width: 260px; max-height: 420px; padding: 8px; border-radius: 14px; display: flex; flex-direction: column; gap: 6px; }
+.bsel_company .bsel_txt{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+/* компания тізімі: аты + қаласы, таңдалғанында белгі */
+.bsel_i2{ flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; min-height: 58px; padding: 10px 40px 10px 16px; border-radius: 10px; position: relative; }
+.bsel_i2 small{ font-size: 12px; font-weight: 500; color: var(--bp-muted); }
+.bsel_i2.bsel_act::after{ content: "\f00c"; font-family: "Font Awesome 5 Pro"; font-weight: 400; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--bp-green); }
 
 /* ---------- Касса: точка батырмалары, жолдар ---------- */
 .k_br{ display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; background: #fff; border: 1px solid var(--bp-line); border-radius: 12px; }
@@ -296,3 +301,49 @@ tr.k_cr_det > td{ height: auto; padding: 10px 20px 16px; background: #fafbfc; }
 /* тағам карточкасы: сипаттама өрісі */
 .pcard_ta{height:auto;min-height:84px;padding:10px 12px;line-height:1.45;resize:vertical}
 .form_im textarea.pre_desc{ height: auto; min-height: 120px; padding: 14px 16px; line-height: 1.45; resize: vertical; font: inherit; width: 100%; box-sizing: border-box; }
+
+/* Хабарлама (toast): кассадағыдай, оң жақ астынан шығады (2026-11-03) */
+.bl_mess{ display: none !important; }
+.tst_box{ position: fixed; top: 16px; right: 16px; z-index: 200000; display: flex; flex-direction: column; gap: 10px; width: 360px; max-width: calc(100vw - 32px); pointer-events: none; }
+.tst{ --c: #e9a23b; position: relative; display: flex; align-items: center; gap: 12px; padding: 14px 12px 16px 16px; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(16,24,40,.14), 0 2px 6px rgba(16,24,40,.06); border-left: 4px solid var(--c); overflow: hidden; pointer-events: auto; opacity: 0; transform: translateX(40px) scale(.96); transition: opacity .25s ease, transform .3s cubic-bezier(.2,.9,.3,1.2); }
+.tst.tst_in{ opacity: 1; transform: none; }
+.tst.tst_out{ opacity: 0; transform: translateX(40px); transition: opacity .2s ease, transform .2s ease; }
+.tst_ok{ --c: #0EA768; } .tst_err{ --c: #e5484d; } .tst_warn{ --c: #e9a23b; }
+.tst_i{ flex: 0 0 auto; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 16px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, #fff); }
+.tst_t{ flex: 1; min-width: 0; font-size: 14px; font-weight: 700; line-height: 19px; color: #1d2433; }
+.tst_x{ flex: 0 0 auto; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #8a94a3; cursor: pointer; transition: .15s; }
+.tst_x:hover{ background: #f0f2f5; color: #1d2433; }
+.tst_bar{ position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--c); opacity: .5; transform-origin: left; animation: tst_bar 4s linear forwards; }
+.tst.tst_pause .tst_bar{ animation-play-state: paused; }
+@keyframes tst_bar{ from{ transform: scaleX(1); } to{ transform: scaleX(0); } }
+@media (max-width: 768px){ .tst_box{ top: 10px; right: 10px; left: 10px; width: auto; } }
+/* Хабарлама: төменгі жақта, астынан жылжып шығады */
+.tst_box{ top: auto; bottom: 16px; }
+.tst{ transform: translateY(30px) scale(.96); }
+.tst.tst_in{ transform: none; }
+.tst.tst_out{ transform: translateY(30px); }
+@media (max-width: 768px){ .tst_box{ top: auto; bottom: 10px; } }
+
+/* Растау терезесі (ask): браузердің confirm орнына (2026-11-03) */
+.ask_bg{ position: fixed; inset: 0; z-index: 200001; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(16,24,40,.45); opacity: 0; transition: opacity .2s; }
+.ask_bg.ask_on{ opacity: 1; }
+.ask{ width: 400px; max-width: 100%; padding: 24px 22px 20px; border-radius: 16px; background: #fff; box-shadow: 0 20px 50px rgba(16,24,40,.25); text-align: center; transform: translateY(12px) scale(.97); transition: transform .25s cubic-bezier(.2,.9,.3,1.2); }
+.ask_bg.ask_on .ask{ transform: none; }
+.ask_i{ width: 52px; height: 52px; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #e3f5ec; color: #0EA768; font-size: 24px; }
+.ask_dg .ask_i{ background: #fdf3e1; color: #e9a23b; }
+.ask_q{ font-size: 16px; font-weight: 700; line-height: 1.4; color: #1d2433; }
+.ask_q small{ display: block; margin-top: 6px; font-size: 13px; font-weight: 400; color: #6b7480; }
+.ask_b{ display: flex; gap: 10px; margin-top: 20px; }
+.ask_b span{ flex: 1; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; user-select: none; transition: .15s; outline: none; }
+.ask_no{ background: #f0f2f5; color: #1d2433; }
+.ask_no:hover{ background: #e6e9ee; }
+.ask_ok{ background: #0EA768; color: #fff; }
+.ask_ok:hover{ background: #0b9159; }
+.ask_dg .ask_ok{ background: #e9a23b; }
+.ask_dg .ask_ok:hover{ background: #d48f2a; }
+
+/* аватар: сурет немесе бас әріптер */
+.ava_box{ display: flex; align-items: center; justify-content: center; overflow: hidden; background: linear-gradient(135deg, #2bb673, #1a8f57); color: #fff; font-weight: 600; letter-spacing: .5px; font-size: 18px; flex-shrink: 0; }
+.ub1_lti.ava_box{ font-size: 20px; }
+.ava_box img{ width: 100%; height: 100%; object-fit: cover; display: block; image-rendering: auto; }
+.ava_box i{ color: #fff; }

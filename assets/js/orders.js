@@ -2,7 +2,7 @@
 $(document).ready(function() {
 
 	// btn_return_sn
-	$('.btn_return_sn').on('click', function () {
+	$(document).on('click', '.btn_return_sn', function () {
 		btn = $(this)
       $.ajax({
          url: "/orders/get.php?return_sn",
@@ -10,7 +10,7 @@ $(document).ready(function() {
          dataType: "html",
          data: ({ id: btn.data('id'), }),
          success: function(data){ 
-            if (data == 'yes') location.reload();
+            if (data == 'yes') ajxReload(btn);
             console.log(data);
          },
          beforeSend: function(){ },
@@ -21,7 +21,7 @@ $(document).ready(function() {
 
 
 	// 
-	$('.on_delete').on('click', function () {
+	$(document).on('click', '.on_delete', function () {
 		btn = $(this)
       $.ajax({
          url: "/orders/get.php?delete",
@@ -29,7 +29,7 @@ $(document).ready(function() {
          dataType: "html",
          data: ({ id: btn.data('id'), }),
          success: function(data){ 
-            if (data == 'yes') location.reload();
+            if (data == 'yes') ajxReload(btn);
             console.log(data);
          },
          beforeSend: function(){ },
@@ -39,7 +39,7 @@ $(document).ready(function() {
 
 
    // 
-	$('.on_staff').on('change', function () {
+	$(document).on('change', '.on_staff', function () {
       // id = $(this).children('option:selected').attr('data-id')
 		btn = $(this)
       $.ajax({
@@ -61,10 +61,10 @@ $(document).ready(function() {
 
 
    // 
-	$('.on_status').on('change', function () {
+	$(document).on('change', '.on_status', function () {
 		var btn = $(this), opt = btn.children('option:selected'), card = btn.closest('.or_card')
 		var kept = opt.attr('data-kept'), need_r = opt.attr('data-refuse') == '1' // Отказ: себебі міндетті, Отказ вне: бізде қалған сома
-		var cancel = function(){ location.reload() }
+		var cancel = function(){ ajxReload(btn) }
 		var step2 = function(k){
 			if (!need_r) return go(k, '')
 			or_ask({ kind: 'reason', title: 'Отказ себебі', text: '№' + ($.trim(card.find('.uc_uil2_nmb').first().text()) || '') + ' тапсырысқа отказ қойылады. Себебін жазыңыз.', quick: ['Клиент бас тартты', 'Клиент телефон алмады', 'Мекенжай қате', 'Ұзақ күтті', 'Тағам біткен'], ok: 'Отказ қою' }, function(r){ go(k, r) }, cancel)
@@ -80,7 +80,7 @@ $(document).ready(function() {
 				dataType: "html",
 				data: ({ id: opt.attr('data-id'), order_id: btn.attr('data-order-id'), reason: reason, kept: k === undefined ? '' : k }),
 				success: function(data){
-					if (data == 'yes') location.reload()
+					if (data == 'yes') ajxReload(btn)
 					else { mess(data == 'need_reason' ? 'Отказ себебін жазыңыз' : 'Өзгерту мүмкін болмады'); setTimeout(cancel, 900) }
 				},
 				error: function(){ mess('Байланыс қатесі'); setTimeout(cancel, 900) }
@@ -90,7 +90,7 @@ $(document).ready(function() {
 
 
    // 
-	$('.on_stype').on('change', function () {
+	$(document).on('change', '.on_stype', function () {
 		btn = $(this)
       $.ajax({
          url: "/orders/get.php?change_type",
@@ -101,7 +101,7 @@ $(document).ready(function() {
             order_id: btn.attr('data-order-id'),
          }),
          success: function(data){ 
-            if (data == 'yes') location.reload();
+            if (data == 'yes') ajxReload(btn);
             console.log(data);
          },
          beforeSend: function(){ },
@@ -112,32 +112,29 @@ $(document).ready(function() {
    
    
    // 
-	$('.on_sort_status').on('change', function () {
+	$(document).on('change', '.on_sort_status', function () {
       var val = $(this).children('option:selected').attr('data-id');
       const url = new URL(window.location);
       url.searchParams.set('status', val); 
-      history.pushState(null, null, url);
-      location.reload();
+      ajxUrl(this, url);
 	})
 
    
    // формат (заказ түрі) сүзгісі
-	$('.on_sort_type').on('change', function () {
+	$(document).on('change', '.on_sort_type', function () {
       var val = $(this).children('option:selected').attr('data-id');
       const url = new URL(window.location);
       if (val) url.searchParams.set('type', val); else url.searchParams.delete('type');
-      history.pushState(null, null, url);
-      location.reload();
+      ajxUrl(this, url);
 	})
 
 
    // 
-	$('.on_sort_staff').on('change', function () {
+	$(document).on('change', '.on_sort_staff', function () {
       var val = $(this).children('option:selected').attr('data-id');
       const url = new URL(window.location);
       url.searchParams.set('staff', val); 
-      history.pushState(null, null, url);
-      location.reload();
+      ajxUrl(this, url);
 	})
 
 
@@ -160,7 +157,7 @@ $(document).ready(function() {
 
 
 
-	$('.on_print').on('click', function () {
+	$(document).on('click', '.on_print', function () {
       window.open("/orders/" + "order_print.php?" + "&orderID=" + $(this).attr('data-id'), "mywin","width=570,height=570,left=250,top=50");
 	})
 	// $('.on_print').on('click', function () {
@@ -174,7 +171,7 @@ $(document).ready(function() {
 
 
    // cashbox_pay
-	$('.on_info').click(function(){
+	$(document).on('click', '.on_info', function(){
 		$('.on_info_block').addClass('pop_bl_act');
 		$('#html').addClass('ovr_h');
 
@@ -192,7 +189,7 @@ $(document).ready(function() {
          error: function(data){ }
       })
 	})
-	$('.on_info_back').click(function(){
+	$(document).on('click', '.on_info_back', function(){
 		$('.on_info_block').removeClass('pop_bl_act');
 		$('#html').removeClass('ovr_h');
 	})
@@ -211,17 +208,17 @@ $(document).ready(function() {
 
 
 	// cashbox_pay
-	$('.cashbox_pay').click(function(){
+	$(document).on('click', '.cashbox_pay', function(){
 		$('.cashbox_pay_block').addClass('pop_bl_act');
 		$('#html').addClass('ovr_h');
 	})
-	$('.cashbox_pay_back').click(function(){
+	$(document).on('click', '.cashbox_pay_back', function(){
 		$('.cashbox_pay_block').removeClass('pop_bl_act');
 		$('#html').removeClass('ovr_h');
 	})
 
    // cashbox_pay
-	$('.cashbox_pay2').on('click', function () {
+	$(document).on('click', '.cashbox_pay2', function () {
 		btn = $(this)
       $.ajax({
          url: "/orders/get.php?cashbox_pay",
@@ -238,7 +235,7 @@ $(document).ready(function() {
             if (btn.attr('data-type') == 'check') {
                
             } else {
-               if (data == 'yes') location.reload();
+               if (data == 'yes') { $('.cashbox_pay_block').removeClass('pop_bl_act'); $('#html').removeClass('ovr_h'); mess('Сақталды'); ajxReload(btn) }
                else if (data == 0) mess('Вам необходимо заполнить все поля')
             }
             console.log(data);

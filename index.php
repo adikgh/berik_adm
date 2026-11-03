@@ -1,45 +1,53 @@
 <? include "config/core.php";
 
-   // 
-//    if ($user_id) header('location: /dashboard/');
-	if ($user_id) header('location: /orders/');
-   // header('location: /cashbox/');
-   // header('location: /dev.php');
+	// Кірген адам бірден Аналитикаға (Статистика) барады.
+	// Кассир (рөл 3) үшін /stats/ өзі /kassa/-ға жібереді.
+	$sign_home = '/stats/';
+	if ($user_id) { header('location: '.$sign_home); exit(); }
 
 
 	// site setting
 	$menu_name = 'main';
 	$site_set['menu'] = false;
+	$site_set['footer'] = false;
 	$css = ['sign'];
-	// $js = [''];
+	$js = ['sign'];
 ?>
 <? include "block/header.php"; ?>
 
-   <div class="u_sign">
-		<div class="bl_c">
-			<div class="usign_c">
+	<div class="u_sign">
+		<div class="lg_wrap">
 
-				<div class="bp_brand" style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:18px"><img src="/assets/img/logo/berik-icon.svg" alt="BERIK POS" width="64" height="64" style="display:block;width:64px;height:64px"><span style="font-family:'Nunito',sans-serif;font-style:italic;font-weight:900;font-size:24px;letter-spacing:.3px;line-height:1">BERIK <b style="color:#0EA768;font-weight:800">POS</b></span></div>
-				<div class="usign_head"><h3 class="usign_h">Админ</h3></div>
-				<div class="usign_cn">
-					<div class="form_im form_im_ph">
-						<i class="far fa-mobile form_icon"></i>
-						<input type="tel" class="form_txt fr_phone phone" placeholder="8 (700) 000-00-00" data-lenght="11" data-sel="0" />
-					</div>
-					<div class="form_im form_im_ps">
-						<i class="far fa-lock form_icon"></i>
-						<input type="password" class="form_txt password" placeholder="Пароль" data-lenght="6" data-sel="0" data-eye="0" />
-						<i class="far fa-eye-slash form_icon_pass"></i>
-					</div>
-					<div class="form_im">
-						<button class="btn btn_sign"><span>Вход</span><i class="far fa-long-arrow-right"></i></button>
-					</div>
-					<div class="form_im si_blc_bn">
-						<div class="btn btn_back3 txt_c" href="sign_reset.php">Забыл пароль?</div>
-					</div>
+			<!-- Сол жақ: бренд (телефонда жоғарғы жасыл жолақ) -->
+			<div class="lg_side">
+				<div class="lg_brand">
+					<span class="lg_logo"><img src="/assets/img/logo/berik-icon.svg" alt="BERIK POS" width="44" height="44"></span>
+					<span class="lg_name">BERIK <b>POS</b></span>
 				</div>
-
+				<div class="lg_side_t">
+					<h2 class="lg_slogan">Кәсібіңізді бір жерден басқарыңыз</h2>
+					<ul class="lg_feats">
+						<li><i class="fal fa-chart-line"></i><span>Аналитика мен статистика</span></li>
+						<li><i class="fal fa-cash-register"></i><span>Касса және курьер есебі</span></li>
+						<li><i class="fal fa-receipt"></i><span>Тапсырыстар мен тағамдар</span></li>
+					</ul>
+				</div>
+				<div class="lg_side_f">© Berik POS, <?=date('Y')?></div>
 			</div>
+
+			<!-- Оң жақ: кіру формасы -->
+			<div class="lg_main">
+				<div class="usign_c">
+					<div class="lg_head">
+						<span class="lg_badge"><i class="far fa-shield-check"></i> Админ</span>
+						<h1 class="lg_h">Жүйеге кіру</h1>
+						<p class="lg_p">Телефон нөміріңіз бен парольді жазыңыз</p>
+					</div>
+					<? include "block/sign_form.php"; ?>
+				</div>
+				<a class="lg_made" href="https://gprog.kz" target="_blank">#gprog-та <i class="fas fa-heart"></i> жасалған</a>
+			</div>
+
 		</div>
 	</div>
 

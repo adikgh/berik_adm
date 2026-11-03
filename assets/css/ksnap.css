@@ -1,0 +1,9 @@
+/* Касса: есеп қайдан алынды (сақталған / тірі) */
+.ks_info { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 4px 0 14px; font-size: 13px; }
+.ks_info:empty { display: none; }
+.ks_saved { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 8px; background: rgba(30, 158, 90, .08); color: #1e9e5a; font-weight: 600; }
+.ks_live { display: inline-flex; align-items: center; gap: 6px; color: #8a8f98; }
+.ks_live .fa-circle { color: #1e9e5a; font-size: 9px; }
+.ks_chg { display: inline-flex; align-items: center; gap: 6px; color: #e08a00; }
+.ks_resave { display: inline-flex; align-items: center; gap: 6px; color: #3a6df0; cursor: pointer; user-select: none; }
+.ks_resave:hover { text-decoration: underline; }

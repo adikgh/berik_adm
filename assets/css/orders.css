@@ -264,3 +264,14 @@
 .or_sum_i b{font-size:18px}
 .or_sum_main{background:#0EA768;color:#fff}
 .or_sum_main span{color:rgba(255,255,255,.85)}
+/* Сомалар қатары: бүкіл енді тең толтырады (2026-11-03) */
+.or_sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.or_sum_i{min-width:0;padding:12px 18px;gap:4px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+.or_sum_i b{font-size:19px;font-weight:800;white-space:nowrap}
+.or_sum_main{box-shadow:0 4px 12px rgba(14,167,104,.25)}
+@media (max-width:768px){.or_sum{grid-template-columns:repeat(2,minmax(0,1fr))}.or_sum_main{grid-column:1/-1}}
+/* Сомалар жоғарыда бөлек блок, сүзгілер астында, арасы ашық (2026-11-03) */
+.bl_c:has(> .uc_ui69 + .or_sum){display:flex;flex-direction:column}
+.uc_ui69 + .or_sum{order:-1;margin:8px 0 0}
+.bl_c:has(> .uc_ui69 + .or_sum) > .uc_ui69{margin-top:22px;padding-top:22px;border-top:1px solid #e6e9ef;margin-bottom:26px}
+@media (max-width:768px){.uc_ui69 + .or_sum{margin-top:4px}.bl_c:has(> .uc_ui69 + .or_sum) > .uc_ui69{margin-top:16px;padding-top:16px;margin-bottom:18px}}

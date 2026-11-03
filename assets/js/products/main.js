@@ -5,7 +5,7 @@ $(document).ready(function() {
 
 
 	// search
-	$('.product_search').on('input', function () {
+	$(document).on('input', '.product_search', function () {
 		// $.ajax({
 		// 	url: "/products/get.php?product_barcode",
 		// 	type: "POST",
@@ -44,7 +44,7 @@ $(document).ready(function() {
 
 
 	// search
-	$('.product_item_search').on('input', function () {
+	$(document).on('input', '.product_item_search', function () {
 		if ($(this).val() == '') {
 			$('.uc_u2q').removeClass('dsp_n')
 			$('.uc_p').removeClass('dsp_n')
@@ -94,21 +94,20 @@ $(document).ready(function() {
 	// delete
 	$('html').on('click', '.pr_btn_delete', function() {
 		btn = $(this)
-		if (!confirm('Тағамды архивке жіберейік пе? Ол толық өшпейді.')) return;
-		$.ajax({
+		ask('Тағамды архивке жіберейік пе?<br>Ол толық өшпейді.', function(){ $.ajax({
 			url: "/products/get.php?product_delete",
 			type: "POST",
 			dataType: "html",
 			data: ({ id: btn.attr('data-id'), }),
 			success: function(data){
 				if (data == 'yes') {
-					mess('Архивке жіберілді')
-					setTimeout(function() { location.reload(); }, 500);
+					mess('Архивке жіберілді', 'ok')
+					ajxReload(btn)
 				} else { mess('Қате!'); console.log(data); }
 			},
 			beforeSend: function(){ },
 			error: function(data){ }
-		})
+		}) }, { ok: 'Архивке' })
 	})
 
 
@@ -150,11 +149,11 @@ $(document).ready(function() {
 
 
    // add product
-	$('.product_add_pop').click(function(){
+	$(document).on('click', '.product_add_pop', function(){
 		$('.product_add_block').addClass('pop_bl_act');
 		$('#html').addClass('ovr_h');
 	})
-	$('.product_add_back').click(function(){
+	$(document).on('click', '.product_add_back', function(){
 		$('.product_add_block').removeClass('pop_bl_act');
 		$('#html').removeClass('ovr_h');
 	})
@@ -162,11 +161,11 @@ $(document).ready(function() {
 	$('html').on('click', '.setting1_clc', function() { $('.setting1_bl').toggleClass('setting1_bl_act') });
 	$('html').on('click', '.info1_clc', function() { $('.info1_bl').toggleClass('info1_bl_act') });
 
-   $('.pr_img_add').click(function(){ $(this).siblings('.pr_img').click() })
+   $(document).on('click', '.pr_img_add', function(){ $(this).siblings('.pr_img').click() })
 
 
    
-	$('.product_add').on('click', function() {
+	$(document).on('click', '.product_add', function() {
 		if ($('.pr_name').attr('data-sel')) {
 			$.ajax({
 				url: "/products/get.php?product_add",
@@ -180,8 +179,9 @@ $(document).ready(function() {
 				}),
 				success: function(data){
 					if (data == 'yes') {
-						mess('Успешно')
-						setTimeout(function() { location.reload(); }, 500);
+						mess('Сақталды')
+						$('.product_add_block, .product2_add_block').removeClass('pop_bl_act'); $('#html').removeClass('ovr_h')
+						ajxReload('.pr_page')
 					} else mess('Ошибка!'); console.log(data);
 				},
 				beforeSend: function(){ mess('Отправка..') },
@@ -236,8 +236,9 @@ $(document).ready(function() {
 				}),
 				success: function(data){
 					if (data == 'yes') {
-						mess('Успешно')
-						setTimeout(function() { location.reload(); }, 500);
+						mess('Сақталды')
+						$('.product_add_block, .product2_add_block').removeClass('pop_bl_act'); $('#html').removeClass('ovr_h')
+						ajxReload('.pr_page')
 					} else mess('Ошибка!'); console.log(data);
 				},
 				beforeSend: function(){ mess('Отправка..') },

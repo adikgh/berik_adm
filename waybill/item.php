@@ -21,6 +21,7 @@
 	while ($rq && $r = mysqli_fetch_assoc($rq)) {
 		$n = trim($r['name_kz'] ?: $r['name_ru']);
 		$ru = trim((string)$r['name_ru']);
+		$raw_n[(int)$r['id']] = $n;
 		if ($n !== '') $raw[] = ['id' => (int)$r['id'], 'n' => $n, 'u' => fun::unit_norm($r['unit']), 'p' => (float)$r['price']] + ($ru !== '' && $ru !== $n ? ['r' => $ru] : []);
 	}
 	// жеткізуші тауары → шикізат (1 шт = factor), supplier_item кестесі болса
@@ -31,6 +32,12 @@
 	}
 	$suppliers = db::query("select id, name from supplier where company_id = '$cmp' and (archive = 0 or id = '".(int)$w['supplier_id']."') order by name");
 	if (@$_GET['s'] && !$w['id']) $w['supplier_id'] = (int)$_GET['s'];
+
+	// Claude накладной оқу (кілт config/ai.php ішінде, браузерге берілмейді); Google Drive болса файл сонда сақталады
+	include_once "../config/claude.php";
+	$ai_on = claude::ready();
+	$gd_on = false;
+	if ($ai_on && defined('GDRIVE_CLIENT_ID') && GDRIVE_CLIENT_ID !== '') { include_once "../config/cfile.php"; $gd_on = cfile::drive_on(); }
 
 	$author = $w['user_id'] ? fun::user($w['user_id']) : null;
 	$st = wb::status($w);
@@ -114,7 +121,7 @@
 					<? if ($posted): ?>
 						<div class="wb_tr">
 							<div class="wb_td wb_td_n"><?=$k + 1?></div>
-							<div class="wb_td wb_td_name"><div class="wb_name"><?=wb::h($i['name'])?></div></div>
+							<div class="wb_td wb_td_name"><div class="wb_name"><?=wb::h($i['name'])?></div><? if ((int)$i['raw_id'] && isset($raw_n[(int)$i['raw_id']])): ?><a class="wb_small wbr_lnk" href="/waybill/raw.php?id=<?=(int)$i['raw_id']?>"><i class="fal fa-chart-line"></i> <?=wb::h($raw_n[(int)$i['raw_id']])?></a><? endif ?></div>
 							<div class="wb_td wb_td_unit" data-h="Өлшемі"><?=wb::h(fun::unit_norm($i['unit']))?></div>
 							<div class="wb_td" data-h="Саны"><?=wb::qty($i['quantity'])?></div>
 							<div class="wb_td" data-h="Бағасы"><?=wb::sum($i['price'])?></div>
@@ -125,6 +132,7 @@
 							<div class="wb_td wb_td_n wb_row_n"><?=$k + 1?></div>
 							<div class="wb_td wb_td_name">
 								<input type="text" class="wb_inp wb_r_name" list="wb_raw_list" value="<?=wb::h($i['name'])?>" data-raw="<?=(int)$i['raw_id']?>" placeholder="Мысалы: Күріш">
+								<? if ((int)$i['raw_id'] && isset($raw_n[(int)$i['raw_id']])): ?><a class="wb_small wbr_lnk" href="/waybill/raw.php?id=<?=(int)$i['raw_id']?>"><i class="fal fa-chart-line"></i> <?=wb::h($raw_n[(int)$i['raw_id']])?><?=(wb::f($i) != 1 ? ' · 1 '.wb::h(fun::unit_norm($i['unit'])).' = '.wb::qty(wb::f($i)) : '')?></a><? endif ?>
 							</div>
 							<div class="wb_td wb_td_unit" data-h="Өлшемі">
 								<select class="wb_inp wb_r_unit">
@@ -182,7 +190,7 @@
 	<datalist id="wb_raw_list">
 		<? foreach ($raw as $r): ?><option value="<?=wb::h($r['n'])?>"></option><? endforeach ?>
 	</datalist>
-	<script>window.wb_raw = <?=json_encode($raw, JSON_UNESCAPED_UNICODE)?>; window.wb_alias = <?=json_encode($alias, JSON_UNESCAPED_UNICODE)?>;</script>
+	<script>window.wb_raw = <?=json_encode($raw, JSON_UNESCAPED_UNICODE)?>; window.wb_alias = <?=json_encode($alias, JSON_UNESCAPED_UNICODE)?>; window.wb_ai_on = <?=($ai_on ? 'true' : 'false')?>; window.wb_gd_on = <?=($gd_on ? 'true' : 'false')?>;</script>
 
 </div>
 

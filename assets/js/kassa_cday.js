@@ -10,10 +10,10 @@ $(document).ready(function() {
             dataType: 'json',
             data: data,
             success: function (r) {
-                if (r && r.ok) location.reload()
-                else { btn.removeClass('cd_wait'); alert((r && r.msg) || 'Қате') }
+                if (r && r.ok) { mess('Сақталды', 'ok'); ajxReload(btn) }
+                else { btn.removeClass('cd_wait'); mess((r && r.msg) || 'Қате', 'err') }
             },
-            error: function () { btn.removeClass('cd_wait'); alert('Байланыс қатесі') }
+            error: function () { btn.removeClass('cd_wait'); mess('Байланыс қатесі', 'err') }
         })
     }
 
@@ -26,22 +26,25 @@ $(document).ready(function() {
     // бір курьерді сақтау
     $('html').on('click', '.cd_save', function () {
         var b = $(this)
-        if (!confirm(b.attr('data-name') + ': бүгінгі есепті қабылдап, сақтайсыз ба?')) return
-        cday_send('save', { courier_id: b.attr('data-user-id'), day: b.attr('data-day'), cashbox_id: b.attr('data-id') }, b)
+        ask('<b>' + $('<i>').text(b.attr('data-name')).html() + '</b>: бүгінгі есепті қабылдап, сақтайсыз ба?', function () {
+            cday_send('save', { courier_id: b.attr('data-user-id'), day: b.attr('data-day'), cashbox_id: b.attr('data-id') }, b)
+        }, { ok: 'Сақтау', no: 'Болдырмау' })
     })
 
     // барлығын сақтау
     $('html').on('click', '.cd_save_all', function () {
         var b = $(this)
-        if (!confirm('Барлық курьердің есебін қабылдап, сақтайсыз ба?')) return
-        cday_send('save', { all: 1, day: b.attr('data-day'), cashbox_id: b.attr('data-id') }, b)
+        ask('Барлық курьердің есебін қабылдап, сақтайсыз ба?', function () {
+            cday_send('save', { all: 1, day: b.attr('data-day'), cashbox_id: b.attr('data-id') }, b)
+        }, { ok: 'Барлығын сақтау', no: 'Болдырмау' })
     })
 
     // сақтауды болдырмау
     $('html').on('click', '.cd_undo', function () {
         var b = $(this)
-        if (!confirm(b.attr('data-name') + ': сақталған есепті ашып, қайта түзетесіз бе?')) return
-        cday_send('undo', { courier_id: b.attr('data-user-id'), day: b.attr('data-day'), cashbox_id: b.attr('data-id') }, b)
+        ask('<b>' + $('<i>').text(b.attr('data-name')).html() + '</b>: сақталған есепті ашып, қайта түзетесіз бе?', function () {
+            cday_send('undo', { courier_id: b.attr('data-user-id'), day: b.attr('data-day'), cashbox_id: b.attr('data-id') }, b)
+        }, { ok: 'Ашу', no: 'Болдырмау', danger: true })
     })
 
 })

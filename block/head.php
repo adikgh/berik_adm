@@ -46,7 +46,7 @@
 
 <!-- main css -->
 <? foreach ($scss as $i): ?> <link rel="stylesheet" type="text/css" href="/assets/css/<?=$i?>.css?v=<?=$ver?>" /> <? endforeach ?>
-<? foreach ($css as $i): ?> <link rel="stylesheet" type="text/css" href="/assets/css/<?=$i?>.css?v=<?=$ver?>" /> <? endforeach ?>
+<? foreach ($css as $i): ?> <link rel="stylesheet" type="text/css" href="/assets/css/<?=$i?>.css?v=<?=$ver?>.<?=@filemtime($_SERVER['DOCUMENT_ROOT'].'/assets/css/'.$i.'.css')?>" /> <? endforeach ?>
 <link rel="stylesheet" type="text/css" href="/assets/css/berik_admin.css?v=<?=@filemtime($_SERVER['DOCUMENT_ROOT'].'/assets/css/berik_admin.css')?>" />
 <link rel="stylesheet" type="text/css" href="/assets/css/berik_mobile.css?v=<?=@filemtime($_SERVER['DOCUMENT_ROOT'].'/assets/css/berik_mobile.css')?>" />
 

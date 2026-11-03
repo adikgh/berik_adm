@@ -1,6 +1,9 @@
-// Накладнойды файлдан жүктеу: Excel (xlsx, xls, csv) немесе мәтіні бар PDF.
-// Файл браузерде оқылады, тауарлар тексеру терезесінде көрсетіледі,
-// содан кейін накладной формасына жолдар болып қосылады. Серверге ештеңе жібермейді.
+// Накладнойды файлдан жүктеу.
+// Excel (xlsx, xls, csv) браузерде оқылады. Фото мен PDF-ті Claude оқиды (/waybill/ai.php, API кілті серверде).
+// Google Drive қосулы болса, файл алдымен Drive-қа жүктеледі (gdrive_up.js), сервер оны сонда алады;
+// қосылмаса, файл тікелей ai.php-ге жіберіледі (серверде сақталмайды).
+// Claude қосылмаса, мәтіні бар PDF бұрынғыдай браузерде оқылады.
+// Тауарлар тексеру терезесінде көрсетіледі: артығын алып тастайсыз, қалғаны формаға қосылады. Базаға әлі ештеңе жазылмайды.
 (function ($) {
 	var $doc = $('.wb_doc');
 	if (!$doc.length || $doc.data('posted') == 1) return;
@@ -8,8 +11,12 @@
 	var LIB = {
 		xlsx: '/assets/pl/xlsx/xlsx.full.min.js',
 		pdf: '/assets/pl/pdfjs/pdf.min.js',
-		worker: '/assets/pl/pdfjs/pdf.worker.min.js'
+		worker: '/assets/pl/pdfjs/pdf.worker.min.js',
+		gd: '/assets/js/gdrive_up.js'
 	};
+	var aiOn = !!window.wb_ai_on; // Claude қосулы (config/ai.php ішінде API кілті бар, item.php)
+	var gdOn = !!window.wb_gd_on; // Google Drive қосулы: файл сонда да сақталады
+	var wbFiles = []; // Drive-қа жүктелген файлдар: накладной сақталғанда соған байланады
 	var say = function (t) { if (typeof mess == 'function') mess(t); else alert(t); };
 	var h = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
 	var r2 = function (n) { return Math.round(n * 100) / 100; };
@@ -473,11 +480,19 @@
 		$m = $(
 			'<div class="wbi_bg dsp_n"><div class="wbi">' +
 				'<div class="wbi_h"><div>Накладнойды файлдан жүктеу</div><div class="wb_x wbi_close" title="Жабу"><i class="fal fa-times"></i></div></div>' +
+				// Claude қосылған ба: белгі + «Тексеру» (серверден кішкентай сұрау жібереді)
+				'<div class="wbi_ai" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;font-size:13px">' +
+					(aiOn
+						? '<span style="color:#1a9b4b"><i class="fas fa-circle" style="font-size:8px"></i> Claude қосулы</span>' +
+						  '<span class="wbi_ai_test" style="cursor:pointer;text-decoration:underline;color:#555">Тексеру</span>' +
+						  '<span class="wbi_ai_res"></span>'
+						: '<span style="color:#c0392b"><i class="fas fa-circle" style="font-size:8px"></i> Claude қосылмаған (config/ai.php ішінде API кілті жоқ)</span>') +
+				'</div>' +
 				'<label class="wbi_drop">' +
-					'<input type="file" class="wbi_file" accept=".xlsx,.xls,.xlsm,.csv,.pdf,application/pdf">' +
+					'<input type="file" class="wbi_file" multiple accept=".xlsx,.xls,.xlsm,.csv,.pdf,application/pdf,image/jpeg,image/png,image/webp">' +
 					'<i class="fal fa-file-import"></i>' +
 					'<b>Файлды таңдаңыз немесе осында тастаңыз</b>' +
-					'<span>Excel (xlsx, xls, csv) немесе PDF. Сканерленген (сурет) PDF оқылмайды.</span>' +
+					'<span>' + (aiOn ? 'Фото, PDF немесе Excel. Фото мен PDF-ті Claude оқиды (ұзын чек болса, бірнеше фото таңдаңыз).' : 'Excel (xlsx, xls, csv) немесе PDF. Сканерленген (сурет) PDF оқылмайды.') + '</span>' +
 				'</label>' +
 				'<div class="wbi_body dsp_n">' +
 					'<div class="wbi_info"></div>' +
@@ -488,7 +503,8 @@
 					'<label class="wbi_chk"><input type="checkbox" class="wbi_replace" checked> Формадағы бар жолдарды ауыстыру</label>' +
 					'<div class="wbi_btns">' +
 						'<div class="wb_btn wb_btn_light wbi_again"><i class="fal fa-redo"></i> Басқа файл</div>' +
-						'<div class="wb_btn wb_btn_green wbi_apply"><i class="fal fa-check"></i> Накладнойға қосу</div>' +
+						'<div class="wb_btn wbi_apply"><i class="fal fa-check"></i> Накладнойға қосу</div>' +
+						'<div class="wb_btn wb_btn_green wbi_apply wbi_apply_save"><i class="fal fa-save"></i> Қосып, сақтау</div>' +
 					'</div>' +
 				'</div>' +
 			'</div></div>'
@@ -496,12 +512,19 @@
 
 		$m.on('click', '.wbi_close', close);
 		$m.on('click', function (e) { if (e.target === $m[0]) close(); });
-		$m.on('change', '.wbi_file', function () { if (this.files && this.files[0]) open(this.files[0]); this.value = ''; });
+		$m.on('click', '.wbi_ai_test', function () {
+			var $r = $m.find('.wbi_ai_res').css('color', '#555').text('тексеріп жатыр...');
+			$.ajax({ url: '/waybill/ai.php?ping', method: 'POST', dataType: 'json', timeout: 60000 }).then(function (d) {
+				if (d && d.ok) $r.css('color', '#1a9b4b').text('✓ Claude жауап берді (' + d.model + ', ' + d.ms + ' мс)');
+				else $r.css('color', '#c0392b').text('✗ ' + ((d && d.msg) || 'жауап жоқ'));
+			}, function (x) { $r.css('color', '#c0392b').text('✗ сервер қатесі ' + (x && x.status || '')); });
+		});
+		$m.on('change', '.wbi_file', function () { if (this.files && this.files[0]) open(Array.prototype.slice.call(this.files)); this.value = ''; });
 		$m.on('dragover', '.wbi_drop', function (e) { e.preventDefault(); $(this).addClass('wbi_drop_on'); });
 		$m.on('dragleave drop', '.wbi_drop', function () { $(this).removeClass('wbi_drop_on'); });
 		$m.on('drop', '.wbi_drop', function (e) {
 			e.preventDefault();
-			var f = e.originalEvent.dataTransfer.files; if (f && f[0]) open(f[0]);
+			var f = e.originalEvent.dataTransfer.files; if (f && f[0]) open(Array.prototype.slice.call(f));
 		});
 		$m.on('click', '.wbi_again', function () { $m.find('.wbi_file').click(); });
 		$m.on('change', '.wbi_sheet', function () { state.sheet = +$(this).val(); state.hdr = null; analyze(); });
@@ -550,15 +573,23 @@
 		$m.find('.wbi_body, .wbi_foot').addClass('dsp_n');
 	}
 
-	function open(file) {
+	function open(files) {
 		modal();
+		var list = Array.isArray(files) ? files : [files], file = list[0];
 		var isPdf = /\.pdf$/i.test(file.name) || file.type == 'application/pdf';
 		var isXls = /\.(xlsx|xls|xlsm|csv|txt)$/i.test(file.name);
-		if (!isPdf && !isXls) { say('Тек Excel (xlsx, xls, csv) немесе PDF файл'); return; }
+		var isImg = /^image\/(jpeg|png|webp)$/.test(file.type);
+		if (!isXls && (isPdf || isImg) && aiOn) {
+			list = list.filter(function (f) { return f.type == 'application/pdf' || /^image\/(jpeg|png|webp)$/.test(f.type); }).slice(0, 5);
+			aiRead(list); return;
+		}
+		if (isImg) { say('Фотоны оқу үшін Claude-ты қосыңыз (config/ai.php ішіне API кілті)'); return; }
+		if (!isPdf && !isXls) { say('Тек Excel (xlsx, xls, csv), PDF немесе фото'); return; }
 		show();
 		$m.find('.wbi_drop').addClass('wbi_drop_wait').find('b').text('Оқып жатырмыз...');
 		(isPdf ? readPdf(file) : readExcel(file)).then(function (res) {
 			$m.find('.wbi_drop').removeClass('wbi_drop_wait').find('b').text('Файлды таңдаңыз немесе осында тастаңыз');
+			if (res.type == 'pdf' && res.chars < 30 && aiOn) { aiRead([file]); return; }
 			if (res.type == 'pdf' && res.chars < 30) {
 				say('Бұл PDF ішінде мәтін жоқ (сканерленген сурет). Жеткізушіден Excel нұсқасын сұраңыз немесе қолмен енгізіңіз.');
 				reset(); return;
@@ -581,6 +612,54 @@
 		});
 	}
 
+	// Фото/PDF: Drive-қа тікелей жүктеп, Claude-қа оқытамыз
+	function aiRead(list) {
+		show();
+		var $d = $m.find('.wbi_drop').removeClass('dsp_n').addClass('wbi_drop_wait'), $t = $d.find('b');
+		$m.find('.wbi_body, .wbi_foot').addClass('dsp_n');
+		var back = function () { $d.removeClass('wbi_drop_wait'); $t.text('Файлды таңдаңыз немесе осында тастаңыз'); };
+		var ids = [], i = 0;
+		// Drive қосулы болса, алдымен соған; Drive қате берсе, файлды тікелей жібереміз
+		var viaDrive = !gdOn ? Promise.resolve(false) : (function () {
+			$t.text('Google Drive-қа жүктеп жатырмыз...');
+			return load(LIB.gd).then(function next() {
+				if (i >= list.length) return true;
+				var f = list[i++];
+				if (list.length > 1) $t.text('Google Drive-қа жүктеп жатырмыз... ' + i + '/' + list.length);
+				return window.gdUpload(f, 'waybill').then(function (r) {
+					if (!r.ok) throw new Error(r.msg || 'Drive-қа жүктелмеді');
+					ids.push(r.file.id);
+					return next();
+				});
+			}).then(null, function (e) { if (window.console) console.warn('Drive:', e); ids = []; return false; });
+		})();
+		viaDrive.then(function (ok) {
+			$t.text('Claude оқып жатыр... (әдетте 20–60 секунд)');
+			var o = { url: '/waybill/ai.php', method: 'POST', dataType: 'json', timeout: 300000 };
+			if (ok && ids.length) o.data = { ids: ids.join(',') };
+			else {
+				var fd = new FormData();
+				list.forEach(function (f) { fd.append('f[]', f, f.name); });
+				o.data = fd; o.processData = false; o.contentType = false;
+			}
+			return $.ajax(o);
+		}).then(function (d) {
+			back();
+			if (d && d.ok) wbFiles = wbFiles.concat(ids);
+			if (!d || !d.ok) { say((d && d.msg) || 'Claude оқи алмады'); reset(); return; }
+			state = {
+				file: { name: list.map(function (f) { return f.name; }).join(', ') },
+				res: { type: 'ai', sheets: [{ name: '', grid: [] }] }, sheet: 0, hdr: null, manual: true,
+				meta: { supplier: d.supplier, docNo: d.doc_no, date: d.date, total: d.total, note: d.note, usage: d.usage },
+				ai: d.items.map(function (x) { return { name: x.name, unitTxt: x.unit, qty: x.qty, price: x.price, sum: x.sum, rawId: x.raw_id, sure: x.sure, noQty: !(x.qty > 0) }; })
+			};
+			build();
+		}, function (e) {
+			back(); reset();
+			say(e && e.message ? e.message : (e && e.statusText == 'timeout' ? 'Claude ұзақ жауап бермеді, қайталап көріңіз' : 'Қате шықты, қайталап көріңіз'));
+		});
+	}
+
 	function analyze() {
 		var g = state.res.sheets[state.sheet].grid;
 		state.hdr = state.res.type == 'pdf' ? null : findHeader(g);
@@ -591,15 +670,15 @@
 	function colLetter(i) { var s = ''; i++; while (i > 0) { var m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
 
 	function build() {
-		var res = state.res, g = res.sheets[state.sheet].grid, isPdf = res.type == 'pdf';
-		var items = extract(g, state.hdr, isPdf ? 'math' : '');
+		var res = state.res, g = res.sheets[state.sheet].grid, isAi = res.type == 'ai', isPdf = res.type == 'pdf' || isAi;
+		var items = isAi ? state.ai : extract(g, state.hdr, isPdf ? 'math' : '');
 		state.items = items;
 
 		$m.find('.wbi_drop').addClass('dsp_n');
 		$m.find('.wbi_body, .wbi_foot').removeClass('dsp_n');
 
 		// жоғарғы ақпарат
-		var meta = state.meta, inf = '<div class="wbi_file_n"><i class="fal ' + (isPdf ? 'fa-file-pdf' : 'fa-file-excel') + '"></i> ' + h(state.file.name) + '</div>';
+		var meta = state.meta, inf = '<div class="wbi_file_n"><i class="fal ' + (isAi ? 'fa-magic' : isPdf ? 'fa-file-pdf' : 'fa-file-excel') + '"></i> ' + (isAi ? '<b>Claude оқыды:</b> ' : '') + h(state.file.name) + '</div>';
 		if (res.sheets.length > 1) {
 			inf += '<select class="wb_inp wbi_sheet">' + res.sheets.map(function (s, i) { return '<option value="' + i + '"' + (i == state.sheet ? ' selected' : '') + '>Парақ: ' + h(s.name) + '</option>'; }).join('') + '</select>';
 		}
@@ -609,10 +688,24 @@
 			(meta.docNo ? '<span>№ <b>' + h(meta.docNo) + '</b></span>' : '') +
 			(meta.date ? '<span>Күні: <b>' + h(meta.date.split('-').reverse().join('.')) + '</b></span>' : '') +
 			'</div>';
+		if (isAi) {
+			var tsum = 0; items.forEach(function (x) { tsum += x.sum || 0; });
+			if (meta.total > 0 && Math.abs(tsum - meta.total) > Math.max(1, meta.total * 0.005))
+				inf += '<div class="wbi_hint">Құжаттағы жалпы сома ' + h(money(meta.total)) + ', жолдардың қосындысы ' + h(money(tsum)) + '. Бір жол оқылмаған не қате болуы мүмкін, тексеріңіз.</div>';
+			if (meta.note) inf += '<div class="wbi_hint">Claude: ' + h(meta.note) + '</div>';
+			// шығын мен қай модель оқығаны (сервер есептейді)
+			var u = meta.usage;
+			if (u && u.steps) {
+				var nm = function (m) { return (String(m).match(/haiku|sonnet|opus|fable/) || [m])[0].replace(/^./, function (c) { return c.toUpperCase(); }); };
+				var path = u.steps.map(function (x) { return nm(x.model); }).join(' → ');
+				inf += '<div class="wb_small">Claude: ' + h(path) + (u.why ? ' (' + h(u.why) + ')' : '') + ' · ' + (u.tokens || 0).toLocaleString('ru-RU') + ' токен, шамамен $' + (+u.usd).toFixed(3) + ' (~' + Math.round(u.usd * 500) + ' ₸)</div>';
+			}
+			inf += '<div class="wb_small">Артық жолдың белгісін алып тастаңыз, атауын түзетуге болады. Жетпейтін тауарды кейін формада «Жол қосу» арқылы қосасыз.</div>';
+		}
 		$m.find('.wbi_info').html(inf);
 
 		// Excel: бағандарды қолмен түзету
-		if (!isPdf) {
+		if (!isPdf && !isAi) {
 			var w = 0; g.forEach(function (r) { if (r.length > w) w = r.length; });
 			w = Math.min(w, 40);
 			var hr = state.hdr ? state.hdr.r : -1;
@@ -645,6 +738,8 @@
 			'<div class="wb_td wb_td_unit">Өлшемі</div><div class="wb_td">Саны</div><div class="wb_td">Бағасы</div><div class="wb_td">Сомасы</div></div>';
 		items.forEach(function (it, i) {
 			var mt = match(it.name);
+			// Claude ұсынған шикізат (сіз бұрын қолмен таңдаған сәйкестік болса, сол басым)
+			if (it.rawId && rawById(it.rawId) && !(mt && (mt.al || mt.mem))) mt = { r: rawById(it.rawId), s: it.sure ? 0.95 : 0.7, ai: true };
 			it.m = mt;
 			var unit = unitOf(it.unitTxt) || (String(it.unitTxt || '').trim().substr(0, 20)) || (mt && mt.s >= 0.8 && mt.r.u) || 'шт';
 			it.unit = unit;
@@ -734,6 +829,7 @@
 	// ---------- Формаға жазу ----------
 	function apply() {
 		if ($(this).hasClass('wb_btn_wait')) return;
+		var saveNow = $(this).hasClass('wbi_apply_save');
 		var sel = [], noq = '', nof = '';
 		$m.find('.wbi_row').each(function () {
 			if (!$(this).find('.wbi_r_on').prop('checked')) return;
@@ -794,6 +890,7 @@
 		if (!$.trim(c.val())) c.val('Файлдан: ' + state.file.name);
 
 		close();
+		if (saveNow) { setTimeout(function () { $doc.find('.wb_save[data-post="0"]').first().click(); }, 50); return; }
 		say(sel.length + ' тауар қосылды. Тексеріп, «Қабылдау» немесе «Жоба ретінде сақтау» басыңыз.');
 		$('html, body').animate({ scrollTop: $doc.find('.wb_table').offset().top - 90 }, 200);
 	}
@@ -811,6 +908,14 @@
 		if (f && f[0]) { e.preventDefault(); open(f[0]); }
 	});
 	if (/[?&]import=1/.test(location.search)) { modal(); reset(); show(); }
+
+	// накладной сақталғанда Drive-тағы файлдарды соған байлаймыз (базада тек сілтемесі)
+	$(document).ajaxSuccess(function (e, xhr, o, d) {
+		if (!wbFiles.length || !/\/waybill\/get\.php\?save/.test(o.url || '')) return;
+		if (typeof d == 'string') { try { d = JSON.parse(d); } catch (x) { d = null; } }
+		var id = (d && d.id) || $doc.data('id');
+		if (id && window.gdLink) { window.gdLink(wbFiles, 'waybill', id); wbFiles = []; }
+	});
 
 	// тест үшін
 	window.wb_import = { toNum: toNum, unitOf: unitOf, findHeader: findHeader, extract: extract, findMeta: findMeta, match: match, rowByMath: rowByMath, open: open };

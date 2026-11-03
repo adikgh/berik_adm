@@ -89,7 +89,7 @@
 ?>
 <? include "../block/header.php"; ?>
 
-	<div class="flex_clm_rev">
+	<div class="flex_clm_rev" data-ajx-nav=".flex_clm_rev">
 		<div class="bl_c">
 
 			<!-- <div class=""> -->

@@ -27,7 +27,7 @@
 ?>
 <? include "../block/header.php"; ?>
 
-<div class="bl_c cl_page dz_page" data-csrf="<?=$_SESSION['csrf']?>">
+<div class="bl_c cl_page dz_page" data-ajx-nav=".dz_page" data-csrf="<?=$_SESSION['csrf']?>">
 
 	<div class="cl_bar">
 		<? if (count($branches) >= 2): ?>

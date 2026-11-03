@@ -1,5 +1,5 @@
 <? include "../config/core.php";
-	include "cday_lib.php";
+	include_once "cday_lib.php";
 
 	header('Content-Type: application/json; charset=utf-8');
 	function out($ok, $data = []) { exit(json_encode(array_merge(['ok' => $ok], $data), JSON_UNESCAPED_UNICODE)); }

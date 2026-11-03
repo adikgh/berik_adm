@@ -25,7 +25,7 @@
 
 	<!-- main js -->
 	<? foreach ($sjs as $i): ?> <script src="/assets/js/<?=$i?>.js?v=<?=$ver?>"></script> <? endforeach ?>
-	<? foreach ($js as $i): ?> <script src="/assets/js/<?=$i?>.js?v=<?=$ver?>"></script> <? endforeach ?>
+	<? foreach ($js as $i): ?> <script src="/assets/js/<?=$i?>.js?v=<?=$ver?>.<?=@filemtime($_SERVER['DOCUMENT_ROOT'].'/assets/js/'.$i.'.js')?>"></script> <? endforeach ?>
 	<script>window.ui_lang = <?=json_encode($ui_lang ?? 'kz')?>; window.bw = <?=json_encode(t::all(), JSON_UNESCAPED_UNICODE)?>;</script>
 	<script src="/assets/js/berik_admin.js?v=<?=@filemtime($_SERVER['DOCUMENT_ROOT'].'/assets/js/berik_admin.js')?>"></script>
 	<script src="/assets/js/berik_mobile.js?v=<?=@filemtime($_SERVER['DOCUMENT_ROOT'].'/assets/js/berik_mobile.js')?>"></script>

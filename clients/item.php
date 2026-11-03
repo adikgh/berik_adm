@@ -41,7 +41,19 @@
 	// Лоялдық: кэшбэк балансы, қозғалысы, сыйлыққа санауыш (компанияда қосулы болса ғана)
 	require_once "../config/loyalty.php";
 	$lc = loyalty::on() ? loyalty::cfg($cmp) : null;
-	$lc_info = null; $lc_moves = false; $lc_gifts = false;
+	$lc_info = null; $lc_moves = false; $lc_gifts = false; $lc_msg = '';
+	// Кэшбэкті қолмен қосу (+) не алу (−)
+	if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
+	if ($lc && isset($_POST['cb_adjust'])) {
+		$amt = (int)preg_replace('/[^\d-]/', '', (string)@$_POST['cb_amount']);
+		if (@$_POST['cb_sign'] == '-') $amt = -abs($amt); else $amt = abs($amt);
+		$note = trim(strip_tags((string)@$_POST['cb_note']));
+		if (!hash_equals($_SESSION['csrf'], (string)@$_POST['csrf'])) $lc_msg = 'Бетті жаңартып, қайта көріңіз';
+		elseif ($note === '') $lc_msg = 'Себебін жазыңыз';
+		elseif (loyalty::manual($cmp, $id, $amt, $note, $user_id) === false) $lc_msg = 'Сақталмады: сома дұрыс емес не баланс жетпейді';
+		else { header('location: /clients/item.php?id='.$id.'&cb=1'); exit; }
+	}
+	if (@$_GET['cb']) $lc_msg = 'Кэшбэк балансы өзгерді';
 	if ($lc && ($lc['cashback'] || $lc['gift'] || (int)@$c['cashback_balance'])) {
 		loyalty::sync($cmp);
 		$c = mysqli_fetch_assoc(db::query("select * from company_client where id = '$id'"));
@@ -54,6 +66,7 @@
 	// site setting
 	$menu_name = 'clients';
 	$page_name = 'Клиент';
+	$page_back = ['/clients/', 'Клиенттер'];
 	$css = ['clients', 'loyalty'];
 	$js = ['clients'];
 ?>
@@ -61,7 +74,6 @@
 
 <div class="bl_c cl_page">
 
-	<a class="cl_back" href="/clients/"><i class="fal fa-arrow-left"></i> Клиенттер</a>
 
 	<div class="cl_profile">
 		<div class="cl_box cl_pf_card">
@@ -131,23 +143,44 @@
 	<? if ($lc_info): ?>
 	<div class="cl_two">
 		<div class="cl_box lc_cl_box">
-			<div class="cl_box_h"><div><i class="fal fa-coins"></i> Кэшбэк<?=($lc['cashback'] ? ' · '.rtrim(rtrim(number_format($lc['percent'], 2, '.', ''), '0'), '.').'%' : '')?></div><div class="cl_card_v cl_c_green"><?=clients::sum($c['cashback_balance'])?></div></div>
+			<div class="cl_box_h"><div><i class="fal fa-coins"></i> Кэшбэк<?=($lc['cashback'] ? ' · '.$lc['label'] : '')?></div><div class="cl_card_v cl_c_green"><?=clients::sum($c['cashback_balance'])?></div></div>
 			<? $has = false; while ($lc_moves && $k = mysqli_fetch_assoc($lc_moves)): $has = true; ?>
 				<div class="cl_li">
-					<div><?=@$lc_t[$k['type']] ?: htmlspecialchars($k['type'])?><?=($k['number'] ? ' · #'.$k['number'] : '')?> <span class="cl_small"><?=clients::dt($k['ins_dt'])?></span></div>
+					<div><?=@$lc_t[$k['type']] ?: htmlspecialchars($k['type'])?><?=($k['number'] ? ' · #'.$k['number'] : '')?> <span class="cl_small"><?=clients::dt($k['ins_dt'])?></span>
+						<? if ($k['type'] == 'earn' && $k['base_sum'] > 0): ?><div class="cl_small lc_mv_s">Тапсырыс <?=clients::sum($k['base_sum'])?> · <?=rtrim(rtrim(number_format($k['percent'], 2, '.', ''), '0'), '.')?>%</div><? endif ?>
+						<? if ($k['type'] == 'manual' && $k['note']): ?><div class="cl_small lc_mv_s"><?=htmlspecialchars($k['note'])?></div><? endif ?></div>
 					<div class="cl_small"><b class="<?=($k['amount'] > 0 ? 'cl_c_green' : '')?>"><?=($k['amount'] > 0 ? '+' : '−').clients::sum(abs($k['amount']))?></b> · <?=clients::sum($k['balance_after'])?></div>
 				</div>
 			<? endwhile ?>
-			<? if (!$has): ?><div class="cl_empty">Әзірге қозғалыс жоқ</div><? endif ?>
+			<? if (!$has): ?><div class="cl_empty">Әзірге қозғалыс жоқ</div><? else: $tt = mysqli_fetch_assoc(db::query("select coalesce(sum(case when amount > 0 then amount end), 0) p, coalesce(-sum(case when amount < 0 then amount end), 0) m, coalesce(sum(case when type = 'earn' then base_sum end), 0) b, sum(type = 'earn') n from company_client_cashback where client_id = '$id'")); ?>
+				<div class="cl_li lc_mv_total">
+					<div><b>Барлығы</b> <span class="cl_small"><?=(int)$tt['n']?> тапсырыс · <?=clients::sum($tt['b'])?></span></div>
+					<div class="cl_small"><b class="cl_c_green">+<?=clients::sum($tt['p'])?></b><?=($tt['m'] ? ' · −'.clients::sum($tt['m']) : '')?> · <b><?=clients::sum($c['cashback_balance'])?></b></div>
+				</div>
+			<? endif ?>
 		</div>
 		<div class="cl_box lc_cl_box">
-			<? if ($lc['gift']): $n = $lc['gift_every']; $cnt = min($lc_info['gift_cnt'], $n - 1); ?>
-				<div class="cl_box_h"><div><i class="fal fa-gift"></i> Сыйлық: <?=htmlspecialchars($lc['gift_name'])?></div><div class="cl_small"><b><?=$cnt?> / <?=$n?></b></div></div>
-				<div class="lc_stamps">
-					<? for ($i = 1; $i < $n; $i++): ?><span class="lc_stamp <?=($i <= $cnt ? 'lc_stamp_on' : '')?>"></span><? endfor ?>
-					<span class="lc_stamp lc_stamp_gift"><i class="fal fa-gift"></i></span>
-				</div>
-				<div class="cl_small"><?=($lc_info['gift_due'] ? 'Келесі тапсырысы сыйлықпен' : ($n - 1 - $cnt).' тапсырыстан кейін сыйлық')?></div>
+			<? if ($lc['gift']): $nx = $lc_info['next']; $cnt = (int)$lc_info['gift_cnt'];
+				// Белгілер: толық цикл 1..ең үлкен деңгей (мысалы 1–20). Жасалғаны жасыл ✓, сыйлық орындары сыйлық белгісімен
+				$tg_k = $lc_info['gift_due'] ? $lc_info['gift_k'] : ($nx ? $nx['k'] : 0);
+				$mx = 0; foreach ($lc['tiers'] as $t) $mx = max($mx, $t['every']);
+				$from = $mx ? (int)floor($cnt / $mx) * $mx : 0;
+				$got = []; // берілген сыйлықтар: нешінші тапсырыста
+				if (loyalty::tiers_on()) { $gq = db::query("select order_no from company_client_gift where client_id = '$id' and order_no is not null"); while ($gq && $gr = mysqli_fetch_assoc($gq)) $got[(int)$gr['order_no']] = true; } ?>
+				<div class="cl_box_h"><div><i class="fal fa-gift"></i> Сыйлық</div><div class="cl_small"><b><?=$cnt?></b> тапсырыс саналды</div></div>
+				<? if ($tg_k): ?>
+					<div class="lc_stamps">
+						<? for ($i = $from + 1; $i <= $from + $mx; $i++): $ti = loyalty::tier_for($cmp, $i); $done = $i <= $cnt; ?>
+							<span class="lc_stamp <?=($done ? 'lc_stamp_on' : '').($ti ? ' lc_stamp_gift' : '').($ti && $i == $lc_info['gift_k'] && $lc_info['gift_due'] ? ' lc_stamp_due' : '').(isset($got[$i]) ? ' lc_stamp_got' : '')?>" title="<?=$i?><?=($ti ? ': '.htmlspecialchars($ti['name']).(isset($got[$i]) ? ' (алды)' : '') : '')?>"><?=($ti ? '<i class="fal fa-gift"></i><small>'.$i.'</small>' : ($done ? '✓' : $i))?></span>
+						<? endfor ?>
+					</div>
+					<? if ($lc_info['gift_due']): ?>
+						<div class="lc_gift_now">Келесі (<?=$lc_info['gift_k']?>-ші) тапсырысы — сыйлық: <b><?=htmlspecialchars($lc_info['gift_name'])?></b></div>
+						<? if ($nx): ?><div class="cl_small">Одан кейін <?=$nx['k']?>-ші тапсырысқа: <?=htmlspecialchars($nx['tier']['name'])?></div><? endif ?>
+					<? else: ?>
+						<div class="cl_small"><?=$nx['k']?>-ші тапсырысқа: <b><?=htmlspecialchars($nx['tier']['name'])?></b> · тағы <?=($nx['k'] - $cnt)?> тапсырыс</div>
+					<? endif ?>
+				<? endif ?>
 			<? else: ?>
 				<div class="cl_box_h"><div><i class="fal fa-gift"></i> Сыйлықтар</div></div>
 			<? endif ?>
@@ -163,7 +196,7 @@
 			<div class="cl_box_h"><div>Сүйікті тағамдары</div></div>
 			<? $has = false; while ($t = mysqli_fetch_assoc($top)): $has = true; ?>
 				<div class="cl_li">
-					<div><?=htmlspecialchars($t['name_kz'] ?: ($t['name_ru'] ?: '#'.$t['product_id']))?></div>
+					<div><?=htmlspecialchars(trim(preg_replace('/\s+/u', ' ', strip_tags(html_entity_decode((string)($t['name_kz'] ?: ($t['name_ru'] ?: '#'.$t['product_id'])), ENT_QUOTES, 'UTF-8')))))?></div>
 					<div class="cl_small"><b><?=(int)$t['q']?> рет</b> · <?=clients::sum($t['s'])?></div>
 				</div>
 			<? endwhile ?>

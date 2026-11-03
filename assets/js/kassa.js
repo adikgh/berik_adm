@@ -60,14 +60,14 @@ $(document).ready(function() {
 
 
         // cashbox_pay
-	$('.read_one').click(function(){
+	$(document).on('click', '.read_one', function(){
 		$('.read_block').addClass('pop_bl_act');
 		$('#html').addClass('ovr_h');
 
         $('.read_pay2').attr('data-id', $(this).attr('data-id'))      
         $('.read_pay2').attr('data-user-id', $(this).attr('data-user-id'))      
 	})
-	$('.read_back').click(function(){
+	$(document).on('click', '.read_back', function(){
 		$('.read_block').removeClass('pop_bl_act');
 		$('#html').removeClass('ovr_h');
 
@@ -88,7 +88,7 @@ $(document).ready(function() {
                 kaspi: sum,
             }),
             success: function(data){ 
-                if (data == 'yes') location.reload();
+                if (data == 'yes') { $('.read_block').removeClass('pop_bl_act'); $('#html').removeClass('ovr_h'); mess('Сақталды'); ajxReload(btn) }
                 console.log(data);
             },
             beforeSend: function(){ },
@@ -100,12 +100,11 @@ $(document).ready(function() {
 
 
    // 
-	$('.on_sort_branch').on('change', function () {
+	$(document).on('change', '.on_sort_branch', function () {
       var val = $(this).children('option:selected').attr('data-id');
       const url = new URL(window.location);
       url.searchParams.set('branch', val); 
-      history.pushState(null, null, url);
-      location.reload();
+      ajxUrl(this, url);
 	})
 
 

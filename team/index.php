@@ -25,12 +25,20 @@
 	// компания жұмысшылары лауазым бойынша топталады
 	$groups = [];
 	foreach ($positions as $pid => $p) $groups[$pid] = [];
-	$sq = db::query("select s.id staff_id, s.positions_id, s.branch_id, s.ins_dt staff_dt, u.id uid, u.name, u.surname, u.phone, u.img
+	$sq = db::query("select s.id staff_id, s.positions_id, s.branch_id, s.ins_dt staff_dt, u.id uid, u.name, u.surname, u.phone, u.img,
+		(select count(*) from company_staff s2 where s2.user_id = s.user_id and s2.company_id is not null and s2.company_id != s.company_id and s2.archive = 0) other_cnt
 		from company_staff s inner join user u on u.id = s.user_id
 		where s.company_id = '$company' and s.positions_id != 1 order by u.name asc");
 	$all_cnt = 0;
 	while ($r = mysqli_fetch_assoc($sq)) { $groups[$r['positions_id']][] = $r; $all_cnt++; }
 	$has_manager = !empty($groups[4]);
+
+	// аты-жөні, нөмірі, құпиясөзі өзгертілмейтін адам: басқа компанияда да жұмыс істейді,
+	// не Директор (оны тек Создатель өзгертеді, өзін өзі өзгерте алады). team/get.php-да да осы тексеріледі
+	function tm_name_lock($r, $me, $my_id) {
+		if (!empty($r['other_cnt'])) return true;
+		return $r['positions_id'] == 2 && @$me['positions_id'] != 1 && $r['uid'] != $my_id;
+	}
 
 
 	// site setting
@@ -77,7 +85,8 @@
 									<div class="tm_btns">
 										<div class="ctg_b tm_edit" title="Өзгерту"
 											data-name="<?=htmlspecialchars($r['name'])?>" data-surname="<?=htmlspecialchars($r['surname'])?>"
-											data-phone="<?=htmlspecialchars($r['phone'])?>" data-pos="<?=$r['positions_id']?>" data-branch="<?=intval($r['branch_id'])?>"><i class="fal fa-pen"></i></div>
+											data-phone="<?=htmlspecialchars($r['phone'])?>" data-pos="<?=$r['positions_id']?>" data-branch="<?=intval($r['branch_id'])?>"
+											data-lock="<?=(tm_name_lock($r, $user_right, $user_id) ? 1 : 0)?>"><i class="fal fa-pen"></i></div>
 										<div class="ctg_b ctg_b_red tm_del" title="Тізімнен шығару"><i class="fal fa-user-minus"></i></div>
 									</div>
 								<? endif ?>
@@ -142,7 +151,7 @@
 						<input type="tel" class="form_txt fr_code tm_in_code" maxlength="4" placeholder="Өзгертпесеңіз бос қалдырыңыз">
 						<i class="fal fa-key form_icon"></i>
 					</div>
-					<div class="form_im">
+					<div class="form_im tm_pass_box">
 						<div class="form_span">Админге кіру құпиясөзі:</div>
 						<input type="text" class="form_txt tm_in_pass" placeholder="Өзгертпесеңіз бос қалдырыңыз">
 						<i class="fal fa-lock form_icon"></i>

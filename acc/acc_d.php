@@ -70,7 +70,7 @@
          <div class="uacc_in">Құпия сөз:</div>
          <div class="uacc_ic">
             <div class="form_im">
-               <input type="password" class="form_im_txt password" placeholder="" data-lenght="6" data-sel="1" data-eye="0" value="<?=$user['password']?>" data-val="<?=$user['password']?>" />
+               <input type="password" class="form_im_txt password" placeholder="Жаңа пароль (өзгертпесеңіз бос қалдырыңыз)" data-lenght="6" data-sel="1" data-eye="0" value="" data-val="" autocomplete="new-password" />
                <i class="far fa-eye-slash form_icon_pass"></i>
             </div>
          </div>

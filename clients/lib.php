@@ -143,31 +143,39 @@
 				) where c.company_id = '$company' and (c.address is null or c.address = '')");
 		}
 
-		// Кезең: ?p=today|yday|week|month|3m|6m|12m|all немесе ?from=&to=
+		// Кезең: ?p=d|w|m|y (Күндік | Апталық | Айлық | Жылдық), ?d=YYYY-MM-DD — қай кезең (‹ › арқылы)
 		public static function period() {
-			$p = @$_GET['p'] ?: 'month';
-			$from = @$_GET['from']; $to = @$_GET['to'];
-			$today = date('Y-m-d', time() - 6 * 3600);
-			$days = ['week' => 7, 'month' => 30, '3m' => 90, '6m' => 180, '12m' => 365];
-			if ($from && strtotime($from)) {
-				$p = 'custom';
-				$f = date('Y-m-d', strtotime($from));
-				$t = ($to && strtotime($to)) ? date('Y-m-d', strtotime($to)) : $today;
-			} elseif ($p == 'today') {
-				$f = $t = $today;
-			} elseif ($p == 'yday') {
-				$f = $t = date('Y-m-d', strtotime($today.' -1 day'));
-			} elseif ($p == 'all') {
-				$f = '2000-01-01'; $t = $today;
+			$p = @$_GET['p'];
+			if (!in_array($p, ['d', 'w', 'm', 'y'], true)) $p = 'm';
+			$today = date('Y-m-d', time() - 6 * 3600); // жұмыс күні 06:00-ден
+			$ad = $today;
+			if (preg_match('/^20\d{2}-\d{2}-\d{2}$/', (string)@$_GET['d']) && strtotime($_GET['d'])) $ad = date('Y-m-d', strtotime($_GET['d']));
+			$at = strtotime($ad);
+			$ml = ['', 'қаңтар', 'ақпан', 'наурыз', 'сәуір', 'мамыр', 'маусым', 'шілде', 'тамыз', 'қыркүйек', 'қазан', 'қараша', 'желтоқсан'];
+			$mn = ['', 'Қаңтар', 'Ақпан', 'Наурыз', 'Сәуір', 'Мамыр', 'Маусым', 'Шілде', 'Тамыз', 'Қыркүйек', 'Қазан', 'Қараша', 'Желтоқсан'];
+			if ($p == 'd') {
+				$f = $t = $ad;
+				$prev = date('Y-m-d', strtotime('-1 day', $at)); $next = date('Y-m-d', strtotime('+1 day', $at));
+				$title = intval(date('j', $at)).' '.$ml[intval(date('n', $at))].($ad == $today ? ' · бүгін' : '');
+			} elseif ($p == 'w') {
+				$ws = strtotime('-'.(intval(date('N', $at)) - 1).' day', $at); $we = strtotime('+6 day', $ws);
+				$f = date('Y-m-d', $ws); $t = date('Y-m-d', $we);
+				$prev = date('Y-m-d', strtotime('-7 day', $ws)); $next = date('Y-m-d', strtotime('+7 day', $ws));
+				$title = intval(date('j', $ws)).(date('n', $ws) != date('n', $we) ? ' '.$ml[intval(date('n', $ws))] : '').' – '.intval(date('j', $we)).' '.$ml[intval(date('n', $we))].($today >= $f && $today <= $t ? ' · осы апта' : '');
+			} elseif ($p == 'm') {
+				$f = date('Y-m-01', $at); $t = date('Y-m-t', $at);
+				$prev = date('Y-m-d', strtotime("$f -1 month")); $next = date('Y-m-d', strtotime("$f +1 month"));
+				$title = $mn[intval(date('n', $at))].' '.date('Y', $at);
 			} else {
-				if (!isset($days[$p])) $p = 'month';
-				$f = date('Y-m-d', strtotime($today.' -'.($days[$p] - 1).' day')); $t = $today;
+				$yy = date('Y', $at); $f = "$yy-01-01"; $t = "$yy-12-31";
+				$prev = ($yy - 1).'-01-01'; $next = ($yy + 1).'-01-01';
+				$title = $yy.' жыл';
 			}
-			// жұмыс күні 06:00-ден басталады
 			return [
-				'p' => $p, 'from' => $f, 'to' => $t,
+				'p' => $p, 'from' => $f, 'to' => $t, 'title' => $title, 'prev' => $prev, 'next' => $next,
+				'is_next' => $next <= $today, // болашаққа өтпейміз
 				'start' => $f.' 06:00:00',
 				'end' => date('Y-m-d 06:00:00', strtotime($t.' +1 day')),
 			];
-		}
+	}
 	}

@@ -16,18 +16,54 @@
 		else {
 			$old = loyalty::cfg($cmp);
 			$pct = round(max(0, min(50, (float)str_replace(',', '.', (string)@$_POST['cashback_percent']))), 2);
-			$every = max(0, min(100, (int)@$_POST['gift_every']));
-			if ($every == 1) $every = 2; // әр тапсырысқа сыйлық болмайды
-			$gname = mb_substr(trim(strip_tags((string)@$_POST['gift_name'])), 0, 255);
-			if ($gname === '') $every = 0;
 			$e = function ($v) { return mysqli_real_escape_string(db::$connect, $v); };
 			$now = date('Y-m-d H:i:s');
-			$set = ["cashback_percent = '$pct'", "gift_every = '$every'", "gift_name = ".($gname !== '' ? "'".$e($gname)."'" : "NULL")];
-			// 0-ден қосылса — осы сәттен бастап есептеледі (ескі тапсырыстарға кэшбэк жоқ)
-			if ($pct > 0 && !$old['cashback']) $set[] = "cashback_from = '$now'";
-			if ($every > 1 && !$old['gift']) $set[] = "gift_from = '$now'";
-			// санауды нөлдеу (мысалы жаңа ай)
-			if ($every > 1 && @$_POST['gift_reset']) $set[] = "gift_from = '$now'";
+			$set = ["cashback_percent = '$pct'"];
+			if ($pct > 0 && !$old['cashback']) $set[] = "cashback_from = '$now'"; // 0-ден қосылса — осы сәттен бастап
+			// Сатылы кэшбэк: тапсырыс сомасы «асса» қанша пайыз (бос жолдар ескерілмейді)
+			if (loyalty::steps_on() && isset($_POST['step'])) {
+				$rows = [];
+				foreach ((array)$_POST['step'] as $st) {
+					$fs = max(0, (int)preg_replace('/\D+/', '', (string)@$st['from']));
+					$sp = round(max(0, min(50, (float)str_replace(',', '.', (string)@$st['percent']))), 2);
+					if ($sp > 0 && trim((string)@$st['percent']) !== '') $rows[$fs] = $sp;
+				}
+				ksort($rows);
+				db::query("delete from company_cashback_step where company_id = '$cmp'");
+				foreach ($rows as $fs => $sp) db::query("insert into company_cashback_step (company_id, from_sum, percent) values ('$cmp', '$fs', '$sp')");
+			}
+			$gift_on = false;
+			if (loyalty::tiers_on()) {
+				// Сыйлық деңгейлері: әр жол — әр N-ші тапсырысқа не беріледі
+				foreach ((array)@$_POST['tier'] as $t) {
+					$tid = (int)@$t['id'];
+					$every = max(0, min(500, (int)@$t['every']));
+					$name = mb_substr(trim(strip_tags((string)@$t['name'])), 0, 255);
+					$pid = (int)@$t['product_id'];
+					if ($pid && !mysqli_num_rows(db::query("select id from product where id = '$pid' and company_id = '$cmp'"))) $pid = 0;
+					$qty = max(1, min(20, (int)@$t['quantity']));
+					$dp = max(0, min(100, (int)@$t['discount_percent']));
+					$dm = max(0, (int)@$t['discount_max']);
+					$del = !empty($t['del']) || $every < 2 || $name === '' || (!$pid && !$dp);
+					if ($tid) {
+						if ($del) db::query("update company_gift_tier set active = 0 where id = '$tid' and company_id = '$cmp'");
+						else db::query("update company_gift_tier set every = '$every', name = '".$e($name)."', product_id = ".($pid ?: 'NULL').", quantity = '".($pid ? $qty : 0)."',
+							discount_percent = '".($pid ? 0 : $dp)."', discount_max = '".($pid ? 0 : $dm)."', active = 1 where id = '$tid' and company_id = '$cmp'");
+					} elseif (!$del) {
+						db::query("insert into company_gift_tier (company_id, every, name, product_id, quantity, discount_percent, discount_max)
+							values ('$cmp', '$every', '".$e($name)."', ".($pid ?: 'NULL').", '".($pid ? $qty : 0)."', '".($pid ? 0 : $dp)."', '".($pid ? 0 : $dm)."')");
+					}
+				}
+				$gift_on = mysqli_num_rows(db::query("select id from company_gift_tier where company_id = '$cmp' and active = 1 and every > 1")) > 0;
+			} else {
+				$every = max(0, min(100, (int)@$_POST['gift_every']));
+				if ($every == 1) $every = 2; // әр тапсырысқа сыйлық болмайды
+				$gname = mb_substr(trim(strip_tags((string)@$_POST['gift_name'])), 0, 255);
+				if ($gname === '') $every = 0;
+				$set[] = "gift_every = '$every'"; $set[] = "gift_name = ".($gname !== '' ? "'".$e($gname)."'" : "NULL");
+				$gift_on = $every > 1;
+			}
+			if ($gift_on && (!$old['gift'] || @$_POST['gift_reset'])) $set[] = "gift_from = '$now'"; // қосылғанда не «бүгіннен бастау»
 			db::query("update company set ".implode(', ', $set)." where id = '$cmp'");
 			header('location: /clients/loyalty.php?saved=1'); exit;
 		}
@@ -36,6 +72,11 @@
 
 	$cfg = loyalty::cfg($cmp);
 	if ($ready) loyalty::sync($cmp);
+	$prods = [];
+	if ($ready && loyalty::tiers_on()) {
+		$q = db::query("select id, name_kz, name_ru, price from product where company_id = '$cmp' and arh = 0 order by name_kz, name_ru");
+		while ($q && $p = mysqli_fetch_assoc($q)) $prods[] = $p;
+	}
 
 	// Қысқа есеп
 	$st = ['balance' => 0, 'clients' => 0, 'earn_m' => 0, 'spend_m' => 0, 'gifts_m' => 0, 'gifts' => 0];
@@ -56,6 +97,7 @@
 	// site setting
 	$menu_name = 'clients';
 	$page_name = 'Лоялдық: кэшбэк және сыйлық';
+	$page_back = ['/clients/', 'Клиенттер'];
 	$css = ['clients', 'loyalty'];
 	$js = [];
 ?>
@@ -63,7 +105,6 @@
 
 <div class="bl_c cl_page lc_page">
 
-	<a class="cl_back" href="/clients/"><i class="fal fa-arrow-left"></i> Клиенттер</a>
 
 	<? if (!$ready): ?>
 		<div class="cl_box"><div class="cl_empty">Базаға кэшбэк кестелері әлі қосылмаған (berik_cashback.sql).</div></div>
@@ -71,7 +112,7 @@
 
 	<? if ($msg): ?><div class="lc_msg"><?=htmlspecialchars($msg)?></div><? endif ?>
 
-	<form class="lc_grid" method="post" autocomplete="off">
+	<form class="lc_grid" method="post" autocomplete="off" data-ajx=".lc_page" data-ajx-msg=".lc_msg">
 		<input type="hidden" name="csrf" value="<?=$_SESSION['csrf']?>">
 
 		<div class="cl_box lc_set">
@@ -80,19 +121,90 @@
 			<div class="lc_inp_w"><input type="number" name="cashback_percent" class="cl_inp" min="0" max="50" step="0.5" value="<?=rtrim(rtrim(number_format($cfg['percent'], 2, '.', ''), '0'), '.')?>"><span>%</span></div>
 			<div class="cl_small">0 болса кэшбэк мүлде жоқ: жиналмайды, кассада да, клиент кабинетінде де көрінбейді.
 				Тағам сомасынан есептеледі (доставка кірмейді), тапсырыс «Аяқталды» болғанда түседі. Кэшбэкті тек осы компанияда жұмсауға болады.</div>
+			<? if (loyalty::steps_on()): $sl = $cfg['steps']; $sl[] = ['from' => '', 'percent' => '']; $sl[] = ['from' => '', 'percent' => '']; ?>
+				<label class="cl_lbl">Сома бойынша сатылар (толтырылса, жоғарғы пайыздың орнына осы қолданылады)</label>
+				<div class="lc_steps">
+					<? foreach ($sl as $i => $sv): ?>
+					<div class="lc_step">
+						<span>Тағам сомасы</span>
+						<div class="lc_inp_w"><input type="number" name="step[<?=$i?>][from]" class="cl_inp" min="0" value="<?=$sv['from']?>" placeholder="0"><span>тг-дан бастап</span></div>
+						<div class="lc_inp_w"><input type="number" name="step[<?=$i?>][percent]" class="cl_inp" min="0" max="50" step="0.5" value="<?=($sv['percent'] === '' ? '' : rtrim(rtrim(number_format($sv['percent'], 2, '.', ''), '0'), '.'))?>"><span>%</span></div>
+					</div>
+					<? endforeach ?>
+				</div>
+				<div class="cl_small">Мысалы: 0 → 1%, 7 990 → 3%, 9 990 → 5%, 14 990 → 7%, 29 990 → 10%. Сома осы санға жетсе, сол пайыз беріледі. Жолды өшіру үшін пайызын тазалаңыз.</div>
+			<? endif ?>
 			<? if ($cfg['cashback'] && $cfg['from']): ?><div class="cl_small">Басталды: <?=clients::dt($cfg['from'])?></div><? endif ?>
 		</div>
 
+		<? if (loyalty::tiers_on()): $tl = array_reverse($cfg['tiers']); $tl[] = ['id' => 0, 'every' => '', 'name' => '', 'product_id' => 0, 'quantity' => 1, 'discount_percent' => 0, 'discount_max' => 0];
+			// Қазақша реттік жұрнақ: 5-ші, 6-шы, 10-шы, 20-шы, 50-ші
+			$ord = function ($n) { $n = (int)$n; if ($n <= 0) return '-ші'; if ($n % 100 == 0) return '-ші'; $d = $n % 10;
+				if ($d) return in_array($d, [6, 9]) ? '-шы' : '-ші'; return in_array(($n % 100) / 10, [5, 7, 8]) ? '-ші' : '-шы'; }; ?>
+		<div class="cl_box lc_set lc_set_wide">
+			<div class="cl_box_h"><div><i class="fal fa-gift"></i> Әр N-ші тапсырысқа сыйлық</div><span class="cl_seg <?=($cfg['gift'] ? 'cl_seg_loyal' : 'cl_seg_archive')?>"><?=($cfg['gift'] ? 'Қосулы' : 'Өшірулі')?></span></div>
+			<div class="lc_tiers">
+				<div class="lc_tier lc_tier_h"><div>Нешінші тапсырыс</div><div>Атауы (кассада көрінеді)</div><div>Тегін тағам (0 тг)</div><div>Саны</div><div>Не жеңілдік</div><div>Ең көбі (тг)</div><div></div></div>
+				<? foreach ($tl as $i => $t): $hp = $t['product_id'] > 0; ?>
+				<? if (!$t['id']): ?><div class="lc_tier_cap"><i class="fal fa-plus"></i> Жаңа сыйлық қосу</div><? endif ?>
+				<div class="lc_tier<?=($t['id'] ? '' : ' lc_tier_new')?><?=($hp ? ' lc_tier_prod' : '')?>">
+					<input type="hidden" name="tier[<?=$i?>][id]" value="<?=$t['id']?>">
+					<div class="lc_inp_w"><input type="number" name="tier[<?=$i?>][every]" class="cl_inp lc_t_every" min="2" max="500" value="<?=$t['every']?>" placeholder="N"><span class="lc_t_ord"><?=$ord($t['every'])?></span></div>
+					<input type="text" name="tier[<?=$i?>][name]" class="cl_inp" maxlength="255" value="<?=htmlspecialchars($t['name'])?>" placeholder="<?=($t['id'] ? '' : 'Мысалы: Цезарь тегін')?>">
+					<select name="tier[<?=$i?>][product_id]" class="cl_inp lc_t_prod">
+						<option value="0">— тағамсыз (жеңілдік) —</option>
+						<? if ($t['product_id'] && !in_array($t['product_id'], array_column($prods, 'id'))): $pa = mysqli_fetch_assoc(db::query("select name_kz, name_ru from product where id = '".(int)$t['product_id']."'")); ?>
+							<option value="<?=$t['product_id']?>" selected><?=htmlspecialchars(($pa ? ($pa['name_kz'] ?: $pa['name_ru']) : '#'.$t['product_id']).' (мәзірде жоқ)')?></option>
+						<? endif ?>
+						<? foreach ($prods as $p): ?><option value="<?=$p['id']?>"<?=($p['id'] == $t['product_id'] ? ' selected' : '')?>><?=htmlspecialchars($p['name_kz'] ?: $p['name_ru'])?> · <?=(int)$p['price']?> тг</option><? endforeach ?>
+					</select>
+					<input type="number" name="tier[<?=$i?>][quantity]" class="cl_inp lc_t_q" min="1" max="20" value="<?=max(1, (int)$t['quantity'])?>"<?=($hp ? '' : ' disabled')?>>
+					<div class="lc_inp_w"><input type="number" name="tier[<?=$i?>][discount_percent]" class="cl_inp lc_t_d" min="0" max="100" value="<?=($t['discount_percent'] ?: '')?>"<?=($hp ? ' disabled' : '')?>><span>%</span></div>
+					<input type="number" name="tier[<?=$i?>][discount_max]" class="cl_inp lc_t_d" min="0" value="<?=($t['discount_max'] ?: '')?>" placeholder="шексіз"<?=($hp ? ' disabled' : '')?>>
+					<? if ($t['id']): ?><label class="lc_del" title="Бұл сыйлықты өшіру"><input type="checkbox" name="tier[<?=$i?>][del]" value="1"> <i class="fal fa-trash"></i></label><? else: ?><div></div><? endif ?>
+				</div>
+				<? endforeach ?>
+			</div>
+			<label class="lc_chk"><input type="checkbox" name="gift_reset" value="1"> Санауды бүгіннен бастау (жаңа ай)</label>
+			<ul class="lc_help">
+				<li>Клиенттің барлық тапсырысы саналады, тек отказдар саналмайды.</li>
+				<li>Бір тапсырыс бірнеше сыйлыққа сәйкес келсе (мысалы 10-шы әрі 5-ші), үлкені беріледі.</li>
+				<li>Тағам таңдалса, кассада «Сыйлықты беру» басылғанда ол тапсырысқа 0 тг болып қосылады.</li>
+				<li>Тағам таңдалмаса, жеңілдік тағам сомасынан есептеледі; «Ең көбі» толтырылса, сол сомаға дейін ғана.</li>
+				<li>Сыйлықты өшіру үшін себетті белгілеп, «Сақтау» басыңыз.</li>
+			</ul>
+			<? if ($cfg['gift'] && $cfg['gift_from']): ?><div class="cl_small">Санау басталды: <?=clients::dt($cfg['gift_from'])?></div><? endif ?>
+		</div>
+		<script>
+			// Тағам таңдалса — саны ашылады, жеңілдік жабылады; нөмір өзгерсе — жұрнақ (-ші/-шы) жаңарады
+			(function () {
+				if (window.lc_tier_js) return; window.lc_tier_js = 1
+				var ord = function (n) { n = parseInt(n) || 0; if (n <= 0 || n % 100 == 0) return '-ші'; var d = n % 10
+					if (d) return (d == 6 || d == 9) ? '-шы' : '-ші'; return [5, 7, 8].indexOf((n % 100) / 10) >= 0 ? '-ші' : '-шы' }
+				document.addEventListener('change', function (e) {
+					if (!e.target.classList.contains('lc_t_prod')) return
+					var r = e.target.closest('.lc_tier'), hp = e.target.value != '0'
+					r.classList.toggle('lc_tier_prod', hp)
+					r.querySelector('.lc_t_q').disabled = !hp
+					r.querySelectorAll('.lc_t_d').forEach(function (x) { x.disabled = hp; if (hp) x.value = '' })
+				})
+				document.addEventListener('input', function (e) {
+					if (!e.target.classList.contains('lc_t_every')) return
+					e.target.closest('.lc_tier').querySelector('.lc_t_ord').textContent = ord(e.target.value)
+				})
+			})()
+		</script>
+		<? else: $t0 = @$cfg['tiers'][0]; ?>
 		<div class="cl_box lc_set">
 			<div class="cl_box_h"><div><i class="fal fa-gift"></i> N-ші тапсырысқа сыйлық</div><span class="cl_seg <?=($cfg['gift'] ? 'cl_seg_loyal' : 'cl_seg_archive')?>"><?=($cfg['gift'] ? 'Қосулы' : 'Өшірулі')?></span></div>
 			<label class="cl_lbl">Нешінші тапсырыс тегін сыйлықпен</label>
-			<div class="lc_inp_w"><input type="number" name="gift_every" class="cl_inp" min="0" max="100" value="<?=$cfg['gift_every']?>"><span>-ші</span></div>
+			<div class="lc_inp_w"><input type="number" name="gift_every" class="cl_inp" min="0" max="100" value="<?=(int)@$t0['every']?>"><span>-ші</span></div>
 			<label class="cl_lbl">Сыйлық</label>
-			<input type="text" name="gift_name" class="cl_inp" maxlength="255" value="<?=htmlspecialchars($cfg['gift_name'])?>" placeholder="Мысалы: Пепперони тегін">
+			<input type="text" name="gift_name" class="cl_inp" maxlength="255" value="<?=htmlspecialchars((string)@$t0['name'])?>" placeholder="Мысалы: Пепперони тегін">
 			<label class="lc_chk"><input type="checkbox" name="gift_reset" value="1"> Санауды бүгіннен бастау (жаңа ай)</label>
-			<div class="cl_small">0 болса сыйлық жүйесі жоқ. Сыйлықты кез келген уақытта ауыстыруға болады. Кассада N-ші тапсырыста «Сыйлық» белгісі шығады.</div>
-			<? if ($cfg['gift'] && $cfg['gift_from']): ?><div class="cl_small">Санау басталды: <?=clients::dt($cfg['gift_from'])?></div><? endif ?>
+			<div class="cl_small">0 болса сыйлық жүйесі жоқ.</div>
 		</div>
+		<? endif ?>
 
 		<div class="lc_save"><button type="submit" class="cl_btn cl_btn_green"><i class="fal fa-check"></i> Сақтау</button></div>
 	</form>

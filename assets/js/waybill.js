@@ -35,6 +35,7 @@
 		var $r = $last.clone();
 		$r.find('input').val('');
 		$r.find('.wb_r_name').attr('data-raw', 0).data('raw', 0);
+		$r.find('.wbr_lnk').remove();
 		$r.find('.wb_r_unit').val($last.find('.wb_r_unit').val());
 		$doc.find('.wb_rows').append($r);
 		total();
@@ -108,7 +109,8 @@
 				price: $r.find('.wb_r_price').val()
 			});
 		});
-		if (post == 1 && !confirm('Накладнойды қабылдап, шикізат қалдығына қосамыз ба?')) return;
+		if (post == 1 && !btn.data('ok')) { ask('Накладнойды қабылдап, шикізат қалдығына қосамыз ба?', function () { btn.data('ok', 1).click() }, { ok: 'Қабылдау' }); return; }
+		btn.data('ok', 0);
 		$('.wb_save').addClass('wb_btn_wait');
 		$.post('/waybill/get.php?save', {
 			id: $doc.data('id'),
@@ -123,30 +125,34 @@
 		}, function (r) {
 			$('.wb_save').removeClass('wb_btn_wait');
 			say(r.msg || (r.ok ? 'Сақталды' : 'Қате шықты'));
-			if (r.id) setTimeout(function () { location.href = '/waybill/item.php?id=' + r.id; }, 600);
+			// қабылданса бет күйі өзгереді (ашамыз); жоба сақталса бет жаңармайды, тек адрес пен id жаңарады
+			if (r.id && post == 1) setTimeout(function () { location.href = '/waybill/item.php?id=' + r.id; }, 600);
+			else if (r.id) { $doc.data('id', r.id).attr('data-id', r.id); history.replaceState(history.state, '', '/waybill/item.php?id=' + r.id); }
 		}, 'json').fail(function () { $('.wb_save').removeClass('wb_btn_wait'); say('Байланыс қатесі, қайта көріңіз'); });
 	});
 
 	$doc.on('click', '.wb_unpost', function () {
-		if (!confirm('Қабылдауды болдырмаймыз ба? Бұл тауарлар қалдықтан алынады.')) return;
-		$.post('/waybill/get.php?unpost', { id: $doc.data('id') }, function (r) {
-			say(r.msg);
-			if (r.ok) setTimeout(function () { location.reload(); }, 600);
-		}, 'json');
+		ask('Қабылдауды болдырмаймыз ба?<br>Бұл тауарлар қалдықтан алынады.', function () {
+			$.post('/waybill/get.php?unpost', { id: $doc.data('id') }, function (r) {
+				say(r.msg);
+				// накладной қайта өңдеуге ашылады (импорт құралы да іске қосылуы керек), сондықтан бет қайта ашылады
+				if (r.ok) setTimeout(function () { location.reload(); }, 600);
+			}, 'json');
+		}, { ok: 'Болдырмау', danger: true });
 	});
 
 	$doc.on('click', '.wb_delete', function () {
-		if (!confirm('Накладнойды өшіреміз бе?')) return;
-		$.post('/waybill/get.php?delete', { id: $doc.data('id') }, function (r) {
-			say(r.msg);
-			if (r.ok) setTimeout(function () { location.href = '/waybill/'; }, 600);
-		}, 'json');
+		ask('Накладнойды өшіреміз бе?', function () {
+			$.post('/waybill/get.php?delete', { id: $doc.data('id') }, function (r) {
+				say(r.msg);
+				if (r.ok) setTimeout(function () { location.href = '/waybill/'; }, 600);
+			}, 'json');
+		}, { ok: 'Өшіру', danger: true });
 	});
 
 	$doc.on('click', '.wb_pay_save', function () {
 		$.post('/waybill/get.php?pay', { id: $doc.data('id'), paid: $doc.find('.wb_f_paid').val() }, function (r) {
-			say(r.msg);
-			if (r.ok) setTimeout(function () { location.reload(); }, 600);
+			say(r.msg); // қарызы жолда өзі есептеліп тұр, бет жаңартпаймыз
 		}, 'json');
 	});
 
@@ -154,6 +160,7 @@
 
 	// ---- Жеткізушілер ----
 	var $sf = $('.wb_sup_form');
+	$(document).on('ajx:done', function () { $sf = $('.wb_sup_form'); }); // тізім AJAX-пен жаңарғанда
 	function supForm(id, name, phone, note) {
 		$sf.data('id', id).removeClass('dsp_n');
 		$sf.find('.wb_sup_form_h').text(id ? 'Жеткізушіні өзгерту' : 'Жаңа жеткізуші');
@@ -162,25 +169,27 @@
 		$sf.find('.wb_s_note').val(note || '');
 		$('html, body').animate({ scrollTop: $sf.offset().top - 90 }, 200);
 	}
-	$('.wb_sup_new').on('click', function () { supForm(0); });
-	$('.wb_sup_edit').on('click', function () {
+	$(document).on('click', '.wb_sup_new', function () { supForm(0); });
+	$(document).on('click', '.wb_sup_edit', function () {
 		var $t = $(this).closest('.wb_tr');
 		supForm($t.data('id'), $t.data('name'), $t.data('phone'), $t.data('note'));
 	});
-	$('.wb_sup_cancel').on('click', function () { $sf.addClass('dsp_n'); });
-	$('.wb_sup_save').on('click', function () {
+	$(document).on('click', '.wb_sup_cancel', function () { $sf.addClass('dsp_n'); });
+	$(document).on('click', '.wb_sup_save', function () {
 		$.post('/waybill/get.php?supplier_save', {
 			id: $sf.data('id'), name: $sf.find('.wb_s_name').val(), phone: $sf.find('.wb_s_phone').val(), note: $sf.find('.wb_s_note').val()
 		}, function (r) {
 			say(r.msg);
-			if (r.ok) setTimeout(function () { location.reload(); }, 500);
+			if (r.ok) ajx('.wb_page');
 		}, 'json');
 	});
-	$('.wb_sup_arch').on('click', function () {
+	$(document).on('click', '.wb_sup_arch', function () {
 		var id = $(this).closest('.wb_tr').data('id'), v = $(this).data('v');
-		if (v == 1 && !confirm('Жеткізушіні архивке жібереміз бе? Накладнойлары өшпейді.')) return;
-		$.post('/waybill/get.php?supplier_archive', { id: id, v: v }, function (r) {
-			if (r.ok) location.reload(); else say('Қате шықты');
-		}, 'json');
+		function go() {
+			$.post('/waybill/get.php?supplier_archive', { id: id, v: v }, function (r) {
+				if (r.ok) { mess(v == 1 ? 'Архивке жіберілді' : 'Архивтен шығарылды', 'ok'); ajx('.wb_page'); } else say('Қате шықты');
+			}, 'json');
+		}
+		if (v == 1) ask('Жеткізушіні архивке жібереміз бе?<br>Накладнойлары өшпейді.', go, { ok: 'Архивке' }); else go();
 	});
 })(jQuery);

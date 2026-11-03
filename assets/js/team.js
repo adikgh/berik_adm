@@ -16,6 +16,8 @@ $(document).ready(function() {
 		tmAuto = false; tmLast = '';
 		$('.tm_in_code, .tm_in_pass').val('');
 		$('.tm_hint').text('').removeClass('tm_hint_warn');
+		tmLock(0);
+		tmRo(d.lock == 1, !!id);
 		tmChip('.tm_in_pos', d.pos || 6);
 		tmPin();
 		tmChip('.tm_in_branch', d.branch || 0);
@@ -29,6 +31,19 @@ $(document).ready(function() {
 		$('.tm_code_box').toggle(op);
 		if (!op) $('.tm_in_code').val('');
 	}
+	// басқа компанияда жұмыс істесе, мұнда тек сол лауазым таңдалады, құпиясөзі өзгертілмейді
+	// аты-жөні бекітулі: тек көрсетіледі, өзгертілмейді (phone — өзгерту формасында нөмір де)
+	function tmRo(on, phone) {
+		var f = $('.tm_in_name, .tm_in_surname').add(phone ? $('.tm_in_phone') : $());
+		f.prop('readonly', on).closest('.form_im').toggleClass('tm_ro', on);
+		if (!on) $('.tm_in_phone').prop('readonly', false).closest('.form_im').removeClass('tm_ro');
+		$('.tm_pass_box').toggle(!on);
+	}
+	function tmLock(pos) {
+		$('.tm_in_pos').toggleClass('tm_chips_lock', !!pos);
+		tmRo(!!pos, false);
+		if (pos) { tmChip('.tm_in_pos', pos); tmPin(); }
+	}
 	function tmClose() { $('.tm_block').removeClass('pop_bl_act'); $('#html').removeClass('ovr_h'); }
 
 	$('.tm_add_pop').on('click', function(){ tmOpen() });
@@ -36,7 +51,7 @@ $(document).ready(function() {
 	$('html').on('click', '.tm_chip', function(){ tmChip($(this).parent(), $(this).attr('data-val')); tmPin() });
 	$('html').on('click', '.tm_edit', function(){
 		var b = $(this);
-		tmOpen(b.closest('.tm_i').attr('data-id'), { name: b.attr('data-name'), surname: b.attr('data-surname'), phone: b.attr('data-phone'), pos: b.attr('data-pos'), branch: b.attr('data-branch') });
+		tmOpen(b.closest('.tm_i').attr('data-id'), { name: b.attr('data-name'), surname: b.attr('data-surname'), phone: b.attr('data-phone'), pos: b.attr('data-pos'), branch: b.attr('data-branch'), lock: b.attr('data-lock') });
 	});
 
 	// жаңа жұмысшы: нөмір базада бар болса, сол адамды көрсетеміз (екінші рет жасалмайды)
@@ -51,18 +66,26 @@ $(document).ready(function() {
 		if ($('.tm_save').attr('data-id')) return;
 		// маска толық болғанда ғана (8 + 10 сан) іздейміз
 		var dg = $(this).val().replace(/\D/g, ''), ph = dg.length >= 11 ? dg.slice(-10) : '', hint = $('.tm_hint');
-		if (ph.length < 10) { if (tmLast) tmClearAuto(); tmLast = ''; hint.text('').removeClass('tm_hint_warn'); return; }
+		if (ph.length < 10) { if (tmLast) { tmClearAuto(); tmLock(0); } tmLast = ''; hint.text('').removeClass('tm_hint_warn'); return; }
 		if (ph == tmLast) return;
 		tmLast = ph;
 		$.post('/team/get.php?find', { phone: ph }, function(d){
 			if (ph != tmLast) return;
 			hint.text('').removeClass('tm_hint_warn');
 			tmClearAuto();
+			tmLock(0);
 			if (!d || !d.name) { $('.tm_in_name').focus(); return; }
 			var who = (d.name + ' ' + d.surname).trim();
 			if (d.staff == 'here') {
 				var pos = $('.tm_in_pos .tm_chip[data-val="' + d.pos + '"]').text().trim();
 				hint.addClass('tm_hint_warn').text(who + ' тізімде бар' + (pos ? ' (' + pos + ')' : '') + '. Лауазымын ауыстыру үшін тізімнен сол адамды өзгертіңіз.');
+			} else if (d.staff == 'lead') {
+				var lp = $('.tm_in_pos .tm_chip[data-val="' + d.pos + '"]').text().trim();
+				hint.text(who + ' басқа компанияда ' + lp + '. Мұнда да тек ' + lp + ' болып қосылады. Басқа лауазым керек болса, алдымен ол компания бұл кісіні өз тізімінен шығаруы керек.');
+				$('.tm_in_name').val(d.name);
+				$('.tm_in_surname').val(d.surname);
+				tmAuto = true;
+				tmLock(d.pos);
 			} else if (d.staff == 'other') {
 				hint.addClass('tm_hint_warn').text('Бұл нөмір басқа компанияда жұмысшы болып тіркелген.');
 			} else {
@@ -77,10 +100,11 @@ $(document).ready(function() {
 	});
 
 	// қолмен өзгертсе, енді автоматты деп санамаймыз
-	$('.tm_in_name, .tm_in_surname').on('input', function(){ tmAuto = false });
+	$('.tm_in_name, .tm_in_surname').on('input', function(){ if (!this.readOnly) tmAuto = false });
 
 	var errs = { name: 'Атын жазыңыз', phone: 'Телефонды дұрыс жазыңыз', pos: 'Лауазымын таңдаңыз', code: 'PIN 4 сан болуы керек',
-		phone_busy: 'Бұл нөмір басқа адамда тұр', already: 'Бұл адам тізімде бар', other_company: 'Бұл нөмір басқа компанияда тіркелген' };
+		phone_busy: 'Бұл нөмір басқа адамда тұр', already: 'Бұл адам тізімде бар', other_company: 'Бұл нөмір басқа компанияда тіркелген',
+		pos_lock: 'Бұл адамның лауазымы басқа компаниядағыдай болуы керек. Өзгерту үшін алдымен ол компания оны шығарсын' };
 
 	$('.tm_save').on('click', function(){
 		var btn = $(this);
@@ -93,7 +117,7 @@ $(document).ready(function() {
 			},
 			beforeSend: function(){ mess('Сақталуда..') },
 			success: function(data){
-				if (data == 'yes') { mess('Сақталды'); setTimeout(function(){ location.reload() }, 400) }
+				if (data == 'yes') { mess('Сақталды'); tmClose(); ajx('.tm_c') }
 				else { mess(errs[data] || 'Қате!'); console.log(data) }
 			},
 		});
@@ -101,16 +125,15 @@ $(document).ready(function() {
 
 	$('html').on('click', '.tm_del', function(){
 		var row = $(this).closest('.tm_i');
-		if (!confirm('Жұмысшыны тізімнен шығарайық па?\nОның аккаунты өшпейді, кейін қайта қосуға болады.')) return;
-		$.ajax({
+		ask('Жұмысшыны тізімнен шығарайық па?<br>Оның аккаунты өшпейді, кейін қайта қосуға болады.', function(){ $.ajax({
 			url: '/team/get.php?remove', type: 'POST', dataType: 'html',
 			data: { id: row.attr('data-id') },
 			success: function(data){
-				if (data == 'yes') { row.remove(); mess('Тізімнен шығарылды') }
+				if (data == 'yes') { mess('Тізімнен шығарылды', 'ok'); ajx('.tm_c') }
 				else if (data == 'self') mess('Өзіңізді шығара алмайсыз')
 				else { mess('Қате!'); console.log(data) }
 			},
-		});
+		}) }, { ok: 'Шығару', danger: true });
 	});
 
 });

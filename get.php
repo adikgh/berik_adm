@@ -17,24 +17,8 @@
 	// }
 
 
-	// sign in phone
-	if(isset($_GET['sign'])) {
-		$phone = substr(preg_replace('/\D/', '', (string)@$_POST['phone']), -10);
-		$password = strip_tags($_POST['password']);
-		$user = db::query("SELECT * FROM user WHERE `phone` = '$phone' and `password` = '$password' and `right` = 1");
-		if (mysqli_num_rows($user)) {
-			$user_d = mysqli_fetch_array($user);
-			$user_staff = fun::user_staffw($user_d['id']);
-			if ($user_staff['positions_id'] == 3 || $user_staff['positions_id'] == 2 || $user_staff['positions_id'] == 1) {
-				$_SESSION['uph'] = $phone;
-				$_SESSION['ups'] = $password;
-				setcookie('uph', $phone, time() + 3600*24*30*6, '/');
-				setcookie('ups', $password, time() + 3600*24*30*6, '/');
-				echo 'yes';
-			} else echo 'none';
-		} else echo 'none';
-		exit();
-	}
+	// Кіру: пароль → WhatsApp коды, парольді ұмыттым (config/auth.php)
+	auth_routes([1, 2, 3], 'admin');
 
 
 
@@ -55,22 +39,23 @@
 
 	// ubd user
 	if(isset($_GET['ubd_acc'])) {
+		if (!$user_id) exit('none');
 		$n_name = strip_tags($_POST['n_name']);
 		$surname = strip_tags($_POST['surname']);
 		$sex = strip_tags($_POST['sex']);
 		$age = strip_tags($_POST['age']);
 		$mail = strip_tags($_POST['mail']);
 		$phone = substr(preg_replace('/\D/', '', (string)@$_POST['phone']), -10);
-		$password = strip_tags($_POST['password']);
+		$password = trim((string)@$_POST['password']);
 		
-		$upd = db::query("UPDATE `user` SET `name`='$n_name', `surname`='$surname', `sex`='$sex', `age`='$age', `mail`='$mail', `phone`='$phone', `password`='$password', `upd_dt`='$datetime' WHERE id = '$user_id'");
+		// SQL-ге экрандау; телефон тек 10 таңба болса және басқа адамда болмаса ауысады
+		$e = function ($v) { return mysqli_real_escape_string(db::$connect, trim((string)$v)); };
+		$set_ph = '';
+		if (strlen($phone) == 10 && !mysqli_num_rows(db::query("SELECT id FROM `user` WHERE `phone` = '$phone' AND id <> '".(int)$user_id."' LIMIT 1"))) $set_ph = ", `phone`='$phone'";
+		$upd = db::query("UPDATE `user` SET `name`='".$e($n_name)."', `surname`='".$e($surname)."', `sex`='".$e($sex)."', `age`='".$e($age)."', `mail`='".$e($mail)."'$set_ph, `upd_dt`='$datetime' WHERE id = '".(int)$user_id."'");
+		if ($password !== '') db::query("UPDATE `user` SET `password` = '".pass_sql($password)."' WHERE id = '$user_id'");
 
-		$_SESSION['uph'] = $phone;
-		$_SESSION['upm'] = $mail;
-		$_SESSION['ups'] = $password;
-		setcookie('uph', $phone, time() + 3600*24*30);
-		setcookie('upm', $mail, time() + 3600*24*30);
-		setcookie('ups', $password, time() + 3600*24*30);
+		auth_relogin($user_id); // cookie жаңа телефон/парольмен
 
 		echo "yes";
 		exit();

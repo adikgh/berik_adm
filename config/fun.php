@@ -168,7 +168,7 @@
 
 		// user management
 		public static function user_staffw($id) {
-			$sql = db::query("select * from company_staff where user_id = '$id' limit 1");
+			$sql = db::query("select * from company_staff where user_id = '".(int)$id."' order by positions_id is null, positions_id limit 1");
 			if (mysqli_num_rows($sql)) return mysqli_fetch_array($sql); else return 0;
 		}
 

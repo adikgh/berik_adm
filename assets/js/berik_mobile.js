@@ -153,3 +153,14 @@ $(function () {
 	$(document).on('keydown', function (e) { if (e.key == 'Escape') open(false); });
 	$(window).on('resize', sync);
 });
+
+// Телефонда көлденең айналатын қойындылар: белсенді қойынды көрінетін жерге келеді (2026-11-03)
+$(function () {
+	if ($(window).width() > 768) return;
+	var act = '.wb_tab_act, .k_br_act, .cs_tab_act, .pr_seg_on, .cl_tab_act, .tg1_topi_act, .st_seg_act, .rnp_seg_act';
+	$('.wb_tabs, .k_br, .cs_tabs, .pr_seg, .cl_tabs, .tg1_topc').each(function () {
+		var box = this, a = $(box).children(act).first()[0];
+		if (!a || box.scrollWidth <= box.clientWidth) return;
+		box.scrollLeft = Math.max(0, a.offsetLeft - box.offsetLeft - 12);
+	});
+});

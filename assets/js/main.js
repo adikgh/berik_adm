@@ -1181,21 +1181,14 @@ $(document).ready(function() {
 
 
    // 
-	$('.on_sort_time').on('change', function () {
+	$(document).on('change', '.on_sort_time', function () {
       var val = $(this).val();
       const url = new URL(window.location);
       url.searchParams.set('time', val);
-      history.pushState(null, null, url);
-      location.reload();
+      ajxUrl(this, url); // бет жаңармай (fun.js)
    })
 
-   $('.on_sort_company').on('change', function () {
-         var val = $(this).val();
-         const url = new URL(window.location);
-         url.searchParams.set('company', val);
-         history.pushState(null, null, url);
-         location.reload();
-   })
+   // компания ауыстыру: berik_admin.js (файл өзгергенде браузер кэші өзі жаңарады)
 
 
 

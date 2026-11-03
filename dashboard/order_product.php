@@ -148,7 +148,7 @@
                             <div class="uc_ui">
                                 <div class="uc_uil">
                                     <div class="uc_ui_number"><?=$number?></div>
-                                    <a class="uc_uiln" href="/products/item/?id=<?=$product_d['id']?>">
+                                    <a class="uc_uiln cpp_open" href="/products/item/?id=<?=$product_d['id']?>" data-id="<?=$product_d['id']?>" title="Құрамы мен себесін көру">
                                         <div class="uc_uinu">
                                             <div class="uc_ui_name"><?=$product_d['name_kz']?></div>
                                         </div>
@@ -169,3 +169,5 @@
     </div>
 
 <? include "../block/footer.php"; ?>
+
+	<? include "../products/comp_pop.php"; // тағам атауын басса, құрамы попап болып ашылады (бет ауыспайды) ?>

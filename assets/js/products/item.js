@@ -4,7 +4,7 @@ $(document).ready(function() {
 
 
 	// upd product
-	$('.pr_upd_pop').click(function(){
+	$(document).on('click', '.pr_upd_pop', function(){
 		$('.pr_upd_block').addClass('pop_bl_act');
 		$('#html').addClass('ovr_h');
 		btn = $(this)
@@ -20,7 +20,7 @@ $(document).ready(function() {
 			error: function(data){ }
 		})
 	})
-	$('.pr_upd_back').click(function(){
+	$(document).on('click', '.pr_upd_back', function(){
 		$('.pr_upd_block').removeClass('pop_bl_act');
 		$('#html').removeClass('ovr_h');
 		$('.pr_upd_block .pop_bl_cl').html('');
@@ -42,7 +42,7 @@ $(document).ready(function() {
 				success: function(data){
 					if (data == 'yes') {
 						mess('Успешно')
-						setTimeout(function() { location.reload(); }, 500);
+						$('.pop_bl').removeClass('pop_bl_act'); $('#html').removeClass('ovr_h'); ajxReload('.it_page');
 					} else mess('Ошибка!'); console.log(data);
 				},
 				beforeSend: function(){ mess('Отправка..') },
@@ -55,8 +55,7 @@ $(document).ready(function() {
 	// delete
 	$('html').on('click', '.pr_delete', function() {
 		btn = $(this)
-		if (!confirm('Тағамды архивке жіберейік пе? Ол толық өшпейді.')) return;
-		$.ajax({
+		ask('Тағамды архивке жіберейік пе?<br>Ол толық өшпейді.', function(){ $.ajax({
 			url: "/products/get.php?product_delete",
 			type: "POST",
 			dataType: "html",
@@ -69,7 +68,7 @@ $(document).ready(function() {
 			},
 			beforeSend: function(){ },
 			error: function(data){ }
-		})
+		}) }, { ok: 'Архивке' })
 	})
 
 
@@ -77,7 +76,7 @@ $(document).ready(function() {
 
 
 	
-	$('.comp_sel').click(function(){
+	$(document).on('click', '.comp_sel', function(){
 		$('.pitem_add').attr('data-comp', $(this).attr('data-id'));
 	})
 
@@ -85,16 +84,16 @@ $(document).ready(function() {
 
 
 	// add product
-	$('.pitem_add_pop').click(function(){
+	$(document).on('click', '.pitem_add_pop', function(){
 		$('.pitem_add_block').addClass('pop_bl_act');
 		$('#html').addClass('ovr_h');
 	})
-	$('.pitem_add_back').click(function(){
+	$(document).on('click', '.pitem_add_back', function(){
 		$('.pitem_add_block').removeClass('pop_bl_act');
 		$('#html').removeClass('ovr_h');
 	})
-	$('.pitem_img_add').click(function(){ $(this).siblings('.pitem_img').click() })
-	$('.pitem_add').on('click', function() {
+	$(document).on('click', '.pitem_img_add', function(){ $(this).siblings('.pitem_img').click() })
+	$(document).on('click', '.pitem_add', function() {
 		if ($('.pitem_add').attr('data-comp')) {
 			$.ajax({
 				url: "/products/item/get.php?pitem_add",
@@ -110,7 +109,7 @@ $(document).ready(function() {
 				success: function(data){
 					if (data == 'yes') {
 						mess('Успешно')
-						setTimeout(function() { location.reload(); }, 500);
+						$('.pop_bl').removeClass('pop_bl_act'); $('#html').removeClass('ovr_h'); ajxReload('.it_page');
 					} else mess('Ошибка!'); console.log(data);
 				},
 			})
@@ -118,7 +117,7 @@ $(document).ready(function() {
 	})
 
 	// pitem_btn_delete
-	$('.pitem_btn_delete').on('click', function() {
+	$(document).on('click', '.pitem_btn_delete', function() {
 		btn = $(this)
 		$.ajax({
 			url: "/products/item/get.php?pitem_delete",
@@ -128,7 +127,7 @@ $(document).ready(function() {
 			success: function(data){
 				if (data == 'yes') {
 					mess('Успешно')
-					setTimeout(function() { location.reload(); }, 500);
+					$('.pop_bl').removeClass('pop_bl_act'); $('#html').removeClass('ovr_h'); ajxReload('.it_page');
 				} else mess('Ошибка!'); console.log(data);
 			},
 			beforeSend: function(){ mess('Отправка..') },
@@ -137,7 +136,7 @@ $(document).ready(function() {
 	})
 
 	// upd item
-	$('.pitem_upd_pop').click(function(){
+	$(document).on('click', '.pitem_upd_pop', function(){
 		$('.pitem_upd_block').addClass('pop_bl_act');
 		$('#html').addClass('ovr_h');
 		btn = $(this)
@@ -155,7 +154,7 @@ $(document).ready(function() {
 			error: function(data){ }
 		})
 	})
-	$('.pitem_upd_back').click(function(){
+	$(document).on('click', '.pitem_upd_back', function(){
 		$('.pitem_upd_block').removeClass('pop_bl_act');
 		$('#html').removeClass('ovr_h');
 		$('.pitem_upd_block .pop_bl_cl').html('');
@@ -184,7 +183,7 @@ $(document).ready(function() {
 				success: function(data){
 					if (data == 'yes') {
 						mess('Успешно')
-						setTimeout(function() { location.reload(); }, 500);
+						$('.pop_bl').removeClass('pop_bl_act'); $('#html').removeClass('ovr_h'); ajxReload('.it_page');
 					} else mess('Ошибка!'); console.log(data);
 				},
 				beforeSend: function(){ mess('Отправка..') },
@@ -247,7 +246,7 @@ $(document).ready(function() {
 		$('.pitem_updq_block').removeClass('pop_bl_act');
 		$('#html').removeClass('ovr_h');
 		$('.pitem_updq_block .pop_bl_cl').html('');
-		if ($('.pitem_updq_block').attr('data-load') == 1) location.reload();	
+		if ($('.pitem_updq_block').attr('data-load') == 1) { $('.pitem_updq_block').attr('data-load', 0); ajxReload('.it_page') }	
 	})
 
 
@@ -283,7 +282,7 @@ $(document).ready(function() {
 		$('.view_add_block .view_add').attr('data-item-id', $(this).attr('data-id'))
 	})
 	$('html').on('click', '.view_add_back', function(){ $('.view_add_block').removeClass('pop_bl_act'); })
-	$('.view_add').on('click', function() {
+	$(document).on('click', '.view_add', function() {
 		if ($('.views_quantity').attr('data-sel') != 1) {
 			if ($('.views_quantity').attr('data-sel') != 1) mess('Введите свой данный')
 		} else {
@@ -453,7 +452,7 @@ $(document).ready(function() {
 		$('.imgs_add_block').removeClass('pop_bl_act');
 		$('#html').removeClass('ovr_h');
 		// $('.imgs_add_block .pop_bl_cl').html('');
-		if ($('.imgs_add_block').attr('data-load') == 1) location.reload();
+		if ($('.imgs_add_block').attr('data-load') == 1) { $('.imgs_add_block').attr('data-load', 0); ajxReload('.it_page') }
 	})
 
 	$('html').on('input', '.view_updq_qn', function () {
@@ -479,7 +478,7 @@ $(document).ready(function() {
 
 
 
-	$('.item_ava_clc2').click(function(){ $(this).siblings('.item_file2').click() })
+	$(document).on('click', '.item_ava_clc2', function(){ $(this).siblings('.item_file2').click() })
 	$(".item_file2").change(function(){
 		tfile = $(this)
 		if (window.FormData === undefined) mess('В вашем браузере FormData не поддерживается')

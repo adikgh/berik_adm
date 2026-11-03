@@ -1,5 +1,5 @@
 // Клиенттер
-$('.cl_save').on('click', function () {
+$(document).on('click', '.cl_save', function () {
 	var f = $(this).closest('.cl_form'), btn = $(this);
 	btn.addClass('cl_btn_wait');
 	$.post('/clients/get.php?client_save', {
@@ -9,16 +9,18 @@ $('.cl_save').on('click', function () {
 		note: f.find('.cl_f_note').val()
 	}, function (r) {
 		btn.removeClass('cl_btn_wait');
-		if (r == 'yes') { mess('Сақталды'); setTimeout(function () { location.reload(); }, 500); }
+		if (r == 'yes') { mess('Сақталды'); ajx('.cl_page'); }
 		else mess('Қате, қайта көріңіз');
 	});
 });
 
-$('.cl_archive').on('click', function () {
+$(document).on('click', '.cl_archive', function () {
 	var f = $(this).closest('.cl_form'), v = $(this).data('v');
-	if (v == 1 && !confirm('Клиентті архивке жіберу керек пе? Деректері өшпейді.')) return;
-	$.post('/clients/get.php?client_archive', { id: f.data('id'), v: v }, function (r) {
-		if (r == 'yes') location.reload();
-		else mess('Қате, қайта көріңіз');
-	});
+	function go() {
+		$.post('/clients/get.php?client_archive', { id: f.data('id'), v: v }, function (r) {
+			if (r == 'yes') { mess(v == 1 ? 'Архивке жіберілді' : 'Архивтен шығарылды', 'ok'); ajx('.cl_page'); }
+			else mess('Қате, қайта көріңіз');
+		});
+	}
+	if (v == 1) ask('Клиентті архивке жіберу керек пе?<br>Деректері өшпейді.', go, { ok: 'Архивке' }); else go();
 });

@@ -12,6 +12,7 @@ $(function () {
 	// Ішінде бұрынғы select қалады, change сол арқылы жүреді (orders.js). Admin: құлып жоқ, кез келген статус
 	function or_dd(scope){ $(scope).find('select.on_staff, select.on_type, select.on_status').each(function(){
 		var sel = $(this)
+		if (sel.data('dd')) return; sel.data('dd', 1)
 		if (sel.hasClass('on_type')) {
 			var tb = $('<div class="tp_btns"></div>'), dis = sel.prop('disabled')
 			tb.append('<span class="tp_sl"></span>').css('--i', sel.prop('selectedIndex')).toggleClass('tp_off', !!dis)
@@ -67,15 +68,18 @@ $(function () {
 	$(window).on('scroll resize', function(){ $('.oh_pop').removeClass('oh_open') })
 
 	// Статус сүзгісі: әр статустың түсті нүктесі (berik_admin.js тізімді жасағаннан кейін)
-	setTimeout(function(){
+	function st_dots(){
 		var s = $('select.on_sort_status'), w = s.closest('.bsel')
-		if (!w.length) return
+		if (!w.length || w.find('.cr_dot').length) return
 		s.find('option').each(function(i){
 			var c = $(this).attr('data-clr'); if (!c) return
 			w.find('.bsel_i[data-i="' + i + '"]').prepend($('<em class="cr_dot"></em>').css('background', c))
 			if (this.selected) w.find('.bsel_txt').prepend($('<em class="cr_dot"></em>').css('background', c))
 		})
-	}, 0)
+	}
+	setTimeout(st_dots, 0)
+	// тізім AJAX-пен жаңарғанда (fun.js ajx) жаңа карточкаларды безендіру
+	$(document).on('ajx:done', function(){ or_dd($('.or_card')); setTimeout(st_dots, 0) })
 })
 
 
