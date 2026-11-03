@@ -37,12 +37,15 @@
 	$menu_name = 'team';
 	$page_name = 'Жұмысшылар';
 	$page_key = 'Staff';
-	$css = ['team'];
+	$tm_tab = 'list';
+	$css = ['team', 'waybill', 'pay'];
 	$js = ['team'];
 ?>
 <? include "../block/header.php"; ?>
 
 	<div class="bl_c">
+
+		<? if ($can_edit) include "tabs.php"; ?>
 
 		<? if ($can_edit): ?>
 			<div class="ucours_t">
