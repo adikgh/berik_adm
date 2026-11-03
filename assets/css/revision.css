@@ -1,0 +1,14 @@
+/* Ревизия (waybill.css үстіне) */
+.rv_prev{ height: 46px; display: flex; align-items: center; padding: 0 12px; background: #f7f7f8; border-radius: 10px; font-size: 14px; font-weight: 700; color: #444; }
+.rv_table .wb_tr{ padding-top: 8px; padding-bottom: 8px; }
+.rv_td_fact{ flex: 0 0 150px; }
+.rv_r_fact{ height: 42px; font-size: 16px; font-weight: 800; text-align: center; }
+.rv_done .rv_r_fact{ border-color: var(--g); background: #f3fbf7; }
+.rv_has_diff{ background: #fffaf0; }
+.rv_doc .wb_actions .wb_small{ flex-basis: 100%; }
+@media (max-width: 768px){
+	.rv_td_fact{ flex: 1 1 100%; order: -1; }
+	.rv_table .wb_td_name{ order: -2; }
+	.rv_table .wb_td_n{ order: -3; }
+	.rv_r_fact{ height: 48px; font-size: 18px; }
+}

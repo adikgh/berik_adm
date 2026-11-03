@@ -2,7 +2,7 @@
 
    // 
 //    if ($user_id) header('location: /dashboard/');
-	if ($user_id) header('location: /orders/');
+	if ($user_id) header('location: '.(@$user_right['positions_id'] == 9 ? '/revision/' : '/orders/'));
    // header('location: /cashbox/');
    // header('location: /dev.php');
 

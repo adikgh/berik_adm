@@ -3,6 +3,7 @@
 		<a class="wb_tab <?=($wb_tab == 'list' ? 'wb_tab_act' : '')?>" href="/waybill/"><i class="fal fa-file-invoice"></i> Накладнойлар</a>
 		<a class="wb_tab <?=($wb_tab == 'suppliers' ? 'wb_tab_act' : '')?>" href="/waybill/suppliers.php"><i class="fal fa-truck"></i> Жеткізушілер</a>
 		<a class="wb_tab <?=($wb_tab == 'stock' ? 'wb_tab_act' : '')?>" href="/waybill/stock.php"><i class="fal fa-boxes-alt"></i> Шикізат қалдығы</a>
+		<a class="wb_tab <?=($wb_tab == 'revision' ? 'wb_tab_act' : '')?>" href="/revision/"><i class="fal fa-clipboard-list-check"></i> Ревизия</a>
 	</div>
 	<div class="wb_bar_btns">
 		<a class="wb_btn wb_btn_light" href="/waybill/item.php?import=1"><i class="fal fa-file-import"></i> Файлдан жүктеу</a>

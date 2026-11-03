@@ -21,7 +21,10 @@
 					<div class="mp_top">
 						<div class="mp_topc">
 
-							<? if ($user_right['positions_id'] == 3): ?>
+							<? if ($user_right['positions_id'] == 9): ?>
+								<!-- Аспазшы: тек ревизия -->
+								<a class="mp_topi <?=($menu_name=='revision'?'mp_topi_act':'')?>" href="/revision/"><i class="fal fa-clipboard-list-check"></i><span><?=t::w('Stock count', 'Ревизия')?></span></a>
+							<? elseif ($user_right['positions_id'] == 3): ?>
 								<a class="mp_topi <?=($menu_name=='kassa'?'mp_topi_act':'')?>" href="/kassa/?time=<?=$time_sort?>"><i class="fal fa-cash-register"></i><span><?=t::w('Cashbox', 'Касса')?></span></a>
 							<? else: ?>
 								<? $an_act = in_array($menu_name, ['order_product', 'order_comp', 'order_user', 'stats']) || strpos((string)$menu_name, 'client') === 0; ?>
@@ -66,7 +69,7 @@
 								<a class="mp_topi <?=($menu_name=='kassa'?'mp_topi_act':'')?>" href="/kassa/?time=<?=$time_sort?>"><i class="fal fa-cash-register"></i><span><?=t::w('Cashbox', 'Касса')?></span></a>
 								<!-- Тағамдар: компьютерде бір батырма, ішінен бөлімдері ашылады (Аналитика сияқты) -->
 								<? $pm = @$pod_menu_name; ?>
-								<div class="mp_dd <?=($menu_name=='products' || $menu_name=='waybill'?'mp_dd_act':'')?>">
+								<div class="mp_dd <?=($menu_name=='products' || $menu_name=='waybill' || $menu_name=='revision'?'mp_dd_act':'')?>">
 									<a class="mp_dd_t" href="javascript:;" tabindex="0"><i class="fal fa-utensils"></i><span><?=t::w('Dishes', 'Тағамдар')?></span><i class="far fa-angle-down mp_dd_ar"></i></a>
 									<div class="mp_dd_c">
 										<a class="mp_dd_i <?=($menu_name=='products' && ($pm=='main' || $pm=='item')?'mp_dd_i_act':'')?>" href="/products/"><i class="fal fa-list-ul"></i><span><?=t::w('All dishes', 'Барлық тағамдар')?></span></a>
@@ -76,6 +79,7 @@
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='cost'?'mp_dd_i_act':'')?>" href="/products/cost/"><i class="fal fa-calculator"></i><span><?=t::w('Cost sheet', 'Себес')?></span></a>
 										<div class="mp_dd_sep"></div>
 										<a class="mp_dd_i <?=($menu_name=='waybill'?'mp_dd_i_act':'')?>" href="/waybill/"><i class="fal fa-file-invoice"></i><span><?=t::w('Incoming goods', 'Кіріс тауарлары')?></span></a>
+										<a class="mp_dd_i <?=($menu_name=='revision'?'mp_dd_i_act':'')?>" href="/revision/"><i class="fal fa-clipboard-list-check"></i><span><?=t::w('Stock count', 'Ревизия')?></span></a>
 									</div>
 									<!-- телефондағы төменгі мәзір үшін -->
 									<a class="mp_topi mp_dd_m <?=($menu_name=='products'?'mp_topi_act':'')?>" href="/products/"><i class="fal fa-utensils"></i><span><?=t::w('Dishes', 'Тағамдар')?></span></a>
@@ -114,11 +118,13 @@
 								</div>
 							</div>
 							<div class="acc_list">
+								<? if (@$user_right['positions_id'] != 9): ?>
 								<a class="menu_ci" href="/team/">
 									<div class="menu_cin"><i class="fal fa-user-headset"></i></div>
 									<div class="menu_cih"><?=t::w('Staff', 'Жұмысшылар')?></div>
 								</a>
-								<? if (@$user_right['positions_id'] != 3): ?>
+								<? endif ?>
+								<? if (@$user_right['positions_id'] != 3 && @$user_right['positions_id'] != 9): ?>
 									<a class="menu_ci" href="/delivery/">
 										<div class="menu_cin"><i class="fal fa-map-marked-alt"></i></div>
 										<div class="menu_cih"><?=t::w('Delivery zones', 'Жеткізу аймақтары')?></div>

@@ -59,6 +59,12 @@
    $user_id = @$user['id'];
    $user_right = fun::user_staffw($user_id);
 
+   // аспазшы тек ревизия бетіне кіреді
+   if (@$user_right['positions_id'] == 9) {
+      $sn = (string)@$_SERVER['SCRIPT_NAME'];
+      if (strpos($sn, '/revision/') !== 0 && !in_array($sn, ['/index.php', '/get.php', '/exit.php'])) { header('location: /revision/'); exit(); }
+   }
+
    // company
    $company = 0;
    if (@$user_right['company_id']) $company = $user_right['company_id'];
