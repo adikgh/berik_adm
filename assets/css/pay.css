@@ -1,0 +1,27 @@
+/* Жалақы және ОПИУ беттері (waybill.css стильдерін қолданады) */
+.zp_tabs_w{ padding-bottom: 0; margin-top: 10px; }
+.zp_top{ display: flex; justify-content: flex-end; margin: -2px 0 14px; }
+.zp_page .wb_box_h i{ color: var(--b); margin-right: 6px; }
+.zp_gsum{ font-size: 18px; }
+.zp_note{ margin: 0 18px 10px; padding: 10px 14px; border-radius: 10px; background: #eef6fb; color: #1f5f86; font-size: 13px; font-weight: 600; line-height: 1.45; }
+.zp_note i{ margin-right: 4px; }
+.zp_page .wb_td_act{ flex: 0 0 120px; }
+.zp_page .wb_td_act .wb_btn{ height: 38px; padding: 0 12px; font-size: 13px; }
+.zp_block select.form_txt{ appearance: auto; }
+
+/* ОПИУ кестесі */
+.op_tbl .wb_tr{ padding-top: 11px; padding-bottom: 11px; }
+.op_tbl .wb_td_v{ flex: 0 0 170px; text-align: right; white-space: nowrap; }
+.op_tbl .wb_td_pc{ flex: 0 0 80px; text-align: right; color: var(--mut); font-size: 13px; font-weight: 600; }
+.op_h{ background: #fafbfc; font-weight: 800; }
+.op_sub .wb_td_name{ padding-left: 26px; color: #444; }
+.op_sub2 .wb_td_name{ padding-left: 48px; color: #666; font-size: 13px; }
+.op_tot{ font-size: 16px; font-weight: 800; background: #f3faf6; }
+.op_tot_neg{ background: #fdf1f1; }
+.op_tbl a.wb_tr .wb_td_name:after{ content: '\f105'; font-family: 'Font Awesome 5 Pro'; margin-left: 8px; color: var(--mut); font-weight: 300; }
+@media (max-width: 700px){
+	.op_tbl .wb_td_v{ flex: 0 0 120px; }
+	.op_tbl .wb_td_pc{ display: none; }
+	.op_sub .wb_td_name{ padding-left: 14px; }
+	.op_sub2 .wb_td_name{ padding-left: 26px; }
+}

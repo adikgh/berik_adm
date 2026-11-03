@@ -118,6 +118,16 @@
 									<div class="menu_cin"><i class="fal fa-user-headset"></i></div>
 									<div class="menu_cih"><?=t::w('Staff', 'Жұмысшылар')?></div>
 								</a>
+								<? if (in_array((int)@$user_right['positions_id'], [1, 2])): ?>
+									<a class="menu_ci" href="/team/pay.php">
+										<div class="menu_cin"><i class="fal fa-wallet"></i></div>
+										<div class="menu_cih"><?=t::w('Salary', 'Жалақы')?></div>
+									</a>
+									<a class="menu_ci" href="/opiu/">
+										<div class="menu_cin"><i class="fal fa-chart-line"></i></div>
+										<div class="menu_cih"><?=t::w('P&L', 'ОПИУ')?></div>
+									</a>
+								<? endif ?>
 								<? if (@$user_right['positions_id'] != 3): ?>
 									<a class="menu_ci" href="/delivery/">
 										<div class="menu_cin"><i class="fal fa-map-marked-alt"></i></div>
