@@ -29,6 +29,7 @@
 	<script>window.ui_lang = <?=json_encode($ui_lang ?? 'kz')?>; window.bw = <?=json_encode(t::all(), JSON_UNESCAPED_UNICODE)?>;</script>
 	<script src="/assets/js/berik_admin.js?v=<?=@filemtime($_SERVER['DOCUMENT_ROOT'].'/assets/js/berik_admin.js')?>"></script>
 	<script src="/assets/js/berik_mobile.js?v=<?=@filemtime($_SERVER['DOCUMENT_ROOT'].'/assets/js/berik_mobile.js')?>"></script>
+	<? include __DIR__."/acc_pop.php"; // Аккаунт поп-апы ?>
 		
 </body>
 </html>

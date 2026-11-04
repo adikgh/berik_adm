@@ -165,6 +165,10 @@
 										<div class="menu_cin"><i class="fal fa-map-marked-alt"></i></div>
 										<div class="menu_cih"><?=t::w('Delivery zones', 'Жеткізу аймақтары')?></div>
 									</a>
+									<a class="menu_ci" href="/qr/">
+										<div class="menu_cin"><i class="fal fa-qrcode"></i></div>
+										<div class="menu_cih"><?=t::w('QR menu', 'QR меню')?></div>
+									</a>
 								<? endif ?>
 								<? if (function_exists('wa_owner_ok') && wa_owner_ok($user_id, @$user_right['positions_id'])): ?>
 									<a class="menu_ci" href="/wa/">
@@ -172,7 +176,7 @@
 										<div class="menu_cih">WhatsApp</div>
 									</a>
 								<? endif ?>
-								<a class="menu_ci" href="#/acc/">
+								<a class="menu_ci ac_open" href="/acc/">
 									<div class="menu_cin"><i class="fal fa-user"></i></div>
 									<div class="menu_cih"><?=t::w('Account', 'Аккаунт')?></div>
 								</a>
