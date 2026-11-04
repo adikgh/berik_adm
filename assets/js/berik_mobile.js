@@ -4,6 +4,9 @@ $(function () {
 
 	var W = window.bw || {};
 	function w(k, d) { return W[k] || d; }
+	// атау тек <span>-нан алынады: қызыл санауыш (.mp_cnt) мәтінге жабысып «Закуп46» болмасын
+	function lbl(x) { var sp = x.children('span').first(); return $.trim(sp.length ? sp.text() : x.clone().children('.mp_cnt').remove().end().text()); }
+	function cnt(x) { var n = $.trim(x.find('.mp_cnt').first().text()); return n ? $('<b class="bm_cnt"></b>').text(n).attr('title', x.find('.mp_cnt').first().attr('title') || '') : null; }
 
 	var MAX = 3; // төменде «Тағы»-дан басқа қанша батырма тұрады (қалғаны «Тағы» ішінде)
 	var links = $('.mp_topc .mp_topi');
@@ -25,12 +28,12 @@ $(function () {
 			entries.push({
 				href: sub.first().attr('href') || el.find('.mp_dd_i').first().attr('href'),
 				icon: ico.clone(),
-				text: $.trim(t.find('span').first().text() || sub.first().text()),
+				text: $.trim(t.find('span').first().text()) || lbl(sub.first()),
 				act: el.hasClass('mp_dd_act') || sub.filter('.mp_topi_act').length > 0,
 				items: el.find('.mp_dd_c').children() // компьютердегі ашылмалы тізім: телефонда да осы ашылады
 			});
 		} else if (el.hasClass('mp_topi') && !el.hasClass('mp_dd_m')) {
-			entries.push({ href: el.attr('href'), icon: el.find('i').clone(), text: $.trim(el.text()), act: el.hasClass('mp_topi_act') });
+			entries.push({ href: el.attr('href'), icon: el.find('i').first().clone(), text: lbl(el), cnt: cnt(el), act: el.hasClass('mp_topi_act') });
 		}
 	});
 
@@ -45,7 +48,7 @@ $(function () {
 			if (!x.hasClass('mp_dd_i')) return;
 			pop.find('.bm_pop_c').append(
 				$('<a class="bm_pop_i"></a>').attr('href', x.attr('href')).toggleClass('bm_pop_act', x.hasClass('mp_dd_i_act'))
-					.append(x.find('i').first().clone()).append($('<span></span>').text($.trim(x.text())))
+					.append(x.find('i').first().clone()).append($('<span></span>').text(lbl(x))).append(cnt(x))
 			);
 		});
 		// Қалдықтар мен Накладной Тағамдар тобына көшірілді (аккаунт тізімінен алынады)
@@ -75,7 +78,7 @@ $(function () {
 
 	var anyAct = false;
 	$.each(entries.slice(0, MAX), function (i, e) {
-		var it = $('<a class="bm_i"></a>').attr('href', e.href).append(e.icon).append($('<span></span>').text(e.text));
+		var it = $('<a class="bm_i"></a>').attr('href', e.href).append(e.icon).append($('<span></span>').text(e.text)).append(e.cnt || null);
 		if (e.act) { it.addClass('bm_act'); anyAct = true; }
 		bindPop(it, e);
 		box.append(it);
@@ -97,14 +100,14 @@ $(function () {
 		if (!sub.length) { plain.push(e); return; }
 		groups.push({ title: e.text, icon: e.icon, tiles: sub.map(function () {
 			var x = $(this);
-			return { href: x.attr('href'), icon: x.find('i').first().clone(), text: $.trim(x.text()), act: x.hasClass('mp_dd_i_act') };
+			return { href: x.attr('href'), icon: x.find('i').first().clone(), text: lbl(x), cnt: cnt(x), act: x.hasClass('mp_dd_i_act') };
 		}).get() });
 	});
 	function makeGrid(list, title, icon) {
 		var grid = $('<div class="bm_grid"></div>');
 		if (title) grid.append($('<div class="bm_grid_h"></div>').append(icon.clone()).append($('<span></span>').text(title)));
 		$.each(list, function (i, e) {
-			grid.append($('<a class="bm_tile"></a>').attr('href', e.href).toggleClass('bm_tile_act', !!e.act).append(e.icon).append($('<span></span>').text(e.text)));
+			grid.append($('<a class="bm_tile"></a>').attr('href', e.href).toggleClass('bm_tile_act', !!e.act).append(e.icon).append($('<span></span>').text(e.text)).append(e.cnt || null));
 		});
 		return grid;
 	}
@@ -143,7 +146,11 @@ $(function () {
 
 
 	// парақты ашу / жабу (аккаунт мәзірінің өз класы: .aheader_r.menu_act)
-	function open(on) { $('.bm_pop').removeClass('bm_pop_on'); holder.toggleClass('menu_act', on); sync(); }
+	function open(on) {
+		$('.bm_pop').removeClass('bm_pop_on'); holder.toggleClass('menu_act', on);
+		if (on) $('.ub1_lx .acc_menu').scrollTop(0); // парақ әрдайым басынан ашылады
+		sync();
+	}
 	function sync() { $('body').toggleClass('bm_open', (holder.hasClass('menu_act') || $('.bm_pop_on').length > 0) && $(window).width() <= 768); }
 
 	more.on('click', function (e) { e.preventDefault(); e.stopPropagation(); open(!holder.hasClass('menu_act')); });
