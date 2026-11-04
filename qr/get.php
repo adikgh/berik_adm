@@ -55,6 +55,32 @@
 	if (!mysqli_num_rows(db::query("SHOW TABLES LIKE 'company_menu'"))) out(false, 'company_menu кестесі жоқ');
 	mysqli_report(MYSQLI_REPORT_OFF);
 
+	// Мәзір көрінісі: company_menu.look (JSON)
+	if (isset($_GET['look'])) {
+		if (!mysqli_num_rows(db::query("SHOW COLUMNS FROM company_menu LIKE 'look'"))) out(false, 'Базаға berik_004_menu_look.sql іске қосу керек');
+		$ids = [];
+		foreach ((array)@$_POST['upsell_ids'] as $i) if ((int)$i > 0) $ids[] = (int)$i;
+		if ($ids) { // тек осы компанияның тағамдары
+			$ok = [];
+			$q = db::query("select p.id from product p join product_catalog k on k.id = p.catalog_id where k.company_id = '$cmp' and p.id in (".implode(',', $ids).")");
+			while ($r = mysqli_fetch_row($q)) $ok[] = (int)$r[0];
+			$ids = array_slice(array_values(array_intersect($ids, $ok)), 0, 12);
+		}
+		$look = [
+			'accent' => preg_match('/^#[0-9a-f]{6}$/i', (string)@$_POST['accent']) ? strtolower($_POST['accent']) : '#0ea768',
+			'layout' => in_array(@$_POST['layout'], ['list', 'grid'], true) ? $_POST['layout'] : 'list',
+			'photos' => (int)!empty($_POST['photos']),
+			'search' => (int)!empty($_POST['search']),
+			'card' => (int)!empty($_POST['card']),
+			'upsell' => (int)!empty($_POST['upsell']),
+			'upsell_ids' => $ids,
+		];
+		$j = json_encode($look);
+		$st = mysqli_prepare(db::$connect, "insert into company_menu (company_id, look, upd_dt) values (?, ?, now()) on duplicate key update look = values(look), upd_dt = now()");
+		mysqli_stmt_bind_param($st, 'is', $cmp, $j);
+		out(mysqli_stmt_execute($st), 'Сақталды');
+	}
+
 	// QR меню баптауын сақтау
 	if (isset($_GET['save'])) {
 		$v = [];

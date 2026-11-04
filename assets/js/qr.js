@@ -130,6 +130,22 @@
 		});
 	});
 
+	// Мәзір көрінісі (company_menu.look)
+	$(document).on('change', '.qr_up_l input', function () {
+		var f = this.form, n = f.querySelectorAll('.qr_up_l input:checked').length;
+		if (n > 12) { this.checked = false; n = 12; mess('12-ден көп болмайды'); }
+		f.querySelector('.qr_up_n').textContent = n;
+	});
+	$(document).on('submit', '.qr_look', function (e) {
+		e.preventDefault();
+		var btn = this.querySelector('.qr_lsave');
+		btn.classList.add('cl_btn_wait');
+		post('look', new FormData(this), function (r) {
+			btn.classList.remove('cl_btn_wait');
+			mess(r.ok ? 'Сәтті сақталды' : (r.msg || 'Қате'));
+		});
+	});
+
 	// Дизайн: өзгерген сайын алдын ала көрініс, «Сақтау» базаға (файлға) жазады
 	$(document).on('input change', '.qr_design', render);
 	$(document).on('submit', '.qr_design', function (e) {
