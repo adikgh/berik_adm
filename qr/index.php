@@ -32,7 +32,7 @@
 
 	// Мәзір көрінісі (company_menu.look, JSON)
 	$look_col = $has && mysqli_num_rows(db::query("SHOW COLUMNS FROM company_menu LIKE 'look'")) > 0;
-	$look = ['accent' => '#0ea768', 'layout' => 'list', 'photos' => 1, 'search' => 1, 'card' => 1, 'upsell' => 1, 'upsell_ids' => []];
+	$look = ['tpl' => 0, 'accent' => '#0ea768', 'layout' => 'list', 'photos' => 1, 'search' => 1, 'card' => 1, 'upsell' => 1, 'upsell_ids' => []];
 	if (!empty($m['look']) && is_array($lj = json_decode((string)$m['look'], true))) $look = array_merge($look, array_intersect_key($lj, $look));
 	$up_ids = array_map('intval', (array)$look['upsell_ids']);
 	$up_cats = [];
@@ -136,6 +136,12 @@
 		<? if (!$look_col): ?>
 			<div class="cl_small">Бұл баптау үшін базаға <b>berik_004_menu_look.sql</b> іске қосу керек.</div>
 		<? else: ?>
+		<div class="qr_tpl">
+			<? foreach ([0 => 'Негізгі', 1 => 'Шаблон-1', 2 => 'Шаблон-2'] as $k => $v): ?>
+				<label class="qr_tpl_i qr_tpl_<?=$k?>"><input type="radio" name="tpl" value="<?=$k?>" <?=((int)$look['tpl'] === $k ? 'checked' : '')?>>
+					<span class="qr_tpl_p" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b><?=$v?></b></label>
+			<? endforeach ?>
+		</div>
 		<div class="qr_look_g">
 			<div class="qr_look_c">
 				<div class="qr_row qr_row2">

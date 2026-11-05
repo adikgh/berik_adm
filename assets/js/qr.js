@@ -136,6 +136,11 @@
 		if (n > 12) { this.checked = false; n = 12; mess('12-ден көп болмайды'); }
 		f.querySelector('.qr_up_n').textContent = n;
 	});
+	// Шаблон таңдалса, түс әлі әдепкі болса, шаблонның өз түсі қойылады
+	$(document).on('change', '.qr_tpl input', function () {
+		var a = this.form.elements.accent, def = { 0: '#0ea768', 1: '#ff4d6d', 2: '#ff6a2b' };
+		if (a && ['#0ea768', '#ff4d6d', '#ff6a2b'].indexOf(a.value.toLowerCase()) >= 0) a.value = def[this.value];
+	});
 	$(document).on('submit', '.qr_look', function (e) {
 		e.preventDefault();
 		var btn = this.querySelector('.qr_lsave');

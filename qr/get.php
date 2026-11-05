@@ -67,6 +67,7 @@
 			$ids = array_slice(array_values(array_intersect($ids, $ok)), 0, 12);
 		}
 		$look = [
+			'tpl' => in_array((int)@$_POST['tpl'], [1, 2], true) ? (int)$_POST['tpl'] : 0,
 			'accent' => preg_match('/^#[0-9a-f]{6}$/i', (string)@$_POST['accent']) ? strtolower($_POST['accent']) : '#0ea768',
 			'layout' => in_array(@$_POST['layout'], ['list', 'grid'], true) ? $_POST['layout'] : 'list',
 			'photos' => (int)!empty($_POST['photos']),
