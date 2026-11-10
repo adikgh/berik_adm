@@ -39,6 +39,10 @@
 	$gd_on = false;
 	if ($ai_on && defined('GDRIVE_CLIENT_ID') && GDRIVE_CLIENT_ID !== '') { include_once "../config/cfile.php"; $gd_on = cfile::drive_on(); }
 
+	// накладнойға жүктелген файлдар (фото, PDF), Google Drive-та сақталған
+	$wb_files = [];
+	if ($w['id'] && fun::has_col('company_file', 'ref_id')) { include_once "../config/cfile.php"; $wb_files = cfile::list('waybill', $w['id'], $cmp); }
+
 	$author = $w['user_id'] ? fun::user($w['user_id']) : null;
 	$st = wb::status($w);
 
@@ -169,6 +173,20 @@
 				<? if ($posted): ?><div class="wb_btn wb_pay_save"><i class="fal fa-check"></i> Төлемді сақтау</div><? endif ?>
 			</div>
 		</div>
+
+		<? if ($wb_files): ?>
+		<!-- Жүктелген файлдар -->
+		<div class="wb_box">
+			<div class="wb_box_h"><div>Жүктелген файлдар (<?=count($wb_files)?>)</div></div>
+			<div class="wb_files">
+				<? foreach ($wb_files as $f): $img = strpos((string)$f['mime'], 'image/') === 0; ?>
+					<a class="wb_file" href="<?=cfile::url($f)?>" target="_blank" title="<?=wb::h($f['name'])?>">
+						<? if ($img): ?><img src="<?=cfile::url($f)?>" loading="lazy" alt=""><? else: ?><i class="fal fa-file-pdf"></i><? endif ?>
+					</a>
+				<? endforeach ?>
+			</div>
+		</div>
+		<? endif ?>
 
 		<!-- Батырмалар -->
 		<div class="wb_actions">

@@ -29,8 +29,8 @@
 	$site_set['utop_bk'] = 'products';
 	$site_set['utop_type'] = 'item';
 	$site_set['utop_nm'] = $page_name;
-	$css = ['products/main', 'products/item', 'products/photo'];
-	$js = ['products/main', 'products/item', 'name_ed', 'products/photo'];
+	$css = ['products/main', 'products/item', 'products/photo']; $css[] = 'gtpl';
+	$js = ['products/main', 'products/item', 'name_ed', 'products/photo']; $js[] = 'gtpl';
 ?>
 <? include "../../block/header.php"; ?>
 
@@ -193,6 +193,7 @@
 						<div class="btn ci_add_pop"><i class="far fa-plus"></i><span><?=t::w('Add to composition', 'Құрамға қосу')?></span></div>
 					</div>
 				<? endif ?>
+				<? @include_once __DIR__.'/../tpl/lib.php'; if (class_exists('gtpl') && gtpl::ready()): ?><div class="gt_box" data-pid="<?=(int)$product_id?>" data-has="<?=($ci_rows ? 1 : 0)?>"></div><? endif ?>
 			</div>
 
 			<? endif ?>

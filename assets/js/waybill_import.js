@@ -479,9 +479,11 @@
 		if ($m) return $m;
 		$m = $(
 			'<div class="wbi_bg dsp_n"><div class="wbi">' +
-				'<div class="wbi_h"><div>Накладнойды файлдан жүктеу</div><div class="wb_x wbi_close" title="Жабу"><i class="fal fa-times"></i></div></div>' +
+				'<div class="wbi_h"><div>Накладнойды файлдан жүктеу</div><div class="wbi_h_btns">' +
+					(aiOn ? '<div class="wb_ic wbi_tech_btn" title="Claude туралы инфо (модель, шығын)"><i class="fal fa-info-circle"></i></div>' : '') +
+					'<div class="wb_x wbi_close" title="Жабу"><i class="fal fa-times"></i></div></div></div>' +
 				// Claude қосылған ба: белгі + «Тексеру» (серверден кішкентай сұрау жібереді)
-				'<div class="wbi_ai" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;font-size:13px">' +
+				'<div class="wbi_ai' + (aiOn ? ' wbi_tech dsp_n' : '') + '" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;font-size:13px">' +
 					(aiOn
 						? '<span style="color:#1a9b4b"><i class="fas fa-circle" style="font-size:8px"></i> Claude қосулы</span>' +
 						  '<span class="wbi_ai_test" style="cursor:pointer;text-decoration:underline;color:#555">Тексеру</span>' +
@@ -512,6 +514,13 @@
 
 		$m.on('click', '.wbi_close', close);
 		$m.on('click', function (e) { if (e.target === $m[0]) close(); });
+		// техникалық инфо (Claude күйі, модель, шығын) әдепкіде жасырын, бұрыштағы (i) батырмасымен ашылады
+		$m.on('click', '.wbi_tech_btn', function () {
+			var on = !$(this).hasClass('wbi_tech_on');
+			$(this).toggleClass('wbi_tech_on', on);
+			$m.find('.wbi_tech').toggleClass('dsp_n', !on);
+		});
+		$m.on('click', '.wbi_note', function () { $(this).toggleClass('wbi_note_open'); });
 		$m.on('click', '.wbi_ai_test', function () {
 			var $r = $m.find('.wbi_ai_res').css('color', '#555').text('тексеріп жатыр...');
 			$.ajax({ url: '/waybill/ai.php?ping', method: 'POST', dataType: 'json', timeout: 60000 }).then(function (d) {
@@ -648,7 +657,7 @@
 			if (d && d.ok) wbFiles = wbFiles.concat(ids);
 			if (!d || !d.ok) { say((d && d.msg) || 'Claude оқи алмады'); reset(); return; }
 			state = {
-				file: { name: list.map(function (f) { return f.name; }).join(', ') },
+				file: { name: list.map(function (f) { return f.name; }).join(', '), n: list.length },
 				res: { type: 'ai', sheets: [{ name: '', grid: [] }] }, sheet: 0, hdr: null, manual: true,
 				meta: { supplier: d.supplier, docNo: d.doc_no, date: d.date, total: d.total, note: d.note, usage: d.usage },
 				ai: d.items.map(function (x) { return { name: x.name, unitTxt: x.unit, qty: x.qty, price: x.price, sum: x.sum, rawId: x.raw_id, sure: x.sure, noQty: !(x.qty > 0) }; })
@@ -678,7 +687,10 @@
 		$m.find('.wbi_body, .wbi_foot').removeClass('dsp_n');
 
 		// жоғарғы ақпарат
-		var meta = state.meta, inf = '<div class="wbi_file_n"><i class="fal ' + (isAi ? 'fa-magic' : isPdf ? 'fa-file-pdf' : 'fa-file-excel') + '"></i> ' + (isAi ? '<b>Claude оқыды:</b> ' : '') + h(state.file.name) + '</div>';
+		// Claude оқыса файл атаулары (ұзын uuid) жасырын, тек саны; атаулары (i) батырмасында
+		var techOn = $m.find('.wbi_tech_btn').hasClass('wbi_tech_on'), tcls = 'wbi_tech' + (techOn ? '' : ' dsp_n');
+		var meta = state.meta, inf = '<div class="wbi_file_n"><i class="fal ' + (isAi ? 'fa-magic' : isPdf ? 'fa-file-pdf' : 'fa-file-excel') + '"></i> ' +
+			(isAi ? 'Claude оқыды' + ((state.file.n || 1) > 1 ? ': ' + state.file.n + ' файл' : '') + ' <span class="wb_small ' + tcls + '">' + h(state.file.name) + '</span>' : h(state.file.name)) + '</div>';
 		if (res.sheets.length > 1) {
 			inf += '<select class="wb_inp wbi_sheet">' + res.sheets.map(function (s, i) { return '<option value="' + i + '"' + (i == state.sheet ? ' selected' : '') + '>Парақ: ' + h(s.name) + '</option>'; }).join('') + '</select>';
 		}
@@ -692,15 +704,15 @@
 			var tsum = 0; items.forEach(function (x) { tsum += x.sum || 0; });
 			if (meta.total > 0 && Math.abs(tsum - meta.total) > Math.max(1, meta.total * 0.005))
 				inf += '<div class="wbi_hint">Құжаттағы жалпы сома ' + h(money(meta.total)) + ', жолдардың қосындысы ' + h(money(tsum)) + '. Бір жол оқылмаған не қате болуы мүмкін, тексеріңіз.</div>';
-			if (meta.note) inf += '<div class="wbi_hint">Claude: ' + h(meta.note) + '</div>';
+			if (meta.note) inf += '<div class="wbi_hint wbi_note" title="Толық оқу үшін басыңыз">' + h(meta.note) + '</div>';
 			// шығын мен қай модель оқығаны (сервер есептейді)
 			var u = meta.usage;
 			if (u && u.steps) {
 				var nm = function (m) { return (String(m).match(/haiku|sonnet|opus|fable/) || [m])[0].replace(/^./, function (c) { return c.toUpperCase(); }); };
 				var path = u.steps.map(function (x) { return nm(x.model); }).join(' → ');
-				inf += '<div class="wb_small">Claude: ' + h(path) + (u.why ? ' (' + h(u.why) + ')' : '') + ' · ' + (u.tokens || 0).toLocaleString('ru-RU') + ' токен, шамамен $' + (+u.usd).toFixed(3) + ' (~' + Math.round(u.usd * 500) + ' ₸)</div>';
+				inf += '<div class="wb_small ' + tcls + '">Claude: ' + h(path) + (u.why ? ' (' + h(u.why) + ')' : '') + ' · ' + (u.tokens || 0).toLocaleString('ru-RU') + ' токен, шамамен $' + (+u.usd).toFixed(3) + ' (~' + Math.round(u.usd * 500) + ' ₸)</div>';
 			}
-			inf += '<div class="wb_small">Артық жолдың белгісін алып тастаңыз, атауын түзетуге болады. Жетпейтін тауарды кейін формада «Жол қосу» арқылы қосасыз.</div>';
+			inf += '<div class="wb_small wbi_tip">Артық жолдың белгісін алып тастаңыз, атауын түзетуге болады. Жетпейтін тауарды кейін формада «Жол қосу» арқылы қосасыз.</div>';
 		}
 		$m.find('.wbi_info').html(inf);
 

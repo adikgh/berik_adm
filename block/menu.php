@@ -174,12 +174,6 @@
 										<div class="menu_cih"><?=t::w('Receipt', 'Чек')?></div>
 									</a>
 								<? endif ?>
-								<? if (function_exists('wa_owner_ok') && wa_owner_ok($user_id, @$user_right['positions_id'])): ?>
-									<a class="menu_ci" href="/wa/">
-										<div class="menu_cin"><i class="fab fa-whatsapp"></i></div>
-										<div class="menu_cih">WhatsApp</div>
-									</a>
-								<? endif ?>
 								<a class="menu_ci ac_open" href="/acc/">
 									<div class="menu_cin"><i class="fal fa-user"></i></div>
 									<div class="menu_cih"><?=t::w('Account', 'Аккаунт')?></div>

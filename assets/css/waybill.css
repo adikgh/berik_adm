@@ -258,3 +258,26 @@ body.wbi_lock{ overflow: hidden; }
 .st_pk_act .st_pk_d{ color: #fff; }
 .st_pk_off{ opacity: .3; pointer-events: none; }
 @media (max-width: 600px){ .wb_per{ width: 100%; } .wb_per_nav{ flex: 1; justify-content: space-between; } .st_pk{ left: auto; right: 0; transform: none; } }
+
+/* Закуп: Claude техникалық инфосы бұрыштағы (i) батырмасымен ашылады (2026-11-10) */
+.wbi_h_btns{ display: flex; align-items: center; gap: 4px; }
+.wbi_tech_btn{ font-size: 16px; opacity: .55; }
+.wbi_tech_btn:hover, .wbi_tech_btn.wbi_tech_on{ opacity: 1; background: #eef3f0; color: #1a9b4b; }
+/* Телефонда жоғарғы инфо ықшам: негізгі тізімге көбірек орын (2026-11-10) */
+.wbi_file_n .wbi_tech{ display: block; font-weight: 600; word-break: break-all; margin-top: 2px; }
+.wbi_file_n .wbi_tech.dsp_n{ display: none; }
+@media (max-width: 760px){
+	.wbi_h{ font-size: 16px; margin-bottom: 8px; }
+	.wbi_info{ gap: 4px 12px; padding: 10px; font-size: 13px; }
+	.wbi_file_n{ font-size: 13px; }
+	.wbi_meta{ font-size: 13px; gap: 2px 12px; }
+	.wbi_hint{ margin: 4px 0 0; padding: 7px 10px; font-size: 12px; }
+	.wbi_note{ display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+	.wbi_note.wbi_note_open{ display: block; -webkit-line-clamp: unset; }
+	.wbi_tip{ display: none; }
+}
+/* Накладнойға жүктелген файлдар (2026-11-10) */
+.wb_files{ display: flex; flex-wrap: wrap; gap: 10px; }
+.wb_file{ width: 96px; height: 96px; border-radius: 10px; overflow: hidden; background: #f3f4f6; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line, #e7e7e7); }
+.wb_file img{ width: 100%; height: 100%; object-fit: cover; }
+.wb_file i{ font-size: 34px; color: #c0392b; }

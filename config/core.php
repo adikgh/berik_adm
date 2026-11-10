@@ -64,9 +64,13 @@
    // 2 не одан көп болса, шапкада таңдағыш шығады (block/menu.php), біреу болса — жасырын.
    $my_companies = [];
    if ($user_id) {
-      if (@$user_right['positions_id'] == 1) $cq = db::query("select id, name, city, code from company order by number is null, number, id");
-      else $cq = db::query("select c.id, c.name, c.city, c.code from company c join company_staff s on s.company_id = c.id
-         where s.user_id = '".(int)$user_id."' and s.archive = 0 group by c.id order by c.number is null, c.number, c.id");
+      // архивтегі компаниялар (dev панелі, company_sub.arh) таңдағышқа шықпайды; баған жоқ базада сүзгісіз
+      $arh_ok = (int)@mysqli_fetch_row(db::query("select count(*) from information_schema.columns where table_schema = database() and table_name = 'company_sub' and column_name = 'arh'"))[0];
+      $arh_j = $arh_ok ? " left join company_sub cs on cs.company_id = c.id" : "";
+      $arh_w = $arh_ok ? " and coalesce(cs.arh, 0) = 0" : "";
+      if (@$user_right['positions_id'] == 1) $cq = db::query("select c.id, c.name, c.city, c.code from company c$arh_j where 1$arh_w order by c.number is null, c.number, c.id");
+      else $cq = db::query("select c.id, c.name, c.city, c.code from company c join company_staff s on s.company_id = c.id$arh_j
+         where s.user_id = '".(int)$user_id."' and s.archive = 0$arh_w group by c.id order by c.number is null, c.number, c.id");
       while ($r = mysqli_fetch_assoc($cq)) $my_companies[(int)$r['id']] = $r;
    }
    $company = (int)@$user_right['company_id'];

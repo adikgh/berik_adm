@@ -50,8 +50,8 @@
 	$pm = 'cost';
 	$page_name = 'Себес';
 	$page_key = 'Cost price';
-	$css = ['cost'];
-	$js = [];
+	$css = ['cost']; $css[] = 'gtpl';
+	$js = []; $js[] = 'gtpl';
 ?>
 <? include "../../block/header.php"; ?>
 
@@ -69,6 +69,7 @@
 
 			<? $n_prep = 0; foreach ($comps as $c) if ($c['parts']) $n_prep++; ?>
 			<div class="cs_bar">
+				<? @include_once __DIR__.'/../tpl/lib.php'; if (class_exists('gtpl') && gtpl::ready()): ?><button type="button" class="btn gt_all_btn" style="margin-bottom:10px"><i class="fal fa-magic"></i> <span>Шаблоннан толтыру</span></button><? endif ?>
 				<div class="cs_tabs">
 				<button type="button" class="cs_tab cs_tab_act" data-tab="sets">Сеттер <span><?=count($set_rows)?></span></button>
 				<button type="button" class="cs_tab" data-tab="dishes">Тағамдар <span><?=count($dish_rows)?></span></button>
@@ -162,6 +163,7 @@
 			<? if ($miss_rows || $cc['comp']): ?>
 			<div class="cs_card cs_pane" data-pane="missing" hidden>
 				<div class="cs_h">Граммовкасы жоқ <span>сатылғанда шикізат азаймайды · соңғы 30 күнде көп сатылғандары жоғарыда</span></div>
+				<? if (class_exists('gtpl') && gtpl::ready()): ?><div style="margin:0 0 12px"><button type="button" class="btn gt_all_btn"><i class="fal fa-magic"></i> <span>Шаблоннан толтыру</span></button> <span style="color:#889;font-size:13px">не тағамның атын басып, картасынан шаблон таңдаңыз</span></div><? endif ?>
 				<div class="cs_scroll"><table class="cs_tbl">
 					<thead><tr><th>Тағам / сет</th><th>Белгі</th><th>30 күнде сатылды</th><th></th></tr></thead>
 					<tbody>

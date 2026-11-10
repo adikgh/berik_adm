@@ -23,6 +23,34 @@ class claude {
 		return ($in * $P[$k][0] + ($u['cache_read_input_tokens'] ?? 0) * $P[$k][0] / 10 + ($u['output_tokens'] ?? 0) * $P[$k][1]) / 1e6;
 	}
 
+	// Әр шақыру базаға жазылады (company_ai_log): әзірлеуші панелінде «ЖИ шығыны» бетінде көрінеді.
+	// $feature: қай функция шақырды (мысалы waybill). Шақырар алдында claude::$feature = '...' деп қоюға болады.
+	public static $feature = 'waybill';
+	public static function log($model, $u) {
+		try {
+			global $company, $user_id;
+			$f = preg_replace('/[^a-z0-9_]/', '', strtolower((string)self::$feature)) ?: 'other';
+			$v = [(int)@$company, (int)@$user_id, $f, preg_replace('/[^a-z0-9.\-]/', '', (string)$model),
+				(int)($u['input_tokens'] ?? 0), (int)($u['output_tokens'] ?? 0), (int)($u['cache_read_input_tokens'] ?? 0), (int)($u['cache_creation_input_tokens'] ?? 0),
+				round(self::usd($model, $u), 6)];
+			$sql = "insert into company_ai_log (company_id, user_id, feature, model, input_tokens, output_tokens, cache_read, cache_write, usd)
+				values ('{$v[0]}', '{$v[1]}', '{$v[2]}', '{$v[3]}', '{$v[4]}', '{$v[5]}', '{$v[6]}', '{$v[7]}', '{$v[8]}')";
+			$ok = false;
+			try { $ok = (bool)@db::query($sql); } catch (Throwable $e) { $ok = false; }
+			if (!$ok) {
+				@db::query("CREATE TABLE IF NOT EXISTS `company_ai_log` (
+					`id` int(11) NOT NULL AUTO_INCREMENT, `company_id` int(11) DEFAULT NULL, `user_id` int(11) DEFAULT NULL,
+					`feature` varchar(40) DEFAULT NULL, `model` varchar(60) DEFAULT NULL,
+					`input_tokens` int(11) NOT NULL DEFAULT 0, `output_tokens` int(11) NOT NULL DEFAULT 0,
+					`cache_read` int(11) NOT NULL DEFAULT 0, `cache_write` int(11) NOT NULL DEFAULT 0,
+					`usd` decimal(10,6) NOT NULL DEFAULT 0, `ins_dt` datetime NOT NULL DEFAULT current_timestamp(),
+					PRIMARY KEY (`id`), KEY `company_id` (`company_id`), KEY `ins_dt` (`ins_dt`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Claude шақырулары: токен, баға'");
+				@db::query($sql);
+			}
+		} catch (Throwable $e) { error_log('ai log: '.$e->getMessage()); }
+	}
+
 	public static function json($system, array $content, array $schema, $effort = 'medium', $model = null) {
 		self::$err = ''; self::$usage = null;
 		if (!self::ready()) { self::$err = 'Claude қосылмаған (config/ai.php ішінде ANTHROPIC_API_KEY жоқ)'; return null; }
@@ -63,6 +91,7 @@ class claude {
 		}
 		self::$usage = $j['usage'] ?? null;
 		if (self::$usage) self::$usage['model'] = $j['model'] ?? $model;
+		if (self::$usage) self::log(self::$usage['model'], self::$usage);
 		$stop = $j['stop_reason'] ?? '';
 		if ($stop == 'refusal') { self::$err = 'Claude бұл файлды оқудан бас тартты'; return null; }
 		if ($stop == 'max_tokens') { self::$err = 'Құжат тым ұзын, бөліп жіберіңіз'; return null; }
