@@ -50,8 +50,8 @@
 	$pm = 'cost';
 	$page_name = 'Себес';
 	$page_key = 'Cost price';
-	$css = ['cost'];
-	$js = [];
+	$css = ['cost']; $css[] = 'gtpl';
+	$js = []; $js[] = 'gtpl';
 ?>
 <? include "../../block/header.php"; ?>
 
@@ -69,6 +69,7 @@
 
 			<? $n_prep = 0; foreach ($comps as $c) if ($c['parts']) $n_prep++; ?>
 			<div class="cs_bar">
+				<? @include_once __DIR__.'/../tpl/lib.php'; if (class_exists('gtpl') && gtpl::ready()): ?><button type="button" class="btn gt_all_btn" style="margin-bottom:10px"><i class="fal fa-magic"></i> <span>Шаблоннан толтыру</span></button><? endif ?>
 				<div class="cs_tabs">
 				<button type="button" class="cs_tab cs_tab_act" data-tab="sets">Сеттер <span><?=count($set_rows)?></span></button>
 				<button type="button" class="cs_tab" data-tab="dishes">Тағамдар <span><?=count($dish_rows)?></span></button>

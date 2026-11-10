@@ -109,6 +109,7 @@
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='comp'?'mp_dd_i_act':'')?>" href="/products/comp/"><i class="fal fa-layer-group"></i><span><?=t::w('Ingredients', 'Құрамы')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='raw'?'mp_dd_i_act':'')?>" href="/products/raw/"><i class="fal fa-box"></i><span><?=t::w('Raw and goods', 'Шикізат (тауар)')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='cost'?'mp_dd_i_act':'')?>" href="/products/cost/#missing"><i class="fal fa-calculator"></i><span><?=t::w('Cost sheet', 'Себес')?></span><?=$wbm_b($wbm['dish'], 'Граммовкасы жоқ сатылған тағам')?></a>
+										<? if ((int)@$user_right['positions_id'] === 1): ?><a class="mp_dd_i <?=($menu_name=='products' && $pm=='tpl'?'mp_dd_i_act':'')?>" href="/products/tpl/"><i class="fal fa-magic"></i><span>Граммовка шаблондары</span></a><? endif ?>
 									</div>
 									<!-- телефондағы төменгі мәзір үшін -->
 									<a class="mp_topi mp_dd_m <?=($menu_name=='products'?'mp_topi_act':'')?>" href="/products/"><i class="fal fa-utensils"></i><span><?=t::w('Dishes', 'Тағамдар')?></span></a>
