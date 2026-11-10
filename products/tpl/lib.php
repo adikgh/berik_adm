@@ -12,7 +12,7 @@ class gtpl {
 	}
 
 	public static function norm($s) {
-		$s = mb_strtolower(trim((string)$s), 'UTF-8');
+		$s = mb_strtolower(trim(html_entity_decode(strip_tags((string)$s), ENT_QUOTES, 'UTF-8')), 'UTF-8');
 		$s = str_replace(['ё', '–', '—'], ['е', '-', '-'], $s);
 		return preg_replace('/\s+/u', ' ', $s);
 	}
@@ -110,7 +110,8 @@ class gtpl {
 			order by c.number, p.number, p.id");
 		while ($r = mysqli_fetch_assoc($q)) {
 			// сеттер шаблонсыз: олардың құрамы «Сет құрамында»
-			if (preg_match('/(^|\s)сет/u', gtpl::norm($r['cat'])) || preg_match('/^сет\b/u', gtpl::norm($r['name_ru']))) continue;
+			$nn = gtpl::norm($r['name_ru'] ?: $r['name_kz']);
+			if (preg_match('/(^|\s)сет/u', gtpl::norm($r['cat'])) || preg_match('/^сет\b/u', $nn) || preg_match('/\s\+\s?|\+\s/u', $nn)) continue; // «… + Кола» комбо да сет
 			$rows[] = $r;
 		}
 		return $rows;
@@ -120,7 +121,7 @@ class gtpl {
 	public static function apply_all($cmp, $variant, $dry = false) {
 		$res = ['ok' => [], 'none' => [], 'created' => 0];
 		foreach (self::empty_dishes($cmp) as $d) {
-			$nm = $d['name_ru'] ?: $d['name_kz'];
+			$nm = trim(strip_tags($d['name_ru'] ?: $d['name_kz']));
 			$m = self::match($nm, (string)$d['cat'], 1);
 			// сусын: құрамы — өзі, 1 дана (Кола 0.5 → «Кола 0.5» 1 шт)
 			if (!$m && preg_match('/напит|сусын|ішімдік/u', gtpl::norm($d['cat']))) {
