@@ -94,7 +94,7 @@
             <tr class="tr" valign="top">
                 <td align="left">Предоплата</td>
                 <td align="center"></td>
-                <td align="right">- <?=$cashbox_d['pay_qr']?></td>
+                <td align="right">- <?=((int)@$cashbox_d['pay_prepay'] > 0 ? (int)$cashbox_d['pay_prepay'] : (int)$cashbox_d['pay_qr'])?></td>
             </tr>
 
         <tr class="tr_sep">

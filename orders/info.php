@@ -3,6 +3,8 @@
     <? $id = strip_tags($_POST['id']); ?>
 	<? $orders = db::query("select * from retail_orders where id = '$id'"); ?>
     <? $buy_d = mysqli_fetch_assoc($orders); ?>
+    <? // Предоплата: pay_prepay (кез келген түрмен), ескі тапсырыстарда — pay_qr
+       $pre_sum = (int)@$buy_d['pay_prepay'] > 0 ? (int)$buy_d['pay_prepay'] : (int)$buy_d['pay_qr']; ?>
 
         <div class="uc_uil2_raz">
             <div class="uc_uil2_trt">
@@ -41,13 +43,13 @@
                 <div class="uc_uil2_trt">
                     <div class="uc_uil2_trt1">Предоплата</div>
                     <div class="uc_uil2_trt2">-</div>
-                    <div class="uc_uil2_trt3 fr_price"><?=$buy_d['pay_qr']?></div>
+                    <div class="uc_uil2_trt3 fr_price"><?=$pre_sum?></div>
                 </div>
             </div>
             <div class="uc_uil2_trb">
                 <div class="uc_uil2_trt1">К оплате</div>
                 <div class="uc_uil2_trt2"></div>
-                <div class="uc_uil2_trt3 fr_price"><?=$buy_d['total'] - $buy_d['pay_qr']?></div>
+                <div class="uc_uil2_trt3 fr_price"><?=$buy_d['total'] - $pre_sum?></div>
             </div>
         </div>
 
