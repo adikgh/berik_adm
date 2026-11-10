@@ -54,6 +54,8 @@ body{ background: var(--bp-bg); }
 
 /* ---------- Батырмалар: негізгісі көк, сақтау жасыл ---------- */
 .btn{ min-height: 54px; border-radius: 10px; font-weight: 700; }
+/* ✕ (btn_dd) батырмасы дөңгелек қалады: 44×44 (2026-11-10) */
+.btn.btn_dd:not(.btn_dd_54){ height: 44px; min-height: 44px; border-radius: 50%; }
 .btn:not([class*="btn_"]){ background: var(--bp-blue); color: #fff; }
 .btn:not([class*="btn_"]):hover{ background: var(--bp-blue-h); }
 .btn.btn_cl{ background: #fff; color: var(--bp-blue); border: 1px solid var(--bp-line); box-shadow: var(--bp-shadow); }
