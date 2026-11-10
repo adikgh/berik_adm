@@ -1,0 +1,78 @@
+/* Чек редакторы (/receipt/) */
+.rc_grid { display: grid; gap: 16px; grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 1000px) { .rc_grid { grid-template-columns: minmax(0, 1fr) 380px; } .rc_side { position: sticky; top: 90px; } }
+.rc_form { display: grid; gap: 16px; margin: 0; }
+.rc_sec { display: grid; gap: 12px; align-content: start; }
+.rc_sec .cl_box_h { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rc_sec label { height: auto; min-height: 0; line-height: 1.3; }
+.rc_sub { display: grid; gap: 10px; margin-left: 44px; padding: 10px 12px; border-radius: 10px; background: #f4f6f5; }
+.rc_off { opacity: .45; pointer-events: none; }
+@media (max-width: 600px) { .rc_sub { margin-left: 0; } .rc_labels { grid-template-columns: 1fr 1fr !important; } }
+.rc_logo_i { height: 44px; max-width: 140px; object-fit: contain; border-radius: 8px; background: #fff; border: 1px solid #e4e8e6; padding: 2px; }
+.rc_range { display: grid; gap: 4px; font-size: 13px; color: #6b7570; margin: 0; }
+.rc_range input { width: 100%; accent-color: #0EA768; }
+.rc_labels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.rc_labels label { display: grid; gap: 4px; font-size: 13px; color: #6b7570; margin: 0; }
+.rc_labels .cl_inp { width: 100%; box-sizing: border-box; min-width: 0; }
+.rc_lang { display: flex; gap: 6px; }
+.rc_bar .rc_reset { background: #fff; border: 1px solid #e4e8e6; }
+.rc_bar { display: flex; justify-content: space-between; gap: 8px; position: sticky; bottom: 0; padding: 10px 0; background: linear-gradient(transparent, #f4f6f5 30%); z-index: 2; }
+.rc_pv_box { display: grid; gap: 10px; }
+.rc_pv_t > span { display: none; }
+.rc_pv_wrap { display: flex; justify-content: center; padding: 16px 10px; border-radius: 12px; background: #e9edeb; max-height: calc(100vh - 220px); overflow-y: auto; }
+
+/* Қағаз: кассадағы print.css-тің көшірмесі (тек .rc_paper ішінде) */
+.rc_paper { width: 70mm; flex: none; background: #fff; color: #000; padding: 8px 6px 24px; box-shadow: 0 2px 10px rgba(0,0,0,.12);
+	font: 16px/1.25 Arial, Helvetica, sans-serif; box-sizing: content-box; }
+.rc_paper * { margin: 0; padding: 0; }
+.rc_paper p { margin: 0; }
+.rc_paper .head { text-align: center; border-top: 3px solid #000; border-bottom: 3px solid #000; padding: 3px 0; }
+.rc_paper .branch_name { font-size: 36px; overflow: hidden; word-break: break-word; }
+.rc_paper .pred_order { border-top: 2px dashed #000; margin-top: 3px; padding-top: 6px; }
+.rc_paper .pred_order div { font-size: 26px; overflow: hidden; }
+.rc_paper .soboi { text-align: center; border-bottom: 3px solid #000; padding: 3px 0; font-size: 36px; overflow: hidden; }
+.rc_paper .head2 { margin-top: 30px; margin-bottom: 15px; }
+.rc_paper .number { font-size: 32px; font-weight: 800; }
+.rc_paper .head_bd { margin-top: 4px; }
+.rc_paper .additional { margin-top: 10px; }
+.rc_paper table { width: 100%; border-collapse: separate; border-spacing: 0; border-top: 3px solid #000; border-bottom: 3px solid #000; padding: 15px 0; font-size: inherit; }
+.rc_paper td { vertical-align: top; text-align: left; }
+.rc_paper .c_q { width: 40px; text-align: center; }
+.rc_paper .c_s { width: 50px; text-align: right; }
+.rc_paper .tr_border td { border-bottom: 1px solid #000; padding-bottom: 2px; font-size: 14px; }
+.rc_paper .tr td { padding: 3px 0; }
+.rc_paper .san { font-weight: 600; font-size: 1.12em; }
+.rc_paper .tr_sep1 td { padding: 0; border-top: 2px dashed #000; }
+.rc_paper .tr_sep2 td { padding: 0; height: 4px; }
+.rc_paper .clens { margin-top: 30px; }
+.rc_paper .clens1 { border-bottom: 1px solid #000; padding-bottom: 4px; margin-bottom: 5px; font-size: 14px; font-weight: 600; }
+.rc_paper .clens2 p { margin-top: 4px; }
+/* жаңа бөліктер (print.css-те де бар) */
+.rc_paper .rc_logo { padding: 4px 0; }
+.rc_paper .rc_logo img { max-width: 100%; filter: grayscale(1) contrast(1.4); }
+.rc_paper .rc_htxt { font-size: 14px; padding: 2px 0 4px; }
+.rc_paper .rc_foot { margin-top: 20px; padding-top: 8px; border-top: 2px dashed #000; text-align: center; font-size: 15px; }
+.rc_paper.fs_s, .rc_paper.fs_s table { font-size: 14px; }
+.rc_paper.fs_l, .rc_paper.fs_l table { font-size: 18px; }
+.rc_paper.ts_s .branch_name { font-size: 28px; }
+.rc_paper.ts_l .branch_name { font-size: 44px; }
+/* 58 мм */
+.rc_paper.p58 { width: 50mm; font-size: 12px; }
+.rc_paper.p58 table { padding: 8px 0; font-size: 12px; border-width: 2px; }
+.rc_paper.p58.fs_s, .rc_paper.p58.fs_s table { font-size: 11px; }
+.rc_paper.p58.fs_l, .rc_paper.p58.fs_l table { font-size: 14px; }
+.rc_paper.p58 .branch_name, .rc_paper.p58 .soboi { font-size: 22px; }
+.rc_paper.p58.ts_s .branch_name { font-size: 18px; }
+.rc_paper.p58.ts_l .branch_name { font-size: 28px; }
+.rc_paper.p58 .pred_order div { font-size: 16px; }
+.rc_paper.p58 .head, .rc_paper.p58 .soboi { border-width: 2px; }
+.rc_paper.p58 .head2 { margin-top: 14px; margin-bottom: 8px; }
+.rc_paper.p58 .number { font-size: 22px; }
+.rc_paper.p58 .tr_border td { font-size: 11px; }
+.rc_paper.p58 .tr td { padding: 2px 0; }
+.rc_paper.p58 .c_q { width: 26px; }
+.rc_paper.p58 .c_s { width: 44px; }
+.rc_paper.p58 .clens { margin-top: 14px; }
+.rc_paper.p58 .clens1 { font-size: 12px; }
+.rc_paper.p58 .rc_htxt { font-size: 11px; }
+.rc_paper.p58 .rc_foot { font-size: 12px; margin-top: 12px; }

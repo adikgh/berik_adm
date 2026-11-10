@@ -33,6 +33,15 @@
 				db::query("ALTER TABLE `retail_orders` ADD COLUMN `client_id` int(11) DEFAULT NULL AFTER `phone`");
 				db::query("ALTER TABLE `retail_orders` ADD KEY `client_id` (`client_id`)");
 			}
+
+			// Сырттан (SayFood т.б.) көшірілген тарих: sync() оны біздің тапсырыстарға қосады
+			if (!mysqli_num_rows(db::query("SHOW COLUMNS FROM `company_client` LIKE 'ext_orders_cnt'"))) {
+				db::query("ALTER TABLE `company_client`
+					ADD COLUMN `ext_orders_cnt` int(11) NOT NULL DEFAULT 0 COMMENT 'сырттан көшірілген тапсырыс саны',
+					ADD COLUMN `ext_total_sum` int(11) NOT NULL DEFAULT 0 COMMENT 'сырттан көшірілген сома',
+					ADD COLUMN `ext_first_dt` datetime DEFAULT NULL,
+					ADD COLUMN `ext_last_dt` datetime DEFAULT NULL");
+			}
 		}
 
 		// user_id жоқ клиенттерге user жасап, байлау (user = барлық адам, логин = телефон)
@@ -136,7 +145,10 @@
 					from retail_orders ro where ro.company_id = '$company' and ro.client_id > 0 and ".self::OK."
 					group by ro.client_id
 				) a on a.client_id = c.id
-				set c.orders_cnt = IFNULL(a.cnt, 0), c.total_sum = IFNULL(a.s, 0), c.first_dt = a.f, c.last_dt = a.l
+				set c.orders_cnt = IFNULL(a.cnt, 0) + c.ext_orders_cnt,
+					c.total_sum = IFNULL(a.s, 0) + c.ext_total_sum,
+					c.first_dt = IF(c.ext_first_dt IS NOT NULL AND (a.f IS NULL OR c.ext_first_dt < a.f), c.ext_first_dt, a.f),
+					c.last_dt = IF(c.ext_last_dt IS NOT NULL AND (a.l IS NULL OR c.ext_last_dt > a.l), c.ext_last_dt, a.l)
 				where c.company_id = '$company'");
 			db::query("update company_client c set c.address = (
 					select ro.address from retail_orders ro where ro.client_id = c.id and ro.address is not null and ro.address <> '' order by ro.ins_dt desc limit 1
