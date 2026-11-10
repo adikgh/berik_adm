@@ -163,6 +163,7 @@
 			<? if ($miss_rows || $cc['comp']): ?>
 			<div class="cs_card cs_pane" data-pane="missing" hidden>
 				<div class="cs_h">Граммовкасы жоқ <span>сатылғанда шикізат азаймайды · соңғы 30 күнде көп сатылғандары жоғарыда</span></div>
+				<? if (class_exists('gtpl') && gtpl::ready()): ?><div style="margin:0 0 12px"><button type="button" class="btn gt_all_btn"><i class="fal fa-magic"></i> <span>Шаблоннан толтыру</span></button> <span style="color:#889;font-size:13px">не тағамның атын басып, картасынан шаблон таңдаңыз</span></div><? endif ?>
 				<div class="cs_scroll"><table class="cs_tbl">
 					<thead><tr><th>Тағам / сет</th><th>Белгі</th><th>30 күнде сатылды</th><th></th></tr></thead>
 					<tbody>
