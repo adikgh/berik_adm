@@ -9,13 +9,60 @@ $(document).ready(function() {
 		$('.ctg_color_in').val(c.length == 7 ? c : '#666666');
 	}
 
+	// мәзірдегі суреті: фото не иконка
+	var ctgIcon = '', ctgImg = '', ctgFile = null;
+	function ctgPreview() {
+		var pv = $('.ctg_pv');
+		if (ctgImg) pv.css('background-image', 'url("' + ctgImg + '")').addClass('ctg_pv_img').text('');
+		else pv.css('background-image', '').removeClass('ctg_pv_img').text(ctgIcon || '🍽️');
+		$('.ctg_img_del').prop('hidden', !ctgImg);
+	}
+	function ctgSetIcon(v) {
+		ctgIcon = v || '';
+		$('.ctg_icon').removeClass('ctg_icon_act');
+		var m = $('.ctg_icon').filter(function () { return $(this).attr('data-icon') === ctgIcon; });
+		m.addClass('ctg_icon_act');
+		$('.ctg_icon_in').val(m.length ? '' : ctgIcon);
+		ctgPreview();
+	}
+	$('html').on('click', '.ctg_icon', function(){ ctgSetIcon($(this).attr('data-icon')) });
+	$('.ctg_icon_in').on('input', function(){ var v = $.trim($(this).val()); ctgIcon = v; $('.ctg_icon').removeClass('ctg_icon_act'); if (!v) $('.ctg_icon_auto').addClass('ctg_icon_act'); ctgPreview(); });
+
+	// фото: санат бар болса бірден жүктеледі, жаңа санатқа «Сақтау»-дан кейін
+	function ctgUpload(id, file, done) {
+		var fd = new FormData(); fd.append('id', id); fd.append('file', file);
+		mess('Фото жүктелуде..');
+		$.ajax({ url: '/products/catalog/get.php?img', type: 'POST', data: fd, processData: false, contentType: false, dataType: 'json',
+			success: function (r) {
+				if (r && r.ok) { ctgImg = r.url; ctgFile = null; ctgPreview(); mess('Фото сақталды'); }
+				else mess(r && r.err == 'type' ? 'Тек JPG, PNG не WEBP' : (r && r.err == 'size' ? 'Файл тым үлкен (15 МБ-қа дейін)' : 'Фото сақталмады!'));
+				if (done) done();
+			},
+			error: function () { mess('Фото сақталмады!'); if (done) done(); } });
+	}
+	$('.ctg_img_in').on('change', function(){
+		var f = this.files && this.files[0], id = $('.ctg_save').attr('data-id');
+		this.value = '';
+		if (!f) return;
+		if (id) { ctgUpload(id, f); return; }
+		ctgFile = f; // жаңа санат: алдын ала көрсетіп, сақтағанда жүктейміз
+		ctgImg = URL.createObjectURL(f); ctgPreview();
+	});
+	$('.ctg_img_del').on('click', function(){
+		var id = $('.ctg_save').attr('data-id');
+		if (!id) { ctgFile = null; ctgImg = ''; ctgPreview(); return; }
+		$.ajax({ url: '/products/catalog/get.php?img_del', type: 'POST', data: { id: id }, dataType: 'json',
+			success: function (r) { if (r && r.ok) { ctgImg = ''; ctgPreview(); mess('Фото өшірілді'); } else mess('Қате!'); } });
+	});
+
 	// попап ашу / жабу
-	function ctgOpen(id, kz, ru, color) {
+	function ctgOpen(id, kz, ru, color, icon, img) {
 		$('.ctg_title').text(id ? 'Каталогты өзгерту' : 'Каталог қосу');
 		$('.ctg_save').attr('data-id', id || '');
 		$('.ctg_name_kz_in').val(kz || '');
 		$('.ctg_name_ru_in').val(ru || '');
 		ctgSetColor(color || '#698cc8');
+		ctgFile = null; ctgImg = img || ''; ctgSetIcon(icon || '');
 		$('.ctg_block').addClass('pop_bl_act');
 		$('#html').addClass('ovr_h');
 		setTimeout(function(){ $('.ctg_name_kz_in').focus() }, 100);
@@ -23,12 +70,15 @@ $(document).ready(function() {
 	function ctgClose() {
 		$('.ctg_block').removeClass('pop_bl_act');
 		$('#html').removeClass('ovr_h');
+		if (ctgChanged) { ctgChanged = false; ajx('.ctg_c'); }
 	}
+	var ctgChanged = false; // фото жүктелсе, жабқанда тізім жаңарады
+	$(document).ajaxSuccess(function (e, x, o) { if (o.url && o.url.indexOf('/products/catalog/get.php?img') === 0) ctgChanged = true; });
 	$('.ctg_add_pop').on('click', function(){ ctgOpen() });
 	$('.ctg_back').on('click', ctgClose);
 	$('html').on('click', '.ctg_edit', function(){
 		var b = $(this);
-		ctgOpen(b.closest('.ctg_i').attr('data-id'), b.attr('data-name-kz'), b.attr('data-name-ru'), b.attr('data-color'));
+		ctgOpen(b.closest('.ctg_i').attr('data-id'), b.attr('data-name-kz'), b.attr('data-name-ru'), b.attr('data-color'), b.attr('data-icon'), b.attr('data-img'));
 	});
 	$('html').on('click', '.ctg_color', function(){ ctgSetColor($(this).attr('data-color')) });
 	$('.ctg_color_in').on('input change', function(){ ctgSetColor($(this).val()) });
@@ -39,10 +89,14 @@ $(document).ready(function() {
 		if ($.trim($('.ctg_name_kz_in').val()) == '') { mess('Атауын жазыңыз'); return; }
 		$.ajax({
 			url: '/products/catalog/get.php?save', type: 'POST', dataType: 'html',
-			data: { id: btn.attr('data-id'), name_kz: $('.ctg_name_kz_in').val(), name_ru: $('.ctg_name_ru_in').val(), color: ctgColor },
+			data: { id: btn.attr('data-id'), name_kz: $('.ctg_name_kz_in').val(), name_ru: $('.ctg_name_ru_in').val(), color: ctgColor, icon: ctgIcon },
 			beforeSend: function(){ mess('Сақталуда..') },
 			success: function(data){
-				if (data == 'yes') { mess('Сақталды'); ctgClose(); ajx('.ctg_c') }
+				if (String(data).indexOf('yes') === 0) {
+					var nid = String(data).split(':')[1];
+					var fin = function () { mess('Сақталды'); ctgChanged = false; ctgClose(); ajx('.ctg_c') };
+					if (ctgFile && nid) ctgUpload(nid, ctgFile, fin); else fin();
+				}
 				else { mess('Қате!'); console.log(data) }
 			},
 		});

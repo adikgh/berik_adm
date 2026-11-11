@@ -133,7 +133,7 @@
 			<div class="cl_small">Бұл баптау үшін базаға <b>berik_004_menu_look.sql</b> іске қосу керек.</div>
 		<? else: ?>
 		<div class="qr_tpl">
-			<? foreach ([0 => 'Негізгі', 1 => 'Шаблон-1', 2 => 'Шаблон-2'] as $k => $v): ?>
+			<? foreach ([0 => 'Негізгі'] + array_combine(range(1, 16), array_map(fn($n) => 'Шаблон-'.$n, range(1, 16))) as $k => $v): ?>
 				<label class="qr_tpl_i qr_tpl_<?=$k?>"><input type="radio" name="tpl" value="<?=$k?>" <?=((int)$look['tpl'] === $k ? 'checked' : '')?>>
 					<span class="qr_tpl_p" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b><?=$v?></b></label>
 			<? endforeach ?>

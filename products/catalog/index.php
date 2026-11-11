@@ -5,6 +5,22 @@
 
 	// каталогтар: компанияның өзінікі, архивтегілер шықпайды, number бойынша ретпен
 	$rec_on = fun::has_col('product_catalog', 'recommend');
+	// санаттың мәзірдегі суреті: фото (product_catalog.img) не иконка (icon)
+	$pic_on = fun::has_col('product_catalog', 'img');
+	// эмодзи санат атауына қарай (my.berik.c food_icon-мен бірдей ереже)
+	$ctg_guess = function ($n) {
+		$map = ['акци|комбо|набор|combo|бокс|box|\+|\bсет' => '🍱', 'суши|ролл|roll|маки|темпур' => '🍣', 'пицц|pizza' => '🍕', 'бургер|burger|чизбург' => '🍔',
+			'шаурм|донер|лаваш|шаверм|doner' => '🌯', 'фри|картоп|картош|наггетс' => '🍟', 'хот-?дог|hot ?dog|сосис' => '🌭', 'лапш|вок|wok|рамен|лагман|удон|паст|спагет' => '🍜',
+			'салат' => '🥗', 'суп|сорпа|борщ|сорп|шорп' => '🍲', 'кофе|латте|капуч|американо|эспрес|раф' => '☕', 'шай|чай|tea' => '🍵',
+			'торт|десерт|тәтті|пирож|чизкейк|выпеч|тоқаш|бәліш|самса' => '🍰', 'балмұздақ|морожен|мороже' => '🍨', 'коктейл|смузи|милкшейк|шейк|лимонад|мохито' => '🍹',
+			'сусын|напит|кола|cola|сок|шырын|вода|фанта|спрайт|пепси|айран|компот' => '🥤', 'тауық|курин|куриц|крыл|чикен|chicken|тандыр' => '🍗',
+			'шашлык|стейк|ет |мяс|кәуап|кебаб|плов|палау|манты|бешбармак|қуырдақ' => '🥩', 'соус' => '🥫', 'нан|хлеб|лепеш|бауырсақ' => '🥖', 'завтрак|таңғы|омлет|яичн' => '🍳',
+			'балық|рыб|fish' => '🐟', 'сэндвич|сендвич|тост|клаб' => '🥪', 'хинкал|пельмен|вареник' => '🥟'];
+		$n = mb_strtolower($n.' ');
+		foreach ($map as $re => $ic) if (preg_match('/'.$re.'/u', $n)) return $ic;
+		return '🍽️';
+	};
+	$ctg_img = function ($c) { return !empty($c['img']) ? (preg_match('~^https?://~', $c['img']) ? $c['img'] : '/assets/uploads/catalog/'.rawurlencode($c['img'])) : ''; };
 	$catalog = db::query("select * from product_catalog where company_id = '$company' and (arh is null or arh = 0) order by number asc, id asc");
 
 	// site setting
@@ -42,6 +58,8 @@
 							<div class="ctg_drag"><i class="fal fa-grip-vertical"></i></div>
 							<div class="ctg_num"><?=$n?></div>
 							<div class="ctg_clr" style="background:<?=htmlspecialchars($c['color'] ?: '#666')?>"></div>
+							<? $ci = $ctg_img($c); ?>
+							<div class="ctg_pic<?=($ci ? ' ctg_pic_img' : '')?>" title="QR мәзірдегі суреті"<?=($ci ? ' style="background-image:url('.htmlspecialchars($ci).')"' : '')?>><?=($ci ? '' : (!empty($c['icon']) ? htmlspecialchars($c['icon']) : '<span class="ctg_pic_auto">'.$ctg_guess($c['name_kz'].' '.$c['name_ru']).'</span>'))?></div>
 							<div class="ctg_name">
 								<div class="ctg_name_kz"><?=htmlspecialchars($c['name_kz'])?></div>
 								<? if ($c['name_ru'] && $c['name_ru'] != $c['name_kz']): ?><div class="ctg_name_ru"><?=htmlspecialchars($c['name_ru'])?></div><? endif ?>
@@ -54,7 +72,9 @@
 								<div class="ctg_b ctg_edit" title="Өзгерту"
 									data-name-kz="<?=htmlspecialchars($c['name_kz'])?>"
 									data-name-ru="<?=htmlspecialchars($c['name_ru'])?>"
-									data-color="<?=htmlspecialchars($c['color'] ?: '#666666')?>"><i class="fal fa-pen"></i></div>
+									data-color="<?=htmlspecialchars($c['color'] ?: '#666666')?>"
+									data-icon="<?=htmlspecialchars((string)@$c['icon'])?>"
+									data-img="<?=htmlspecialchars($ctg_img($c))?>"><i class="fal fa-pen"></i></div>
 								<div class="ctg_b ctg_b_red ctg_del" title="Архивке" data-cnt="<?=$pr_ct?>"><i class="fal fa-archive"></i></div>
 							</div>
 						</div>
@@ -94,6 +114,24 @@
 								<div class="ctg_color" data-color="<?=$clr?>" style="background:<?=$clr?>"></div>
 							<? endforeach ?>
 							<input type="color" class="ctg_color_in" value="#698cc8">
+						</div>
+					</div>
+				</div>
+				<div class="form_c">
+					<div class="form_im">
+						<div class="form_span">Мәзірдегі суреті (QR мәзір, клиент сайты):</div>
+						<div class="ctg_pv_row">
+							<div class="ctg_pv"></div>
+							<div class="ctg_pv_btns">
+								<label class="btn btn_cl ctg_img_up"><i class="fal fa-image"></i><span>Фото жүктеу</span><input type="file" accept="image/jpeg,image/png,image/webp" class="ctg_img_in" hidden></label>
+								<div class="btn btn_dd ctg_img_del" hidden><i class="fal fa-trash"></i><span>Фотоны өшіру</span></div>
+							</div>
+						</div>
+						<div class="ctg_small">Фото болса, мәзірде фото шығады. Фото жоқ болса, таңдалған иконка шығады. Ештеңе таңдалмаса, иконка атауына қарай өзі қойылады.</div>
+						<div class="ctg_icons">
+							<div class="ctg_icon ctg_icon_auto" data-icon="" title="Өзі таңдайды">Авто</div>
+							<div class="ctg_icon" data-icon="🍣">🍣</div><div class="ctg_icon" data-icon="🍕">🍕</div><div class="ctg_icon" data-icon="🍔">🍔</div><div class="ctg_icon" data-icon="🌯">🌯</div><div class="ctg_icon" data-icon="🍟">🍟</div><div class="ctg_icon" data-icon="🌭">🌭</div><div class="ctg_icon" data-icon="🍜">🍜</div><div class="ctg_icon" data-icon="🍝">🍝</div><div class="ctg_icon" data-icon="🍛">🍛</div><div class="ctg_icon" data-icon="🍚">🍚</div><div class="ctg_icon" data-icon="🍤">🍤</div><div class="ctg_icon" data-icon="🥗">🥗</div><div class="ctg_icon" data-icon="🍲">🍲</div><div class="ctg_icon" data-icon="🥘">🥘</div><div class="ctg_icon" data-icon="🍗">🍗</div><div class="ctg_icon" data-icon="🥩">🥩</div><div class="ctg_icon" data-icon="🍖">🍖</div><div class="ctg_icon" data-icon="🥟">🥟</div><div class="ctg_icon" data-icon="🐟">🐟</div><div class="ctg_icon" data-icon="🥪">🥪</div><div class="ctg_icon" data-icon="🌮">🌮</div><div class="ctg_icon" data-icon="🥙">🥙</div><div class="ctg_icon" data-icon="🍳">🍳</div><div class="ctg_icon" data-icon="🥞">🥞</div><div class="ctg_icon" data-icon="🥖">🥖</div><div class="ctg_icon" data-icon="🥐">🥐</div><div class="ctg_icon" data-icon="🍰">🍰</div><div class="ctg_icon" data-icon="🎂">🎂</div><div class="ctg_icon" data-icon="🧁">🧁</div><div class="ctg_icon" data-icon="🍩">🍩</div><div class="ctg_icon" data-icon="🍪">🍪</div><div class="ctg_icon" data-icon="🥧">🥧</div><div class="ctg_icon" data-icon="🍨">🍨</div><div class="ctg_icon" data-icon="🍦">🍦</div><div class="ctg_icon" data-icon="☕">☕</div><div class="ctg_icon" data-icon="🍵">🍵</div><div class="ctg_icon" data-icon="🧃">🧃</div><div class="ctg_icon" data-icon="🥤">🥤</div><div class="ctg_icon" data-icon="🍹">🍹</div><div class="ctg_icon" data-icon="🍺">🍺</div><div class="ctg_icon" data-icon="🥫">🥫</div><div class="ctg_icon" data-icon="🍱">🍱</div>
+							<input type="text" class="ctg_icon_in" maxlength="8" placeholder="басқа" title="Кез келген эмодзи қоюға болады">
 						</div>
 					</div>
 				</div>

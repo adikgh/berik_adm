@@ -133,8 +133,9 @@
 	// Мәзір көрінісі (company_menu.look)
 	// Шаблон таңдалса, түс әлі әдепкі болса, шаблонның өз түсі қойылады
 	$(document).on('change', '.qr_tpl input', function () {
-		var a = this.form.elements.accent, def = { 0: '#0ea768', 1: '#ff4d6d', 2: '#ff6a2b' };
-		if (a && ['#0ea768', '#ff4d6d', '#ff6a2b'].indexOf(a.value.toLowerCase()) >= 0) a.value = def[this.value];
+		var a = this.form.elements.accent, def = ['#0ea768', '#ff4d6d', '#ff6a2b', '#f4511e', '#b7ce59', '#c6f432', '#f26b1d', '#2f8a4f',
+			'#d9b86a', '#b08a3e', '#ff7751', '#111111', '#d98a32', '#eb4302', '#1d4ed8', '#2d8747', '#ff8a3d', '#e34923'];
+		if (a && def.indexOf(a.value.toLowerCase()) >= 0) a.value = def[this.value] || def[0];
 	});
 	$(document).on('submit', '.qr_look', function (e) {
 		e.preventDefault();

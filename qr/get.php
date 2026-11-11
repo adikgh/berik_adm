@@ -59,7 +59,7 @@
 	if (isset($_GET['look'])) {
 		if (!mysqli_num_rows(db::query("SHOW COLUMNS FROM company_menu LIKE 'look'"))) out(false, 'Базаға berik_004_menu_look.sql іске қосу керек');
 		$look = [
-			'tpl' => in_array((int)@$_POST['tpl'], [1, 2], true) ? (int)$_POST['tpl'] : 0,
+			'tpl' => (int)@$_POST['tpl'] >= 1 && (int)@$_POST['tpl'] <= 16 ? (int)$_POST['tpl'] : 0, // 1..16 = Шаблон-N
 			'accent' => preg_match('/^#[0-9a-f]{6}$/i', (string)@$_POST['accent']) ? strtolower($_POST['accent']) : '#0ea768',
 			'layout' => in_array(@$_POST['layout'], ['list', 'grid'], true) ? $_POST['layout'] : 'list',
 			'photos' => (int)!empty($_POST['photos']),
