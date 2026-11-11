@@ -31,8 +31,10 @@ body:has(.u_sign) .app{ padding: 0; min-height: 100vh; min-height: 100svh; }
 .lg_brand{ display: flex; align-items: center; gap: 12px; }
 .lg_logo{ width: 56px; height: 56px; border-radius: 16px; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(0,0,0,.12); }
 .lg_logo img{ display: block; width: 40px; height: 40px; }
-.lg_name{ font-family: 'Nunito', sans-serif; font-style: italic; font-weight: 900; font-size: 26px; letter-spacing: .3px; line-height: 1; }
+.lg_name{ display: flex; flex-direction: column; gap: 4px; font-family: 'Nunito', sans-serif; font-style: italic; font-weight: 900; font-size: 26px; letter-spacing: .3px; line-height: 1; }
 .lg_name b{ font-weight: 800; color: #d8ffe9; }
+/* Екінші жол: админде "Admin", dev-те "Developer" (сөзі беттің өзінде) */
+.lg_name small{ font-size: 15px; font-style: normal; font-weight: 600; letter-spacing: 1.2px; opacity: .78; }
 
 .lg_slogan{ margin: 0 0 26px; font-size: 32px; line-height: 1.2; font-weight: 800; color: #fff; }
 .lg_feats{ list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }

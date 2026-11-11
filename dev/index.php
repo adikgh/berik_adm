@@ -14,7 +14,7 @@
 			<div class="lg_side">
 				<div class="lg_brand">
 					<span class="lg_logo"><img src="/assets/img/logo/berik-icon.svg" alt="BERIK" width="44" height="44"></span>
-					<span class="lg_name">BERIK <b>DEV</b></span>
+					<span class="lg_name"><span>BERIK <b>POS</b></span><small>Developer</small></span>
 				</div>
 				<div class="lg_side_t">
 					<h2 class="lg_slogan"><?=t::w('All companies in one place', 'Барлық компания бір жерде')?></h2>
