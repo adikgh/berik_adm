@@ -72,3 +72,108 @@
 .lc_paid .cl_small{margin:0 0 10px}
 .lc_bad{opacity:.55}
 .lc_bad small,.lc_paid .cl_td small{display:block;font-size:11px;color:#888}
+/* Кэшбэк және Сыйлық беттері (2026-11-11): ауыстырғыш, чиптер, ықшам өрістер */
+.lc_page form{margin-bottom:16px}
+.lc_page .lc_set{gap:0;padding:18px 20px}
+.lc_page .lc_set .cl_box_h{margin-bottom:0}
+.lc_page input[type=number]{-moz-appearance:textfield;appearance:textfield}
+.lc_page input[type=number]::-webkit-inner-spin-button,.lc_page input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.lc_page .cl_small{font-weight:500;line-height:1.5;color:var(--mut)}
+/* қосу/өшіру ауыстырғышы */
+.lc_sw{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none;font-size:13px;font-weight:700;color:var(--mut)}
+.lc_sw input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.lc_sw i{position:relative;flex:none;width:46px;height:26px;border-radius:13px;background:#d5d9de;transition:background .2s}
+.lc_sw i::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.lc_sw input:checked + i{background:var(--g)}
+.lc_sw input:checked + i::after{transform:translateX(20px)}
+.lc_sw input:checked ~ .lc_sw_t{color:var(--g)}
+.lc_sw input:focus-visible + i{outline:2px solid var(--b);outline-offset:2px}
+.lc_body{display:flex;flex-direction:column;gap:18px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.lc_off .lc_body{display:none}
+.lc_off_note{display:none;margin-top:12px;font-size:13px;color:var(--mut);font-weight:500}
+.lc_off .lc_off_note{display:block}
+.lc_row{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.lc_row .cl_lbl{margin:0}
+.lc_row .cl_small{max-width:640px}
+/* сан өрісі + жұрнақ (%, -ші) */
+.lc_num{display:inline-flex;align-items:center;gap:6px}
+.lc_num .cl_inp{width:80px;height:42px;padding:0 10px;text-align:right}
+.lc_num span{font-size:14px;font-weight:700;color:var(--mut)}
+.lc_num_sum .cl_inp{width:110px}
+/* сома сатылары */
+.lc_page .lc_steps{gap:8px}
+.lc_page .lc_step{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.lc_page .lc_step > span{opacity:1;color:var(--mut)}
+.lc_page .lc_step > i{color:var(--mut);font-size:12px;margin:0 2px}
+/* төлеу шегінің чиптері */
+.lc_chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.lc_chip{height:38px;padding:0 16px;border:1px solid var(--line);border-radius:19px;background:#fff;font:inherit;font-size:14px;font-weight:700;color:#333;cursor:pointer;transition:.15s}
+.lc_chip:hover{border-color:var(--g)}
+.lc_chip_on,.lc_chip_on:hover{background:var(--g);border-color:var(--g);color:#fff}
+.lc_pm_x[hidden]{display:none}
+.lc_pm_x .cl_inp{width:90px;height:38px}
+.lc_w_name{width:100%;max-width:360px}
+.lc_page .lc_save{display:flex;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.lc_page .lc_msg{font-weight:600}
+/* сыйлық деңгейлері: тегіс бағандар */
+.lc_page .lc_tiers{margin:0;gap:8px}
+.lc_page .lc_tier{grid-template-columns:104px minmax(150px,1.2fr) minmax(170px,1.3fr) 64px 96px 104px 34px;gap:8px}
+.lc_page .lc_tier .cl_inp{height:42px;min-width:0;width:100%}
+.lc_page .lc_tier .lc_num{display:flex;width:100%}
+.lc_page .lc_tier .lc_num .cl_inp{width:auto;flex:1;min-width:0}
+.lc_page .lc_tier .lc_num span{flex:none}
+.lc_page .lc_tier select.cl_inp{padding-right:28px;text-overflow:ellipsis}
+.lc_page .lc_tier_h{font-size:11px;letter-spacing:.2px;text-transform:uppercase;color:var(--mut);opacity:1}
+.lc_page .lc_tier_new{padding:10px;border-radius:12px}
+.lc_page .lc_del{justify-content:center;width:34px;height:42px;border-radius:10px}
+.lc_page .lc_del:hover{background:#fdecee}
+.lc_page .lc_del input{-webkit-appearance:checkbox;appearance:auto;position:static;opacity:1;width:16px;height:16px;margin:0 4px 0 0}
+.lc_page .lc_help{margin:4px 0 0;color:var(--mut);font-weight:500}
+/* карточкалар бір қатарда, кестелер тегіс */
+.lc_page .lc_cards{grid-template-columns:repeat(3,1fr)}
+.lc_page .lc_tbl .lc_r{text-align:right}
+.lc_page .lc_tbl .lc_tbl_s{padding:0 18px 10px;margin:0}
+.lc_page .lc_tbl .cl_td small{display:block;font-size:11px;color:var(--mut)}
+@media (max-width:1100px){.lc_page .lc_tier{grid-template-columns:96px 1fr 1fr 64px 90px 96px 34px}}
+@media (max-width:900px){.lc_page .lc_tier{grid-template-columns:1fr 1fr}.lc_page .lc_tier_h{display:none}.lc_page .lc_tier .lc_del{width:auto}}
+@media (max-width:700px){
+	.lc_page .lc_set{padding:16px}
+	.lc_page .lc_cards{grid-template-columns:1fr}
+	.lc_page .lc_tier{grid-template-columns:1fr}
+	.lc_page .lc_tbl .lc_r{text-align:left}
+	.lc_page .lc_save .cl_btn{width:100%}
+}
+/* кіші ауыстырғыш: «Сома бойынша сатылар» */
+.lc_tg_sm .lc_body{margin-top:4px;padding-top:0;border-top:0;gap:8px;width:100%}
+.lc_tg_sm .lc_off_note{margin-top:0}
+.lc_sw_sm{font-size:12px;text-transform:uppercase;color:var(--mut)}
+.lc_sw_sm i{width:36px;height:20px;border-radius:10px}
+.lc_sw_sm i::after{top:2px;left:2px;width:16px;height:16px}
+.lc_sw_sm input:checked + i::after{transform:translateX(16px)}
+.lc_sw_sm input:checked ~ span{color:#222}
+/* «?» кеңес */
+.lc_q{position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:4px;border-radius:50%;background:#eef1f4;color:#555;font-size:11px;font-weight:800;cursor:help;vertical-align:middle}
+.lc_q > span{display:none;position:absolute;bottom:26px;left:50%;transform:translateX(-50%);width:280px;padding:10px 12px;border-radius:10px;background:#222;color:#fff;font-size:12px;font-weight:500;line-height:1.45;z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.lc_q:hover > span,.lc_q:focus > span{display:block}
+@media (max-width:700px){.lc_q > span{left:auto;right:-10px;transform:none}}
+/* сыйлық жолы: жою батырмасы, тегіс бағандар */
+.lc_page .lc_tier{align-items:center}
+.lc_page .lc_tier .cl_inp:disabled{background:#f6f7f8;color:#b5b9be;border-color:#eef0f2}
+.lc_page .lc_tier .cl_inp::placeholder{color:#b5b9be;font-weight:500}
+.lc_page .lc_tier input[name$="[discount_max]"]{padding:0 8px}
+.lc_page button.lc_del{display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:0;border-radius:8px;background:none;color:#a0a5ab;font-size:15px;cursor:pointer;transition:.15s;justify-self:center}
+.lc_page button.lc_del:hover{background:#fdecee;color:#dc3545}
+.lc_del_note{display:none;grid-column:1/-1;font-size:12px;font-weight:600;color:#dc3545}
+.lc_del_note a{color:var(--b);text-decoration:underline}
+.lc_page .lc_tier_del > :not(.lc_del_note){opacity:.4;pointer-events:none}
+.lc_page .lc_tier_del .cl_inp{text-decoration:line-through}
+.lc_page .lc_tier_del .lc_del_note{display:block}
+@media (max-width:900px){
+	.lc_page .lc_tier:not(.lc_tier_h){padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+	.lc_page .lc_tier_new{border-style:dashed}
+	.lc_page button.lc_del{justify-self:end}
+}
+/* өрістер бір биіктікте */
+.cl_page.lc_page .lc_set .cl_inp{height:44px;min-height:44px}
+.cl_page.lc_page .lc_pm_x .cl_inp{height:38px;min-height:38px}
+.cl_page.lc_page .lc_tier_new{padding:10px 0;border:0;border-top:1px dashed var(--line);border-radius:0;background:none}

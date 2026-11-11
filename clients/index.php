@@ -132,7 +132,10 @@
 			<? endif ?>
 		</div>
 		<? if (loyalty::on()): ?>
-			<a class="cl_go" href="/clients/loyalty.php"><i class="fal fa-gift"></i><span>Кэшбэк, сыйлық</span><i class="far fa-chevron-right cl_go_ar"></i></a>
+			<div class="cl_gos">
+				<a class="cl_go" href="/clients/cashback.php"><i class="fal fa-coins"></i><span>Кэшбэк</span><i class="far fa-chevron-right cl_go_ar"></i></a>
+				<a class="cl_go" href="/clients/gift.php"><i class="fal fa-gift"></i><span>Сыйлық</span><i class="far fa-chevron-right cl_go_ar"></i></a>
+			</div>
 		<? endif ?>
 	</div>
 
