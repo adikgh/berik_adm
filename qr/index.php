@@ -20,7 +20,7 @@
 	// Мәзір ашылатын сайттар: QR меню (qr.* алиасы) және жеке кабинет
 	$live = preg_match('~gprog\.kz$~i', (string)@$_SERVER['HTTP_HOST']);
 	$qr_base = $live ? 'https://qrb.gprog.kz' : 'http://qr.berik.c';
-	$my_base = defined('CABINET_URL') ? CABINET_URL : 'http://my.berik.c';
+	$my_base = $live ? 'https://myb.gprog.kz' : 'http://my.berik.c';
 	$code = ltrim(strtolower((string)$c['code']), '#');
 
 	// QR дизайны: компанияның өз файлында (assets/uploads/qr/c<id>.json), логотип сол папкада
