@@ -184,12 +184,14 @@ $(document).ready(function() {
 		});
 		s.on('change.bsel', sync);
 	}
-	$('.uc_ui69 select, .head_rk select').each(function() { enhance(this); });
+	// сүзгі жолағындағы тізімдер де (Клиенттер сұрыптауы, Накладной жеткізушісі, QR филиалы)
+	var BSEL = '.uc_ui69 select, .head_rk select, .cl_range select, .wb_range select, select.qr_branch';
+	$(BSEL).each(function() { enhance(this); });
 	// бет блогы AJAX-пен жаңарғанда (fun.js ajx) күнтізбе мен тізімдерді қайта безендіру
 	$(document).on('ajx:done', function() {
 		$('.bcal').each(function() { var i = $(this).data('inp'); if (i && !document.body.contains(i)) $(this).remove(); });
 		bdt_init(document);
-		$('.uc_ui69 select, .head_rk select').each(function() { enhance(this); });
+		$(BSEL).each(function() { enhance(this); });
 	});
 	$(document).on('click', function() { $('.bsel').removeClass('bsel_open'); });
 
