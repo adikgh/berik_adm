@@ -151,6 +151,7 @@ $(document).ready(function() {
 		if (s.hasClass('on_sort_company')) wrap.addClass('bsel_company');
 		s.after(wrap); wrap.append(s);
 		var btn = $('<div class="bsel_btn"><span class="bsel_txt"></span><i class="far fa-angle-down"></i></div>');
+		if (s.attr('data-icon')) { btn.prepend($('<span class="bsel_ico"></span>').append($('<i></i>').addClass('fal ' + s.attr('data-icon')))); wrap.addClass('bsel_has_ico'); }
 		var list = $('<div class="bsel_list"></div>');
 		wrap.append(btn).append(list);
 		function sync() {

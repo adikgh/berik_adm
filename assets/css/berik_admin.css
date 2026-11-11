@@ -174,13 +174,17 @@ body{ background: var(--bp-bg); }
 .bsel_i2 small{ font-size: 12px; font-weight: 500; color: var(--bp-muted); }
 .bsel_i2.bsel_act::after{ content: "\f00c"; font-family: "Font Awesome 5 Pro"; font-weight: 400; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--bp-green); }
 /* сүзгі жолағындағы кіші тізім (Клиенттер, Накладной, QR): көршілес инпуттың биіктігімен бірдей */
-.cl_range .bsel_btn, .wb_range .bsel_btn, .qr_tb .bsel_btn{ height: 48px; min-width: 180px; border-radius: 10px; box-shadow: none; font-size: 14px; }
-.wb_range .bsel_btn{ height: 46px; }
+.cl_range .bsel_btn, .wb_range .bsel_btn, .qr_tb .bsel_btn{ height: 56px; min-width: 180px; border-radius: 10px; box-shadow: none; font-size: 14px; }
 .cl_range .bsel_on .bsel_btn, .wb_range .bsel_on .bsel_btn, .qr_tb .bsel_on .bsel_btn{ background: #fff; border-color: var(--bp-line); color: var(--bp-text); }
 .cl_range .bsel_open .bsel_btn, .wb_range .bsel_open .bsel_btn, .qr_tb .bsel_open .bsel_btn{ border-color: var(--bp-blue); }
 .cl_range .bsel_list, .qr_tb .bsel_list{ left: auto; right: 0; }
 .cl_range .bsel_i, .wb_range .bsel_i, .qr_tb .bsel_i{ min-height: 42px; font-size: 14px; }
 @media (max-width: 760px){ .cl_range .bsel, .wb_range .bsel{ flex: 1; } .cl_range .bsel_btn, .wb_range .bsel_btn{ min-width: 0; width: 100%; } }
+/* тізім батырмасындағы иконка (data-icon): сұрыптау / сүзгі */
+.bsel_btn .bsel_ico{ display: flex; align-items: center; }
+.bsel_btn .bsel_ico i{ color: var(--bp-blue); font-size: 16px; transform: none !important; }
+.bsel_has_ico .bsel_btn{ justify-content: flex-start; gap: 10px; }
+.bsel_has_ico .bsel_txt{ flex: 1; }
 
 /* ---------- Касса: точка батырмалары, жолдар ---------- */
 .k_br{ display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; background: #fff; border: 1px solid var(--bp-line); border-radius: 12px; }

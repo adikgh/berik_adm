@@ -123,7 +123,7 @@
 		</div>
 		<form class="wb_range" method="get" action="/waybill/" data-ajx=".wb_page">
 			<? foreach (['mode', 'd', 'st'] as $k): if (@$_GET[$k]): ?><input type="hidden" name="<?=$k?>" value="<?=wb::h($_GET[$k])?>"><? endif; endforeach ?>
-			<select name="s" class="wb_inp" onchange="this.form.requestSubmit()">
+			<select name="s" class="wb_inp" onchange="this.form.requestSubmit()" data-icon="fa-filter" title="Сүзгі">
 				<option value="">Барлық жеткізуші</option>
 				<? while ($s = mysqli_fetch_assoc($suppliers)): ?>
 					<option value="<?=$s['id']?>" <?=($sup == $s['id'] ? 'selected' : '')?>><?=wb::h($s['name'])?></option>

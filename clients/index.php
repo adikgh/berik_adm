@@ -201,7 +201,7 @@
 		<form class="cl_range" method="get" action="/clients/" data-ajx=".cl_page">
 			<? foreach (['p', 'd', 'seg', 'sort', 'branch'] as $k): if (@$_GET[$k]): ?><input type="hidden" name="<?=$k?>" value="<?=htmlspecialchars($_GET[$k])?>"><? endif; endforeach ?>
 			<input type="text" name="q" value="<?=htmlspecialchars($q)?>" class="cl_inp cl_search" placeholder="Телефон, аты немесе мекенжай">
-			<select class="cl_inp" onchange="ajxGo(this.value, '.cl_page')">
+			<select class="cl_inp" onchange="ajxGo(this.value, '.cl_page')" data-icon="fa-sort-amount-down" title="Сұрыптау">
 				<? foreach (['sum' => 'Сома бойынша', 'cnt' => 'Тапсырыс саны', 'last' => 'Соңғы келгені', 'new' => 'Жаңалары'] as $k => $v): ?>
 					<option value="<?=cl_url(['sort' => $k, 'page' => null])?>" <?=($sort == $k ? 'selected' : '')?>><?=$v?></option>
 				<? endforeach ?>
