@@ -78,6 +78,23 @@ $(document).ready(function() {
 			});
 		}, 300);
 	}
+	// ★ QR мәзірде бүкіл санатты ұсыну
+	$('html').on('click', '.ctg_rec', function(){
+		var b = $(this), on = !b.hasClass('ctg_rec_on');
+		if (b.hasClass('ctg_rec_busy')) return;
+		b.addClass('ctg_rec_busy');
+		$.ajax({
+			url: '/products/catalog/get.php?rec', type: 'POST', dataType: 'html',
+			data: { id: b.closest('.ctg_i').attr('data-id'), on: on ? 1 : '' },
+			success: function(data){
+				b.removeClass('ctg_rec_busy');
+				if (data != 'yes') { mess('Сақталмады!'); return }
+				b.toggleClass('ctg_rec_on', on).find('i').attr('class', (on ? 'fas' : 'fal') + ' fa-star');
+				mess(on ? 'Санат ұсынысқа қосылды' : 'Санат ұсыныстан алынды');
+			},
+			error: function(){ b.removeClass('ctg_rec_busy'); mess('Сақталмады!') },
+		});
+	});
 	$('html').on('click', '.ctg_up', function(){
 		var row = $(this).closest('.ctg_i'), prev = row.prev('.ctg_i');
 		if (prev.length) { row.insertBefore(prev); ctgRenumber(); ctgSaveSort() }

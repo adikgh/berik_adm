@@ -23,6 +23,10 @@
 		else $no_catalog['items'][] = $pr_d;
 	}
 	if ($no_catalog['items']) $catalogs[0] = $no_catalog;
+	// QR мәзірдегі «Ұсыныс» (★): тағам өзі не бүкіл санаты белгіленеді
+	$rec_on = fun::has_col('product', 'recommend') && fun::has_col('product_catalog', 'recommend');
+	$rec_n = 0; $rec_k = 0;
+	foreach ($catalogs as $cat) { if (!empty($cat['recommend'])) $rec_k++; foreach ($cat['items'] as $x) if (!empty($x['recommend'])) $rec_n++; }
 	$coll = class_exists('Collator') ? new Collator('kk_KZ') : null;
 	foreach ($catalogs as &$cat) usort($cat['items'], function ($a, $b) use ($coll) {
 		$x = mb_strtolower(fun::name_text($a['name_kz'] ?: $a['name_ru'])); $y = mb_strtolower(fun::name_text($b['name_kz'] ?: $b['name_ru']));
@@ -90,6 +94,12 @@
 							</div>
 						<? endif ?>
 					</div>
+					<? if ($rec_on): ?>
+						<div class="pr_tr pr_rec_info">
+							<i class="fas fa-star"></i>
+							<span>QR мәзірдегі «Тағы қосасыз ба?» ұсынысы: <b class="pr_rec_cn"><?=$rec_n?></b> тағам, <b class="pr_rec_ck"><?=$rec_k?></b> санат белгіленген. Мәзірде 12-ге дейін шығады: алдымен жеке белгіленген тағамдар, сосын белгіленген санаттағылар. Ештеңе белгіленбесе, басқа санаттан арзан тағамдар өзі таңдалады.</span>
+						</div>
+					<? endif ?>
 					<div class="pr_tr">
 						<span class="pr_lbl">Каталог:</span>
 						<div class="k_br pr_cat_chips">
@@ -106,10 +116,11 @@
 						<span class="pr_grp_clr" style="background:<?=htmlspecialchars($clr)?>"></span>
 						<span class="pr_grp_name"><?=htmlspecialchars($cat['name_'.$lang] ?: $cat['name_ru'])?></span>
 						<span class="pr_grp_cnt"><?=count($cat['items'])?></span>
+						<? if ($rec_on && $cat['id']): ?><button type="button" class="pr_rec pr_rec_k<?=(!empty($cat['recommend']) ? ' pr_rec_on' : '')?>" data-id="<?=$cat['id']?>" title="Бүкіл санатты QR мәзірде ұсыну"><i class="fa<?=(!empty($cat['recommend']) ? 's' : 'l')?> fa-star"></i><span>Санатты ұсыну</span></button><? endif ?>
 					</div>
 					<div class="ctg_list">
 						<? foreach ($cat['items'] as $pr_d): $number++; ?>
-							<div class="ctg_i pr_row" data-id="<?=$pr_d['id']?>" data-cat="<?=$cat['id']?>"
+							<div class="ctg_i pr_row<?=(!empty($cat['recommend']) ? ' pr_row_rk' : '')?>" data-id="<?=$pr_d['id']?>" data-cat="<?=$cat['id']?>"
 								data-name="<?=htmlspecialchars(mb_strtolower(fun::name_text($pr_d['name_kz']).' '.fun::name_text($pr_d['name_ru'])))?>"
 								data-name-kz="<?=htmlspecialchars(fun::name_save($pr_d['name_kz']))?>"
 								data-name-ru="<?=htmlspecialchars(fun::name_save($pr_d['name_ru']))?>"
@@ -124,6 +135,7 @@
 								</a>
 								<div class="ctg_cnt pr_pr"><?=((int)$pr_d['price'] ? number_format((int)$pr_d['price'], 0, '', ' ').' тг' : '<m>'.t::w('No price', 'Бағасы жоқ').'</m>')?></div>
 								<div class="ctg_btns">
+									<? if ($rec_on): ?><div class="ctg_b pr_rec pr_rec_p<?=(!empty($pr_d['recommend']) ? ' pr_rec_on' : '')?>" data-id="<?=$pr_d['id']?>" title="QR мәзірде ұсыну (★)"><i class="fa<?=(!empty($pr_d['recommend']) ? 's' : 'l')?> fa-star"></i></div><? endif ?>
 									<a class="ctg_b cpp_open" href="item/?id=<?=$pr_d['id']?>" data-id="<?=$pr_d['id']?>" title="<?=t::w('Ingredients', 'Құрамы (граммовка)')?>"><i class="fal fa-layer-group"></i></a>
 									<div class="ctg_b product2_add_pop" data-id="<?=$pr_d['id']?>" title="<?=t::w('Make copy', 'Көшірме жасау')?>"><i class="fal fa-clone"></i></div>
 									<div class="ctg_b pr_edit" title="<?=t::w('Edit', 'Өзгерту')?>"><i class="fal fa-pen"></i></div>
@@ -228,6 +240,16 @@
 		.pr_lg{ display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 		.pr_lg_r{ background: #fdecec; color: #c0392b; } .pr_lg_y{ background: #fff3d6; color: #b07800; }
 		.pr_row .wbm_b{ cursor: pointer; }
+		.pr_rec_info{ flex-wrap: nowrap; align-items: flex-start; gap: 8px; font-size: 13px; color: #5d6470; line-height: 1.45; padding: 8px 12px; background: #fff8e1; border-radius: 10px; }
+		.pr_rec_info > i{ color: #f5a700; margin-top: 3px; }
+		.pr_rec{ cursor: pointer; }
+		.pr_rec_p i{ color: #b3bac7; }
+		.pr_rec_p.pr_rec_on i, .pr_rec_k.pr_rec_on i{ color: #f5a700; }
+		.pr_row_rk .pr_rec_p:not(.pr_rec_on) i{ color: #f5c95c; }
+		.pr_rec_k{ margin-left: 10px; height: 30px; padding: 0 10px; border: 1px solid var(--bp-line, #e6e9ef); border-radius: 8px; background: #fff; font: inherit; font-size: 12px; font-weight: 600; color: #5d6470; display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
+		.pr_rec_k i{ color: #b3bac7; }
+		.pr_rec_k.pr_rec_on{ background: #fff8e1; border-color: #f5d27a; color: #8a6400; }
+		.pr_rec_busy{ opacity: .5; pointer-events: none; }
 		.pr_cat_cnt{ font-size: 12px; font-weight: 600; opacity: .55; }
 		.pr_grp{ margin-top: 16px; }
 		.ctg_c .ctg_list{ margin-top: 8px; }
@@ -315,6 +337,31 @@
 				var o = w.closest('.pr_row').querySelector('.cpp_open'); if (o) o.click();
 			});
 			if (chips.length) apply();
+
+			// ★ Ұсыныс: тағам (products/get.php?rec) не бүкіл санат (catalog/get.php?rec), бет жаңармайды
+			function recCnt() {
+				var n = document.querySelector('.pr_rec_cn'), k = document.querySelector('.pr_rec_ck');
+				if (n) n.textContent = document.querySelectorAll('.pr_rec_p.pr_rec_on').length;
+				if (k) k.textContent = document.querySelectorAll('button.pr_rec_k.pr_rec_on').length;
+			}
+			function recSet(b, on) { b.classList.toggle('pr_rec_on', on); var i = b.querySelector('i'); i.className = (on ? 'fas' : 'fal') + ' fa-star'; }
+			document.addEventListener('click', function (e) {
+				var b = e.target.closest('.pr_rec'); if (!b || b.classList.contains('pr_rec_busy')) return;
+				e.preventDefault(); e.stopPropagation();
+				var cat = b.classList.contains('pr_rec_k'), on = !b.classList.contains('pr_rec_on');
+				var fd = new FormData(); fd.append('id', b.dataset.id); if (on) fd.append('on', 1);
+				b.classList.add('pr_rec_busy');
+				fetch(cat ? '/products/catalog/get.php?rec' : '/products/get.php?rec', { method: 'POST', body: fd, credentials: 'same-origin' })
+					.then(function (r) { return r.text(); })
+					.then(function (t) {
+						b.classList.remove('pr_rec_busy');
+						if (t.trim() != 'yes') { msg(T.err); return; }
+						recSet(b, on);
+						if (cat) document.querySelectorAll('.pr_row[data-cat="' + b.dataset.id + '"]').forEach(function (r) { r.classList.toggle('pr_row_rk', on); });
+						recCnt();
+					})
+					.catch(function () { b.classList.remove('pr_rec_busy'); msg(T.err); });
+			});
 
 			// каталог таңдағыш (чиптер, мәні жасырын input-та)
 			function pick(box, id) {

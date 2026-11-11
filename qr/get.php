@@ -58,14 +58,6 @@
 	// Мәзір көрінісі: company_menu.look (JSON)
 	if (isset($_GET['look'])) {
 		if (!mysqli_num_rows(db::query("SHOW COLUMNS FROM company_menu LIKE 'look'"))) out(false, 'Базаға berik_004_menu_look.sql іске қосу керек');
-		$ids = [];
-		foreach ((array)@$_POST['upsell_ids'] as $i) if ((int)$i > 0) $ids[] = (int)$i;
-		if ($ids) { // тек осы компанияның тағамдары
-			$ok = [];
-			$q = db::query("select p.id from product p join product_catalog k on k.id = p.catalog_id where k.company_id = '$cmp' and p.id in (".implode(',', $ids).")");
-			while ($r = mysqli_fetch_row($q)) $ok[] = (int)$r[0];
-			$ids = array_slice(array_values(array_intersect($ids, $ok)), 0, 12);
-		}
 		$look = [
 			'tpl' => in_array((int)@$_POST['tpl'], [1, 2], true) ? (int)$_POST['tpl'] : 0,
 			'accent' => preg_match('/^#[0-9a-f]{6}$/i', (string)@$_POST['accent']) ? strtolower($_POST['accent']) : '#0ea768',
@@ -74,7 +66,6 @@
 			'search' => (int)!empty($_POST['search']),
 			'card' => (int)!empty($_POST['card']),
 			'upsell' => (int)!empty($_POST['upsell']),
-			'upsell_ids' => $ids,
 		];
 		$j = json_encode($look);
 		$st = mysqli_prepare(db::$connect, "insert into company_menu (company_id, look, upd_dt) values (?, ?, now()) on duplicate key update look = values(look), upd_dt = now()");

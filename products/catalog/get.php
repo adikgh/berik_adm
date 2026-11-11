@@ -28,6 +28,15 @@
 	}
 
 
+	// QR мәзірдегі «Ұсыныс»: бүкіл санатты белгілеу / алу (product_catalog.recommend)
+	if (isset($_GET['rec'])) {
+		$id = intval(@$_POST['id']); $on = (int)!empty($_POST['on']);
+		$upd = db::query("UPDATE `product_catalog` SET `recommend` = '$on' WHERE id = '$id' and company_id = '$company'");
+		echo $upd ? 'yes' : 'error';
+		exit();
+	}
+
+
 	// ретін сақтау: ids[] жаңа ретпен келеді
 	if (isset($_GET['sort'])) {
 		$ids = @$_POST['ids'];

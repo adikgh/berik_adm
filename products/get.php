@@ -1,4 +1,12 @@
 <? include "../config/core.php";
+
+	// QR мәзірдегі «Ұсыныс» жұлдызшасы: тағамды белгілеу / алу (product.recommend)
+	if (isset($_GET['rec'])) {
+		if (!$user_id || !$company) exit('error');
+		$id = (int)@$_POST['id']; $on = (int)!empty($_POST['on']); $cmp = (int)$company;
+		$q = db::query("update product set recommend = '$on' where id = '$id' and company_id = '$cmp'");
+		exit($q ? 'yes' : 'error');
+	}
 	// Құрам (product_comp) / шикізат (product_raw): қосу және өзгерту
 	$cr_act = null;
 	foreach (['comp_add', 'raw_add', 'comp_upd', 'raw_upd'] as $k) if (isset($_GET[$k])) $cr_act = $k;
