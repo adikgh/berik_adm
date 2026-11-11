@@ -25,9 +25,9 @@ $(document).ready(function() {
 		$('#html').addClass('ovr_h');
 		if (!id) setTimeout(function(){ ph.focus() }, 200);
 	}
-	// PIN тек оператор (кассир) үшін керек
+	// PIN кассаға кіретіндерге керек: Менеджер (4) мен Кассир (5)
 	function tmPin() {
-		var op = $('.tm_in_pos .tm_chip_act').attr('data-val') == '5';
+		var op = ['4', '5'].indexOf($('.tm_in_pos .tm_chip_act').attr('data-val')) != -1;
 		$('.tm_code_box').toggle(op);
 		if (!op) $('.tm_in_code').val('');
 	}

@@ -8,7 +8,7 @@
 	$positions = [];
 	$pq = db::query("select * from company_staff_positions where id != 1 order by number asc");
 	while ($p = mysqli_fetch_assoc($pq)) $positions[$p['id']] = $p;
-	// рет: Директор, Басқарушы, Маркетолог, Раздача, Кассир, Аспазшы, Поставщик, Курьер (Менеджер — ескі, тек бар болса шығады)
+	// рет: Директор, Басқарушы, Маркетолог, Раздача, Кассир, Аспазшы, Поставщик, Курьер, Менеджер (Менеджер мен Кассир кассаға PIN-мен кіреді)
 	$pos_kz = [2 => 'Директор', 3 => 'Басқарушы', 7 => 'Маркетолог', 8 => 'Раздача', 5 => 'Кассир', 9 => 'Аспазшы', 10 => 'Поставщик', 6 => 'Курьер', 4 => 'Менеджер'];
 	$pos_icon = [2 => 'fa-user-tie', 3 => 'fa-user-cog', 7 => 'fa-bullhorn', 8 => 'fa-concierge-bell', 5 => 'fa-cash-register', 9 => 'fa-hat-chef', 10 => 'fa-truck', 6 => 'fa-car', 4 => 'fa-user-chart'];
 	// базада әлі жоқ лауазымдар болса да, рет осылай тұрады
@@ -31,7 +31,6 @@
 		where s.company_id = '$company' and s.positions_id != 1 order by u.name asc");
 	$all_cnt = 0;
 	while ($r = mysqli_fetch_assoc($sq)) { $groups[$r['positions_id']][] = $r; $all_cnt++; }
-	$has_manager = !empty($groups[4]);
 
 	// аты-жөні, нөмірі, құпиясөзі өзгертілмейтін адам: басқа компанияда да жұмыс істейді,
 	// не Директор (оны тек Создатель өзгертеді, өзін өзі өзгерте алады). team/get.php-да да осы тексеріледі
@@ -129,7 +128,7 @@
 					<div class="form_im">
 						<div class="form_span">Лауазымы:</div>
 						<div class="tm_chips tm_in_pos">
-							<? foreach ($positions as $pid => $p): if ($pid == 4 && !$has_manager) continue; ?>
+							<? foreach ($positions as $pid => $p): ?>
 								<div class="tm_chip" data-val="<?=$pid?>"><i class="fal <?=($pos_icon[$pid] ?? 'fa-user')?>"></i> <?=($pos_kz[$pid] ?? $p['name_ru'])?></div>
 							<? endforeach ?>
 						</div>
@@ -145,7 +144,7 @@
 							</div>
 						</div>
 					<? endif ?>
-					<!-- PIN тек оператор (кассир, id 5) үшін -->
+					<!-- PIN кассаға кіретіндерге: Менеджер (4) мен Кассир (5) -->
 					<div class="form_im tm_code_box">
 						<div class="form_span">Кассаға кіру PIN (4 сан):</div>
 						<input type="tel" class="form_txt fr_code tm_in_code" maxlength="4" placeholder="Өзгертпесеңіз бос қалдырыңыз">
