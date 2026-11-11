@@ -12,6 +12,7 @@
 		private static $on = null;
 		private static $tiers_on = null; // company_gift_tier кестесі бар ма
 		private static $steps_on = null; // company_cashback_step кестесі бар ма
+		private static $paymax_on = null; // company.cashback_pay_max бағаны бар ма
 		private static $cmp = [];
 		public static $gift_discount = 0; // order_save соңғы жазған сыйлық жеңілдігі
 
@@ -32,15 +33,23 @@
 			return self::$steps_on;
 		}
 
+		public static function paymax_on() {
+			if (self::$paymax_on === null) self::$paymax_on = self::on() && mysqli_num_rows(db::query("SHOW COLUMNS FROM `company` LIKE 'cashback_pay_max'")) > 0;
+			return self::$paymax_on;
+		}
+
 		// Компания баптауы: percent, from, gift_from, tiers (every кемуімен), cashback/gift => bool
 		public static function cfg($company) {
 			$company = (int)$company;
 			if (isset(self::$cmp[$company])) return self::$cmp[$company];
-			$r = ['percent' => 0, 'steps' => [], 'label' => '', 'from' => null, 'gift_from' => null, 'tiers' => [], 'cashback' => false, 'gift' => false];
+			$r = ['percent' => 0, 'steps' => [], 'label' => '', 'from' => null, 'gift_from' => null, 'tiers' => [], 'cashback' => false, 'gift' => false, 'pay_max' => 0];
 			if (self::on()) {
-				$c = mysqli_fetch_assoc(db::query("select cashback_percent, cashback_from, gift_every, gift_name, gift_from from company where id = '$company'"));
+				$pm = self::paymax_on() ? ", cashback_pay_max" : "";
+				$c = mysqli_fetch_assoc(db::query("select cashback_percent, cashback_from, gift_every, gift_name, gift_from$pm from company where id = '$company'"));
 				if ($c) {
 					$r['percent'] = (float)$c['cashback_percent'];
+					// Кэшбэкпен төлеудің шегі: тапсырыстың жалпы сомасының ең көбі неше пайызы (0 = шек жоқ)
+					$r['pay_max'] = max(0, min(100, (int)@$c['cashback_pay_max'])); if ($r['pay_max'] >= 100) $r['pay_max'] = 0;
 					$r['from'] = $c['cashback_from'];
 					$r['gift_from'] = $c['gift_from'];
 					if (self::$tiers_on) {
@@ -107,6 +116,13 @@
 		}
 		// Саты тапсырыстың тағам сомасымен ($sum) анықталады, пайыз төленген бөлігінен ($base) есептеледі
 		public static function amount($company, $base, $sum = null) { return (int)floor(max(0, $base) * self::pct($company, $sum === null ? $base : $sum) / 100); }
+
+		// Кэшбэкпен ең көбі қанша төлеуге болады: $grand — төленетін жалпы сома (тағам − сыйлық жеңілдігі + доставка)
+		public static function pay_cap($company, $grand) {
+			$grand = max(0, (int)$grand);
+			$pm = self::cfg($company)['pay_max'];
+			return $pm > 0 ? (int)floor($grand * $pm / 100) : $grand;
+		}
 
 		// Осы тапсырыс аяқталғанда түсетін кэшбэк (чекке)
 		public static function earn_preview($company, $order_id, $pay_cashback = 0, $gift_discount = 0) {
@@ -234,7 +250,7 @@
 		// Касса үшін клиент ақпараты: баланс, сыйлық күйі. $order_id — қазір ашық тапсырыс.
 		public static function client_info($company, $client, $order_id = 0) {
 			$cfg = self::cfg($company);
-			$res = ['cashback' => $cfg['cashback'], 'percent' => $cfg['percent'], 'label' => $cfg['label'], 'steps' => $cfg['steps'], 'balance' => 0, 'available' => 0, 'used' => 0,
+			$res = ['cashback' => $cfg['cashback'], 'percent' => $cfg['percent'], 'label' => $cfg['label'], 'steps' => $cfg['steps'], 'balance' => 0, 'available' => 0, 'used' => 0, 'pay_max' => $cfg['pay_max'],
 				'gift' => $cfg['gift'], 'gift_cnt' => 0, 'gift_k' => 0, 'gift_due' => false, 'gift_given' => false,
 				'gift_name' => '', 'gift_product' => false, 'gift_discount' => 0, 'next' => null, 'tiers' => []];
 			foreach ($cfg['tiers'] as $t) $res['tiers'][] = ['every' => $t['every'], 'name' => $t['name']];
@@ -297,9 +313,9 @@
 			}
 			if (self::tiers_on()) db::query("update retail_orders set gift_discount = '".self::$gift_discount."' where id = '$order_id'");
 
-			// Кэшбэк: баланстан және төленетін сомадан аспайды; клиент жоқ не кэшбэк өшірулі болса 0
+			// Кэшбэк: баланстан, төленетін сомадан және компания шегінен (жалпы соманың pay_max %) аспайды; клиент жоқ не кэшбэк өшірулі болса 0
 			$amt = 0;
-			if ($cl && $cfg['cashback'] && $want_cashback > 0) $amt = min((int)$want_cashback, $info['available'], max(0, self::food_sum($order_id) - self::$gift_discount) + (int)$o['pay_delivery']);
+			if ($cl && $cfg['cashback'] && $want_cashback > 0) $amt = min((int)$want_cashback, $info['available'], self::pay_cap($company, max(0, self::food_sum($order_id) - self::$gift_discount) + (int)$o['pay_delivery']));
 			if ($amt != (int)$o['pay_cashback']) db::query("update retail_orders set pay_cashback = '$amt' where id = '$order_id'");
 
 			self::sync_order($order_id);

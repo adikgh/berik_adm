@@ -20,6 +20,8 @@
 			$now = date('Y-m-d H:i:s');
 			$set = ["cashback_percent = '$pct'"];
 			if ($pct > 0 && !$old['cashback']) $set[] = "cashback_from = '$now'"; // 0-ден қосылса — осы сәттен бастап
+			// Кэшбэкпен төлеу шегі: жалпы соманың ең көбі неше пайызы (0 не 100 = шек жоқ)
+			if (loyalty::paymax_on() && isset($_POST['cashback_pay_max'])) { $pm = max(0, min(100, (int)$_POST['cashback_pay_max'])); if ($pm >= 100) $pm = 0; $set[] = "cashback_pay_max = '$pm'"; }
 			// Сатылы кэшбэк: тапсырыс сомасы «асса» қанша пайыз (бос жолдар ескерілмейді)
 			if (loyalty::steps_on() && isset($_POST['step'])) {
 				$rows = [];
@@ -92,6 +94,25 @@
 		$moves = db::query("select k.*, c.name, c.phone, o.number from company_client_cashback k join company_client c on c.id = k.client_id left join retail_orders o on o.id = k.order_id
 			where k.company_id = '$cmp' order by k.id desc limit 50");
 	}
+	// Кэшбэкпен төленген тапсырыстар: таңдалған ай (?m=2026-11)
+	$pm_m = preg_match('/^\d{4}-\d{2}$/', (string)@$_GET['m']) ? $_GET['m'] : date('Y-m');
+	$pm_from = $pm_m.'-01 00:00:00'; $pm_to = date('Y-m-01 00:00:00', strtotime($pm_from.' +1 month'));
+	$pm_prev = date('Y-m', strtotime($pm_from.' -1 month')); $pm_next = date('Y-m', strtotime($pm_from.' +1 month'));
+	$pm_rows = []; $pm_tot = ['n' => 0, 'cb' => 0, 'sum' => 0];
+	if ($ready) {
+		$bad = implode(',', loyalty::CLOSED_BAD);
+		$q = db::query("select o.id, o.number, o.ins_dt, o.client_id, o.total, o.pay_cashback, o.pay_prepay, o.order_status, c.name, c.phone from retail_orders o
+			left join company_client c on c.id = o.client_id
+			where o.company_id = '$cmp' and o.pay_cashback > 0 and o.ins_dt >= '$pm_from' and o.ins_dt < '$pm_to' order by o.id desc");
+		while ($q && $r = mysqli_fetch_assoc($q)) {
+			$r['bad'] = in_array((int)$r['order_status'], loyalty::CLOSED_BAD);
+			$r['full'] = (int)$r['total'] + (int)$r['pay_cashback']; // кэшбэк шегерілгенге дейінгі сома
+			if (!$r['bad']) { $pm_tot['n']++; $pm_tot['cb'] += (int)$r['pay_cashback']; $pm_tot['sum'] += $r['full']; }
+			$pm_rows[] = $r;
+		}
+	}
+	$pm_mn = ['01' => 'Қаңтар', '02' => 'Ақпан', '03' => 'Наурыз', '04' => 'Сәуір', '05' => 'Мамыр', '06' => 'Маусым', '07' => 'Шілде', '08' => 'Тамыз', '09' => 'Қыркүйек', '10' => 'Қазан', '11' => 'Қараша', '12' => 'Желтоқсан'];
+
 	$tnames = ['earn' => 'Түсті', 'spend' => 'Жұмсалды', 'cancel' => 'Қайтарылды (статус)', 'refund' => 'Клиентке қайтты', 'manual' => 'Қолмен'];
 
 	// site setting
@@ -133,6 +154,12 @@
 					<? endforeach ?>
 				</div>
 				<div class="cl_small">Мысалы: 0 → 1%, 7 990 → 3%, 9 990 → 5%, 14 990 → 7%, 29 990 → 10%. Сома осы санға жетсе, сол пайыз беріледі. Жолды өшіру үшін пайызын тазалаңыз.</div>
+			<? endif ?>
+			<? if (loyalty::paymax_on()): $pmv = [0, 10, 20, 30, 50]; if (!in_array($cfg['pay_max'], $pmv)) $pmv[] = $cfg['pay_max']; sort($pmv); ?>
+				<label class="cl_lbl">Кэшбэкпен төлеу шегі: тапсырыстың жалпы сомасының ең көбі</label>
+				<div class="lc_inp_w"><input type="number" name="cashback_pay_max" class="cl_inp" min="0" max="100" step="1" list="lc_pm_list" value="<?=($cfg['pay_max'] ?: '')?>" placeholder="шексіз"><span>%</span></div>
+				<datalist id="lc_pm_list"><? foreach ($pmv as $v) if ($v): ?><option value="<?=$v?>"><? endif ?></datalist>
+				<div class="cl_small">Мысалы 30 болса: 10 000 тг тапсырыстың ең көбі 3 000 тг-сы кэшбэкпен төленеді, қалғаны басқа түрмен. Бос не 0 болса шек жоқ (баланс жеткенше).</div>
 			<? endif ?>
 			<? if ($cfg['cashback'] && $cfg['from']): ?><div class="cl_small">Басталды: <?=clients::dt($cfg['from'])?></div><? endif ?>
 		</div>
@@ -213,6 +240,31 @@
 		<div class="cl_card"><div class="cl_card_h">Клиенттердегі кэшбэк</div><div class="cl_card_v cl_c_green"><?=clients::sum($st['balance'])?></div><div class="cl_card_s"><?=$st['clients']?> клиентте</div></div>
 		<div class="cl_card"><div class="cl_card_h">Осы айда түсті / жұмсалды</div><div class="cl_card_v cl_v_sm"><?=clients::sum($st['earn_m'])?> / <?=clients::sum($st['spend_m'])?></div></div>
 		<div class="cl_card"><div class="cl_card_h">Берілген сыйлық</div><div class="cl_card_v"><?=$st['gifts_m']?></div><div class="cl_card_s">осы айда · барлығы <?=$st['gifts']?></div></div>
+	</div>
+
+	<div class="cl_box cl_table lc_paid">
+		<div class="cl_box_h"><div><i class="fal fa-coins"></i> Кэшбэкпен төленген тапсырыстар</div>
+			<div class="lc_mnav" data-ajx-nav=".lc_page"><a href="/clients/loyalty.php?m=<?=$pm_prev?>">‹</a> <b><?=$pm_mn[substr($pm_m, 5, 2)].' '.substr($pm_m, 0, 4)?></b> <a href="/clients/loyalty.php?m=<?=$pm_next?>">›</a></div></div>
+		<div class="cl_small">Барлығы <?=$pm_tot['n']?> тапсырыс · кэшбэкпен <b><?=clients::sum($pm_tot['cb'])?></b> · тапсырыстар сомасы <?=clients::sum($pm_tot['sum'])?><?=($pm_tot['sum'] ? ' · үлесі '.round($pm_tot['cb'] * 100 / $pm_tot['sum'], 1).'%' : '')?><?=($cfg['pay_max'] ? ' · шек '.$cfg['pay_max'].'%' : '')?></div>
+		<div class="cl_tr cl_th">
+			<div class="cl_td">Күні</div>
+			<div class="cl_td cl_td_name">Клиент</div>
+			<div class="cl_td">Тапсырыс</div>
+			<div class="cl_td">Сомасы</div>
+			<div class="cl_td">Кэшбэкпен</div>
+			<div class="cl_td">Үлесі</div>
+		</div>
+		<? foreach ($pm_rows as $r): ?>
+			<div class="cl_tr<?=($r['bad'] ? ' lc_bad' : '')?>">
+				<div class="cl_td" data-h="Күні"><?=clients::dt($r['ins_dt'])?></div>
+				<div class="cl_td cl_td_name"><? if ($r['client_id']): ?><a href="/clients/item.php?id=<?=$r['client_id']?>"><?=($r['name'] ? htmlspecialchars($r['name']) : clients::phone_view($r['phone']))?></a><? else: ?>—<? endif ?></div>
+				<div class="cl_td" data-h="Тапсырыс">#<?=htmlspecialchars($r['number'])?><?=($r['bad'] ? ' <small>отказ, кэшбэк қайтты</small>' : '')?><?=((int)$r['pay_prepay'] > 0 ? ' <small>предоплата '.clients::sum($r['pay_prepay']).'</small>' : '')?></div>
+				<div class="cl_td" data-h="Сомасы"><?=clients::sum($r['full'])?></div>
+				<div class="cl_td" data-h="Кэшбэкпен"><b><?=clients::sum($r['pay_cashback'])?></b></div>
+				<div class="cl_td" data-h="Үлесі"><?=($r['full'] ? round($r['pay_cashback'] * 100 / $r['full']) : 0)?>%</div>
+			</div>
+		<? endforeach ?>
+		<? if (!$pm_rows): ?><div class="cl_empty">Бұл айда кэшбэкпен төлем болмаған</div><? endif ?>
 	</div>
 
 	<div class="cl_box cl_table">

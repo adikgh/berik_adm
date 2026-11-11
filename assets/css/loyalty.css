@@ -67,3 +67,8 @@
 .lc_help{margin:12px 0 6px;padding:12px 14px 12px 30px;background:#f7f8fa;border-radius:12px;font-size:13px;line-height:1.5;color:#555}
 .lc_help li{list-style:disc;margin:2px 0}
 @media (max-width:900px){.lc_tier{grid-template-columns:1fr 1fr}}
+.lc_mnav{display:flex;align-items:center;gap:10px;font-size:14px}
+.lc_mnav a{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:#f1f4f7;color:#333;text-decoration:none;font-size:18px}
+.lc_paid .cl_small{margin:0 0 10px}
+.lc_bad{opacity:.55}
+.lc_bad small,.lc_paid .cl_td small{display:block;font-size:11px;color:#888}
