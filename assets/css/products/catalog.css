@@ -25,7 +25,7 @@
 	.ctg_i{gap:8px}
 	.ctg_b{width:40px;height:40px}
 }
-.ctg_rec i{color:#b3bac7}
+.ctg_rec i{color:#e0a100}
 .ctg_rec_on{background:#fff8e1}
 .ctg_rec_on i{color:#f5a700}
 .ctg_rec_busy{opacity:.5;pointer-events:none}

@@ -243,11 +243,11 @@
 		.pr_rec_info{ flex-wrap: nowrap; align-items: flex-start; gap: 8px; font-size: 13px; color: #5d6470; line-height: 1.45; padding: 8px 12px; background: #fff8e1; border-radius: 10px; }
 		.pr_rec_info > i{ color: #f5a700; margin-top: 3px; }
 		.pr_rec{ cursor: pointer; }
-		.pr_rec_p i{ color: #b3bac7; }
+		.pr_rec_p i, .pr_rec_k i{ color: #e0a100; }
+		.pr_rec_p.pr_rec_on{ background: #fff3c4; }
 		.pr_rec_p.pr_rec_on i, .pr_rec_k.pr_rec_on i{ color: #f5a700; }
 		.pr_row_rk .pr_rec_p:not(.pr_rec_on) i{ color: #f5c95c; }
 		.pr_rec_k{ margin-left: 10px; height: 30px; padding: 0 10px; border: 1px solid var(--bp-line, #e6e9ef); border-radius: 8px; background: #fff; font: inherit; font-size: 12px; font-weight: 600; color: #5d6470; display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
-		.pr_rec_k i{ color: #b3bac7; }
 		.pr_rec_k.pr_rec_on{ background: #fff8e1; border-color: #f5d27a; color: #8a6400; }
 		.pr_rec_busy{ opacity: .5; pointer-events: none; }
 		.pr_cat_cnt{ font-size: 12px; font-weight: 600; opacity: .55; }
