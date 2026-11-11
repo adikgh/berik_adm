@@ -45,7 +45,7 @@
 					</div>
 					<? include "block/sign_form.php"; ?>
 				</div>
-				<a class="lg_made" href="https://gprog.kz" target="_blank">#gprog-та <i class="fas fa-heart"></i> жасалған</a>
+				<a class="lg_made gprog_bl gp_made" href="https://gprog.kz" target="_blank" rel="noopener"><span>#gprog-та</span><span class="gprog_heart"><i class="fas fa-heart"></i></span><span>жасалған</span></a>
 			</div>
 
 		</div>

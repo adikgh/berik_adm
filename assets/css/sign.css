@@ -75,8 +75,12 @@ body:has(.u_sign) .app{ padding: 0; min-height: 100vh; min-height: 100svh; }
 .u_sign .sg_forgot:hover{ color: #0EA768; background: transparent; }
 
 .lg_made{ align-self: center; margin-top: 28px; font-size: 13px; color: #a0a6ae; }
-.lg_made i{ color: #e5484d; font-size: 11px; margin: 0 3px; }
-.lg_made:hover{ color: #0EA768; }
+.gprog_bl.gp_made{ display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #a0a6ae; font-size: 13px; font-weight: 600; text-decoration: none; }
+.gprog_bl.gp_made:hover{ color: #0EA768; text-decoration: none; }
+.gprog_bl.gp_made .gprog_heart{ position: relative; width: auto; height: auto; margin: 0; font-size: 13px; color: #e5484d; line-height: 1; display: inline-flex; animation: gp_beat 1.4s ease-in-out infinite; }
+.gprog_bl.gp_made .gprog_heart svg{ display: block; width: 13px; height: 13px; fill: currentColor; }
+@keyframes gp_beat{ 0%,40%,100%{ transform: scale(1) } 20%{ transform: scale(1.25) } }
+@media (prefers-reduced-motion: reduce){ .gp_made .gprog_heart{ animation: none; } }
 
 /* ---------- Планшет ---------- */
 @media (max-width: 900px){
