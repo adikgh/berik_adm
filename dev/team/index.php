@@ -4,7 +4,6 @@
 	$st = dev::rows("select d.*, u.name, u.surname, u.phone, r.nick from dev_staff d left join user u on u.id = d.user_id left join company_ref r on r.id = d.ref_id order by d.arh, d.role, d.id");
 	$refs = dev::rows("select r.id, r.nick, r.name, (select count(*) from company_sub s where s.ref_id = r.id) n from company_ref r where r.arh = 0 order by n desc, r.nick");
 	$what = [
-		1 => t::w('Everything: companies, payments, tariffs, referrers, AI, templates, team', 'Барлығы: компаниялар, төлем, тариф, шақырушылар, ЖИ, шаблон, команда'),
 		2 => t::w('Sees companies (no payments), AI costs, recipe templates', 'Компанияларды көреді (төлем енгізбейді), ЖИ шығыны, граммовка шаблондары'),
 		3 => t::w('Companies, registering, subscriptions and payments, payment list', 'Компаниялар, тіркеу, жазылым мен төлем енгізу, төлемдер тізімі'),
 		4 => t::w('Only the companies they brought, their bonus and link', 'Тек өзі әкелген компаниялар, бонусы мен сілтемесі'),
@@ -30,10 +29,10 @@
 			<div class="card_h"><h2><?=t::w('Add a person', 'Адам қосу')?></h2></div>
 			<form data-post="get.php?add">
 				<label class="mb"><?=t::w('Phone', 'Телефон')?><input type="tel" name="phone" class="fr_phone" inputmode="tel" required placeholder="8 (700) 000-00-00"></label>
-				<label class="mb"><?=t::w('Role', 'Рөлі')?><select name="role" class="tm_role">
-					<? foreach (dev::$roles as $k => $r): ?><option value="<?=$k?>"><?=$r?></option><? endforeach ?>
+				<label class="mb"><?=t::w('Role', 'Рөлі')?><select name="role" class="tm_role bsel_f">
+					<? foreach (dev::$roles as $k => $r): if ($k == 1) continue; // иесі біреу, қосылмайды ?><option value="<?=$k?>"><?=$r?></option><? endforeach ?>
 				</select></label>
-				<label class="mb tm_ref" hidden><?=t::w('Referral code', 'Шақыру коды')?><select name="ref_id"><option value="">—</option>
+				<label class="mb tm_ref" hidden><?=t::w('Referral code', 'Шақыру коды')?><select name="ref_id" class="bsel_f"><option value="">—</option>
 					<? foreach ($refs as $r): ?><option value="<?=$r['id']?>"><?=dev::h($r['nick'] . ($r['name'] ? ' · ' . $r['name'] : ''))?> · <?=(int)$r['n']?> <?=t::w('companies', 'компания')?><?=$r['n'] >= dev::$top_partner ? ' ★' : ''?></option><? endforeach ?>
 				</select></label>
 				<p class="note" style="margin:0 0 10px"><?=t::w('If the number is new, a new person is created: enter a name and a password.', 'Нөмір базада жоқ болса, жаңа адам ашылады: атын және парольін жазыңыз.')?></p>
@@ -50,6 +49,7 @@
 		</div>
 	</div>
 <script>
-document.querySelector('.tm_role').addEventListener('change', function () { document.querySelector('.tm_ref').hidden = this.value !== '4'; });
+// безендірілген тізім (bsel) 'change'-ті jQuery арқылы жібереді
+$('.tm_role').on('change', function () { $('.tm_ref').prop('hidden', this.value !== '4'); });
 </script>
 <? include "../block/footer.php"; ?>

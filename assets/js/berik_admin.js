@@ -186,7 +186,7 @@ $(document).ready(function() {
 		s.on('change.bsel', sync);
 	}
 	// сүзгі жолағындағы тізімдер де (Клиенттер сұрыптауы, Накладной жеткізушісі, QR филиалы)
-	var BSEL = '.uc_ui69 select, .head_rk select, .cl_range select, .wb_range select, select.qr_branch';
+	var BSEL = '.uc_ui69 select, .head_rk select, .cl_range select, .wb_range select, select.qr_branch, select.bsel_f'; // bsel_f: dev формалары
 	$(BSEL).each(function() { enhance(this); });
 	// бет блогы AJAX-пен жаңарғанда (fun.js ajx) күнтізбе мен тізімдерді қайта безендіру
 	$(document).on('ajx:done', function() {

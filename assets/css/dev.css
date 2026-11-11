@@ -20,6 +20,16 @@
 .dv_c input:focus, .dv_c select:focus, .dv_c textarea:focus { border-color: var(--bl2); outline: none; }
 .dv_c label { display: block; font-size: 13px; font-weight: 700; color: var(--mut); }
 .dv_c label > input, .dv_c label > select, .dv_c label > textarea { margin-top: 6px; }
+/* ашылмалы тізім: админнің bsel-і (berik_admin.js, select.bsel_f), өріс биіктігімен бірдей, жасыл таңдау + белгі */
+.dv_c label > .bsel { display: block; margin-top: 6px; }
+.dv_c .bsel_btn, .dv_c .bsel_on .bsel_btn { width: 100%; min-width: 0; height: 50px; padding: 0 14px; border-radius: 10px; background: #fff; border-color: var(--line); color: var(--tx); font-size: 15px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.dv_c .bsel_txt { overflow: hidden; text-overflow: ellipsis; }
+.dv_c .bsel_open .bsel_btn { border-color: var(--g); box-shadow: 0 0 0 3px rgba(14,167,104,.12); }
+.dv_c .bsel_list { right: 0; padding: 6px; border-radius: 12px; display: flex; flex-direction: column; gap: 2px; max-width: none; }
+.dv_c .bsel_i { position: relative; min-height: 44px; padding: 10px 40px 10px 14px; border-radius: 8px; font-size: 15px; font-weight: 600; color: var(--tx); white-space: normal; line-height: 1.3; }
+.dv_c .bsel_i:hover { background: var(--gl); color: var(--g2); }
+.dv_c .bsel_act, .dv_c .bsel_act:hover { background: var(--gl); color: var(--g); font-weight: 700; }
+.dv_c .bsel_act::after { content: "\f00c"; font-family: "Font Awesome 5 Pro"; font-weight: 400; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--g); }
 .dv_c label.chk { display: flex; align-items: center; gap: 8px; color: var(--tx); font-weight: 600; font-size: 14px; cursor: pointer; }
 .dv_c label.chk input { margin: 0; }
 

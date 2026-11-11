@@ -70,6 +70,9 @@
 		if (r && !e.target.closest('a,button,input,select')) location.href = r.dataset.href;
 	});
 
+	// <label> ішіндегі bsel: басқанда label жасырын select-ке қайта басып, тізімді бірден жауып тастамасын
+	document.addEventListener('click', function (e) { if (e.target.closest('label .bsel_btn, label .bsel_list')) e.preventDefault(); }, true);
+
 	// ?add=1 → терезе бірден ашылады
 	if (/[?&]add=1/.test(location.search)) { var ab = document.querySelector('[data-pop]'); if (ab) ab.click(); }
 	document.addEventListener('keydown', function (e) { if (e.key == 'Escape') document.querySelectorAll('.pop_bl_act').forEach(function (p) { p.classList.remove('pop_bl_act'); }); });

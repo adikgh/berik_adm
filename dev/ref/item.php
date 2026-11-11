@@ -19,7 +19,7 @@
 				<label><?=t::w('Code', 'Код')?><input name="nick" value="<?=dev::h($ref['nick'])?>" required pattern="[A-Za-z0-9_]+"></label>
 				<label><?=t::w('Name', 'Аты')?><input name="name" value="<?=dev::h($ref['name'])?>"></label>
 				<label><?=t::w('Phone', 'Телефон')?><input type="tel" name="phone" class="fr_phone" inputmode="tel" placeholder="8 (700) 000-00-00" value="<?=dev::h($ref['phone'])?>"></label>
-				<label><?=t::w('Own company', 'Өз компаниясы')?><select name="company_id"><option value="">— <?=t::w('none', 'жоқ')?> —</option>
+				<label><?=t::w('Own company', 'Өз компаниясы')?><select name="company_id" class="bsel_f"><option value="">— <?=t::w('none', 'жоқ')?> —</option>
 					<? foreach ($cs as $c): ?><option value="<?=$c['id']?>" <?=$c['id'] == $ref['company_id'] ? 'selected' : ''?>><?=dev::h($c['name'])?></option><? endforeach ?>
 				</select></label>
 			</div>

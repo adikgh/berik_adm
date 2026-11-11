@@ -9,6 +9,8 @@
 		if (strlen($phone) != 10) out(['ok' => false, 'msg' => t::w('Enter the phone in full', 'Телефонды толық жазыңыз')]);
 		$role = (int)@$_POST['role'];
 		if (!isset(dev::$roles[$role])) out(['ok' => false, 'msg' => t::w('Choose a role', 'Рөлді таңдаңыз')]);
+		// Иесі біреу ғана (core өзі ашады): қосуға да, біреуді иесіне ауыстыруға да болмайды
+		if ($role == 1) out(['ok' => false, 'msg' => t::w('The owner cannot be added', 'Иесін қосуға болмайды')]);
 		$rid = (int)@$_POST['ref_id'];
 		if ($role == 4 && !$rid) out(['ok' => false, 'msg' => t::w('Choose a referral code for the top partner', 'Топ серіктеске шақыру кодын таңдаңыз')]);
 		$u = dev::row("select * from `user` where phone = '$phone' limit 1");
@@ -20,6 +22,7 @@
 			if (!$u) out(['ok' => false, 'msg' => t::w('Could not create the person', 'Адам ашылмады')]);
 		} elseif (!$u['right']) db::query("update `user` set `right` = 1 where id = '" . (int)$u['id'] . "'");
 		$uid = (int)$u['id'];
+		if (dev::row("select id from dev_staff where user_id = '$uid' and role = 1")) out(['ok' => false, 'msg' => t::w('This person is the owner, the role is not changed', 'Бұл адам — иесі, рөлі өзгертілмейді')]);
 		$v = "role = '$role', ref_id = " . ($role == 4 ? "'$rid'" : "NULL") . ", arh = 0";
 		if (dev::row("select id from dev_staff where user_id = '$uid'")) db::query("update dev_staff set $v where user_id = '$uid'");
 		else db::query("insert into dev_staff set user_id = '$uid', $v");
