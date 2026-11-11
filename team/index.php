@@ -8,9 +8,9 @@
 	$positions = [];
 	$pq = db::query("select * from company_staff_positions where id != 1 order by number asc");
 	while ($p = mysqli_fetch_assoc($pq)) $positions[$p['id']] = $p;
-	// рет: Директор, Басқарушы, Маркетолог, Раздача, Кассир, Аспазшы, Поставщик, Курьер, Менеджер (Менеджер мен Кассир кассаға PIN-мен кіреді)
-	$pos_kz = [2 => 'Директор', 3 => 'Басқарушы', 7 => 'Маркетолог', 8 => 'Раздача', 5 => 'Кассир', 9 => 'Аспазшы', 10 => 'Поставщик', 6 => 'Курьер', 4 => 'Менеджер'];
-	$pos_icon = [2 => 'fa-user-tie', 3 => 'fa-user-cog', 7 => 'fa-bullhorn', 8 => 'fa-concierge-bell', 5 => 'fa-cash-register', 9 => 'fa-hat-chef', 10 => 'fa-truck', 6 => 'fa-car', 4 => 'fa-user-chart'];
+	// рет шкала бойынша: Директор, Басқарушы, Маркетолог, Менеджер, Кассир, Раздача, Аспазшы, Курьер, Поставщик (Менеджер мен Кассир кассаға PIN-мен кіреді)
+	$pos_kz = [2 => 'Директор', 3 => 'Басқарушы', 7 => 'Маркетолог', 4 => 'Менеджер', 5 => 'Кассир', 8 => 'Раздача', 9 => 'Аспазшы', 6 => 'Курьер', 10 => 'Поставщик'];
+	$pos_icon = [2 => 'fa-user-tie', 3 => 'fa-user-cog', 7 => 'fa-bullhorn', 4 => 'fa-user-chart', 5 => 'fa-cash-register', 8 => 'fa-concierge-bell', 9 => 'fa-hat-chef', 6 => 'fa-car', 10 => 'fa-truck'];
 	// базада әлі жоқ лауазымдар болса да, рет осылай тұрады
 	$sorted = [];
 	foreach ($pos_kz as $pid => $nm) if (isset($positions[$pid])) $sorted[$pid] = $positions[$pid];
