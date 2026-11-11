@@ -90,7 +90,7 @@ $(document).ready(function() {
 				b.removeClass('ctg_rec_busy');
 				if (data != 'yes') { mess('Сақталмады!'); return }
 				b.toggleClass('ctg_rec_on', on).find('i').attr('class', (on ? 'fas' : 'fal') + ' fa-star');
-				mess(on ? 'Санат ұсынысқа қосылды' : 'Санат ұсыныстан алынды');
+				mess(on ? 'Санат QR мәзірге қосылды' : 'Санат QR мәзірден алынды');
 			},
 			error: function(){ b.removeClass('ctg_rec_busy'); mess('Сақталмады!') },
 		});

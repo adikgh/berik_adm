@@ -97,7 +97,7 @@
 					<? if ($rec_on): ?>
 						<div class="pr_tr pr_rec_info">
 							<i class="fas fa-star"></i>
-							<span>QR мәзірдегі «Тағы қосасыз ба?» ұсынысы: <b class="pr_rec_cn"><?=$rec_n?></b> тағам, <b class="pr_rec_ck"><?=$rec_k?></b> санат белгіленген. Мәзірде 12-ге дейін шығады: алдымен жеке белгіленген тағамдар, сосын белгіленген санаттағылар. Ештеңе белгіленбесе, басқа санаттан арзан тағамдар өзі таңдалады.</span>
+							<span>QR мәзірде тек ★ белгіленген тағамдар көрінеді (тағамның өзі не бүкіл санаты): қазір <b class="pr_rec_cn"><?=$rec_n?></b> тағам, <b class="pr_rec_ck"><?=$rec_k?></b> санат. Олар «Тағы қосасыз ба?» ұсынысына да шығады (12-ге дейін). Ештеңе белгіленбесе, мәзірде барлық тағам көрінеді.</span>
 						</div>
 					<? endif ?>
 					<div class="pr_tr">
@@ -116,7 +116,7 @@
 						<span class="pr_grp_clr" style="background:<?=htmlspecialchars($clr)?>"></span>
 						<span class="pr_grp_name"><?=htmlspecialchars($cat['name_'.$lang] ?: $cat['name_ru'])?></span>
 						<span class="pr_grp_cnt"><?=count($cat['items'])?></span>
-						<? if ($rec_on && $cat['id']): ?><button type="button" class="pr_rec pr_rec_k<?=(!empty($cat['recommend']) ? ' pr_rec_on' : '')?>" data-id="<?=$cat['id']?>" title="Бүкіл санатты QR мәзірде ұсыну"><i class="fa<?=(!empty($cat['recommend']) ? 's' : 'l')?> fa-star"></i><span>Санатты ұсыну</span></button><? endif ?>
+						<? if ($rec_on && $cat['id']): ?><button type="button" class="pr_rec pr_rec_k<?=(!empty($cat['recommend']) ? ' pr_rec_on' : '')?>" data-id="<?=$cat['id']?>" title="Бүкіл санатты QR мәзірде көрсету"><i class="fa<?=(!empty($cat['recommend']) ? 's' : 'l')?> fa-star"></i><span>QR мәзірде</span></button><? endif ?>
 					</div>
 					<div class="ctg_list">
 						<? foreach ($cat['items'] as $pr_d): $number++; ?>
@@ -135,7 +135,7 @@
 								</a>
 								<div class="ctg_cnt pr_pr"><?=((int)$pr_d['price'] ? number_format((int)$pr_d['price'], 0, '', ' ').' тг' : '<m>'.t::w('No price', 'Бағасы жоқ').'</m>')?></div>
 								<div class="ctg_btns">
-									<? if ($rec_on): ?><div class="ctg_b pr_rec pr_rec_p<?=(!empty($pr_d['recommend']) ? ' pr_rec_on' : '')?>" data-id="<?=$pr_d['id']?>" title="QR мәзірде ұсыну (★)"><i class="fa<?=(!empty($pr_d['recommend']) ? 's' : 'l')?> fa-star"></i></div><? endif ?>
+									<? if ($rec_on): ?><div class="ctg_b pr_rec pr_rec_p<?=(!empty($pr_d['recommend']) ? ' pr_rec_on' : '')?>" data-id="<?=$pr_d['id']?>" title="QR мәзірде көрсету (★)"><i class="fa<?=(!empty($pr_d['recommend']) ? 's' : 'l')?> fa-star"></i></div><? endif ?>
 									<a class="ctg_b cpp_open" href="item/?id=<?=$pr_d['id']?>" data-id="<?=$pr_d['id']?>" title="<?=t::w('Ingredients', 'Құрамы (граммовка)')?>"><i class="fal fa-layer-group"></i></a>
 									<div class="ctg_b product2_add_pop" data-id="<?=$pr_d['id']?>" title="<?=t::w('Make copy', 'Көшірме жасау')?>"><i class="fal fa-clone"></i></div>
 									<div class="ctg_b pr_edit" title="<?=t::w('Edit', 'Өзгерту')?>"><i class="fal fa-pen"></i></div>

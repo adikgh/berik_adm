@@ -154,8 +154,8 @@
 				<label class="qr_sw qr_sw_s"><input type="checkbox" name="upsell" value="1" <?=($look['upsell'] ? 'checked' : '')?>><span></span><b>«Тағы қосасыз ба?» ұсынысы</b></label>
 			</div>
 			<div class="qr_up">
-				<div class="qr_up_h"><i class="fas fa-star"></i> <span>Ұсынылатын тағамдар енді <a href="/products/">Мәзір бетінде</a> жұлдызшамен белгіленеді: жеке тағамды не бүкіл санатты (<a href="/products/catalog/">Каталог</a>).</span></div>
-				<? if ($rec): ?><div class="cl_small">Қазір белгіленген: <b><?=(int)$rec['n']?></b> тағам, <b><?=(int)$rec['k']?></b> санат. Мәзірде 12-ге дейін шығады. Ешнәрсе белгіленбесе, басқа санаттан арзан тағамдар өзі таңдалады.</div><? endif ?>
+				<div class="qr_up_h"><i class="fas fa-star"></i> <span>QR мәзірде тек ★ белгіленген тағамдар көрінеді. Оларды <a href="/products/">Мәзір бетінде</a> (жеке тағам) не <a href="/products/catalog/">Каталогта</a> (бүкіл санат) белгілейсіз. Олар «Тағы қосасыз ба?» ұсынысына да шығады.</span></div>
+				<? if ($rec): ?><div class="cl_small">Қазір белгіленген: <b><?=(int)$rec['n']?></b> тағам, <b><?=(int)$rec['k']?></b> санат. Ешнәрсе белгіленбесе, мәзірде барлық тағам көрінеді.</div><? endif ?>
 			</div>
 		</div>
 		<div class="qr_b"><button type="submit" class="cl_btn cl_btn_green qr_lsave"><i class="fal fa-check"></i> Сақтау</button></div>

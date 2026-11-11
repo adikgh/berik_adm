@@ -32,7 +32,7 @@
 
 		<div class="ctg_c">
 			<div class="ctg_hint"><i class="fal fa-arrows-alt-v"></i><span>Ретін ауыстыру үшін жолды сүйреңіз немесе ↑ ↓ басыңыз. Рет өзі сақталады.</span></div>
-			<? if ($rec_on): ?><div class="ctg_hint"><i class="fas fa-star" style="color:#f5a700"></i><span>★ басылған санаттың барлық тағамы QR мәзірдегі «Тағы қосасыз ба?» ұсынысына кіреді (12-ге дейін). Жеке тағамды <a href="/products/">Тағамдар</a> бетінде белгілеуге болады.</span></div><? endif ?>
+			<? if ($rec_on): ?><div class="ctg_hint"><i class="fas fa-star" style="color:#f5a700"></i><span>QR мәзірде тек ★ белгіленген санаттар мен тағамдар көрінеді, олар «Тағы қосасыз ба?» ұсынысына да шығады. Жеке тағамды <a href="/products/">Тағамдар</a> бетінде белгілеуге болады. Ештеңе белгіленбесе, мәзірде барлық тағам көрінеді.</span></div><? endif ?>
 
 			<? if (mysqli_num_rows($catalog)): ?>
 				<div class="ctg_list">
@@ -48,7 +48,7 @@
 							</div>
 							<div class="ctg_cnt"><?=$pr_ct?> тағам</div>
 							<div class="ctg_btns">
-								<? if ($rec_on): ?><div class="ctg_b ctg_rec<?=($c['recommend'] ? ' ctg_rec_on' : '')?>" title="QR мәзірде бүкіл санатты ұсыну"><i class="fa<?=($c['recommend'] ? 's' : 'l')?> fa-star"></i></div><? endif ?>
+								<? if ($rec_on): ?><div class="ctg_b ctg_rec<?=($c['recommend'] ? ' ctg_rec_on' : '')?>" title="Бүкіл санатты QR мәзірде көрсету"><i class="fa<?=($c['recommend'] ? 's' : 'l')?> fa-star"></i></div><? endif ?>
 								<div class="ctg_b ctg_up" title="Жоғары"><i class="fal fa-arrow-up"></i></div>
 								<div class="ctg_b ctg_down" title="Төмен"><i class="fal fa-arrow-down"></i></div>
 								<div class="ctg_b ctg_edit" title="Өзгерту"
