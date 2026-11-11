@@ -52,7 +52,8 @@
 	while ($oc = mysqli_fetch_assoc($ocq)) { $ocu = fun::user($oc['user_id']); $o_couriers[] = ['id' => $oc['user_id'], 'name' => (string)@$ocu['name'], 'phone' => (string)@$ocu['phone']]; }
 	$or_lg_on = (bool)mysqli_num_rows(db::query("SHOW TABLES LIKE 'retail_orders_log'"));
 
-	$allorder = ['count' => 0, 'total' => 0, 'pay_qr' => 0, 'pay_cash' => 0, 'pay_transfer' => 0, 'pay_delivery' => 0, 'pay_red' => 0, 'pay_prepay' => 0];
+	$allorder = ['count' => 0, 'total' => 0, 'pay_qr' => 0, 'pay_cash' => 0, 'pay_transfer' => 0, 'pay_delivery' => 0, 'pay_red' => 0, 'pay_prepay' => 0, 'promo' => 0];
+	require_once "../config/promo.php";
 
 
 	// site setting
@@ -83,6 +84,7 @@
 							$pay_red = intval($buy_d['pay_red'] ?? 0);
 							$pay_transfer = intval($buy_d['pay_transfer'] ?? 0);
 							$pay_prepay = intval($buy_d['pay_prepay'] ?? 0);
+							$pr_p = promo::on() ? promo::of($buy_d) : null; // акция жеңілдігі
 							$service = $buy_d['service'] ?? '';
 							$pm = $buy_d['payment_method'];
 							$is_draft = ($buy_d['number'] === null || $buy_d['number'] === '');
@@ -177,6 +179,13 @@
 										<div class="uc_uil2_trt">
 											<div class="uc_uil2_trt1"><?=t::w('Delivery fee', 'Доставка')?></div>
 											<div class="uc_uil2_trt3 fr_price"><?=$buy_d['pay_delivery']?></div>
+										</div>
+										<? endif ?>
+										<? if ($pr_p): ?>
+										<div class="uc_uil2_trt">
+											<div class="uc_uil2_trt1"><i class="far fa-tags" style="color:#e9a23b"></i> <?=htmlspecialchars($pr_p['label'])?></div>
+											<div class="uc_uil2_trt2">-</div>
+											<div class="uc_uil2_trt3 fr_price"><?=$pr_p['sum']?></div>
 										</div>
 										<? endif ?>
 										<? if ($pay_red): ?>
@@ -274,6 +283,7 @@
 								$allorder['pay_delivery'] += $buy_d['pay_delivery'];
 								$allorder['pay_red'] += $pay_red;
 								$allorder['pay_prepay'] += $pay_prepay;
+								$allorder['promo'] += $pr_p ? $pr_p['sum'] : 0;
 							}
 						?>
 
@@ -334,6 +344,7 @@
 				<? if ($allorder['pay_transfer']): ?><div class="or_sum_i"><span><?=t::w('Transfer', 'Аударым')?></span><b class="fr_price"><?=$allorder['pay_transfer']?></b></div><? endif ?>
 				<? if ($allorder['pay_delivery']): ?><div class="or_sum_i"><span><?=t::w('Delivery', 'Жеткізу')?></span><b class="fr_price"><?=$allorder['pay_delivery']?></b></div><? endif ?>
 				<? if ($allorder['pay_red']): ?><div class="or_sum_i"><span>RED</span><b class="fr_price"><?=$allorder['pay_red']?></b></div><? endif ?>
+				<? if ($allorder['promo']): ?><div class="or_sum_i"><span><?=t::w('Promotions', 'Акция жеңілдігі')?></span><b class="fr_price"><?=$allorder['promo']?></b></div><? endif ?>
 				<? if ($allorder['pay_prepay']): ?><div class="or_sum_i"><span><?=t::w('Prepayment', 'Предоплата')?></span><b class="fr_price"><?=$allorder['pay_prepay']?></b></div><? endif ?>
 			</div>
 

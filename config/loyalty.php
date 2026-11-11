@@ -129,7 +129,7 @@
 			$cfg = self::cfg($company);
 			if (!$cfg['cashback']) return 0;
 			$food = self::food_sum($order_id);
-			return self::amount($company, $food - (int)$pay_cashback - (int)$gift_discount, $food);
+			return self::amount($company, $food - (int)$pay_cashback - (int)$gift_discount - self::promo_disc($order_id), $food);
 		}
 
 		// Сыйлық тағамын тапсырысқа 0 тг болып қосу / алып тастау
@@ -139,6 +139,15 @@
 			$has = mysqli_fetch_assoc(db::query("select id from retail_orders_products where order_id = '$order_id' and product_id = '$product_id' and price = 0 limit 1"));
 			if ($on && !$has) db::query("insert into retail_orders_products (order_id, product_id, quantity, price) values ('$order_id', '$product_id', '$qty', 0)");
 			if (!$on && $has) db::query("delete from retail_orders_products where id = '".(int)$has['id']."'");
+		}
+
+		// Тапсырыстағы акция жеңілдігі (config/promo.php, retail_orders.promo_discount); кэшбэк одан кейінгі сомадан
+		public static function promo_disc($order_id) {
+			static $col = null;
+			if ($col === null) $col = mysqli_num_rows(db::query("SHOW COLUMNS FROM `retail_orders` LIKE 'promo_discount'")) > 0;
+			if (!$col) return 0;
+			$r = mysqli_fetch_row(db::query("select promo_discount from retail_orders where id = '".(int)$order_id."'"));
+			return (int)@$r[0];
 		}
 
 		// Тапсырыстың тағам сомасы (доставка, RED кірмейді)
@@ -188,7 +197,7 @@
 			$got = (int)$o['cashback_sum'];
 			if ($st == self::DONE && !$got && $cfg['cashback'] && $o['ins_dt'] >= $cfg['from']) {
 				$food = self::food_sum($id);
-				$base = max(0, $food - (int)$o['pay_cashback'] - (int)@$o['gift_discount']);
+				$base = max(0, $food - (int)$o['pay_cashback'] - (int)@$o['gift_discount'] - self::promo_disc($id));
 				$amt = self::amount($cmp, $base, $food);
 				if ($amt > 0 && self::move($cmp, $cl, $id, 'earn', $amt, self::pct($cmp, $food), $base) !== false)
 					db::query("update retail_orders set cashback_sum = '$amt' where id = '$id'");
@@ -315,7 +324,7 @@
 
 			// Кэшбэк: баланстан, төленетін сомадан және компания шегінен (жалпы соманың pay_max %) аспайды; клиент жоқ не кэшбэк өшірулі болса 0
 			$amt = 0;
-			if ($cl && $cfg['cashback'] && $want_cashback > 0) $amt = min((int)$want_cashback, $info['available'], self::pay_cap($company, max(0, self::food_sum($order_id) - self::$gift_discount) + (int)$o['pay_delivery']));
+			if ($cl && $cfg['cashback'] && $want_cashback > 0) $amt = min((int)$want_cashback, $info['available'], self::pay_cap($company, max(0, self::food_sum($order_id) - self::$gift_discount - self::promo_disc($order_id)) + (int)$o['pay_delivery']));
 			if ($amt != (int)$o['pay_cashback']) db::query("update retail_orders set pay_cashback = '$amt' where id = '$order_id'");
 
 			self::sync_order($order_id);

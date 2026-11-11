@@ -173,6 +173,10 @@
 										<div class="menu_cin"><i class="fal fa-print"></i></div>
 										<div class="menu_cih"><?=t::w('Receipt', 'Чек')?></div>
 									</a>
+									<a class="menu_ci" href="/promo/">
+										<div class="menu_cin"><i class="fal fa-tags"></i></div>
+										<div class="menu_cih"><?=t::w('Promotions', 'Акциялар')?></div>
+									</a>
 								<? endif ?>
 								<a class="menu_ci ac_open" href="/acc/">
 									<div class="menu_cin"><i class="fal fa-user"></i></div>

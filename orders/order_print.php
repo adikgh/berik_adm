@@ -91,6 +91,12 @@
                 <td align="center"></td>
                 <td align="right"><?=$cashbox_d['pay_delivery']?></td>
             </tr>
+            <? require_once "../config/promo.php"; $pr_p = promo::on() ? promo::of($cashbox_d) : null; if ($pr_p): // Акция ?>
+            <tr class="tr" valign="top">
+                <td align="left" colspan="2">Акция: <?=htmlspecialchars($pr_p['label'])?></td>
+                <td align="right">- <?=$pr_p['sum']?></td>
+            </tr>
+            <? endif ?>
             <tr class="tr" valign="top">
                 <td align="left">Предоплата</td>
                 <td align="center"></td>

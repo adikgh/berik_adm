@@ -1,0 +1,19 @@
+/* Админ: Акциялар беті (2026-11-11) */
+.pm_page .cl_box_h i{margin-right:6px;opacity:.7}
+.pm_row{display:grid;grid-template-columns:minmax(180px,1.6fr) 120px 160px 160px auto;gap:10px;align-items:end}
+.pm_row label{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pm_row label > span{font-size:12px;font-weight:700;color:var(--mut)}
+.pm_row .cl_inp{width:100%;box-sizing:border-box;height:48px}
+.pm_row .lc_inp_w{max-width:none}
+.pm_new .cl_small{margin-top:10px;font-size:13px;color:var(--mut)}
+.pm_item{padding:14px 0;border-top:1px solid #f0f0f0}
+.pm_item:first-of-type{border-top:0}
+.pm_off .pm_row{opacity:.6}
+.pm_foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:10px;font-size:13px}
+.pm_use{color:var(--mut);font-weight:600}
+.pm_lnk{background:none;border:0;padding:0;font:inherit;font-size:13px;font-weight:700;color:var(--b);cursor:pointer}
+.pm_foot .pm_lnk:first-of-type{margin-left:auto}
+.pm_del{color:#c0392b}
+.pm_seg_wait{background:#fff4dc;color:#b7791f}
+@media (max-width:900px){.pm_row{grid-template-columns:1fr 1fr}.pm_row label:first-child{grid-column:1/-1}.pm_row .cl_btn{grid-column:1/-1}}
+.pm_foot .cl_seg{margin-left:0}
