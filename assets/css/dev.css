@@ -1,0 +1,156 @@
+/* BERIK DEV: тек беттің ішкі блоктары. Шапка, мәзір, батырмалар, шрифт, түстер админнің файлдарынан
+   (norm.css, main.css, berik_admin.css, berik_mobile.css) келеді, айнымалылары: --bp-* */
+.dv_c { --g: var(--bp-green, #0EA768); --g2: var(--bp-green-h, #0c8f59); --gl: #e3f5ec; --bl2: var(--bp-blue, #1f75a8); --bll: #e8f1f8;
+	--line: var(--bp-line, #e7e7e7); --mut: var(--bp-muted, #8a8f98); --tx: var(--bp-text, #222);
+	--red: #e5484d; --redl: #fdecec; --or: #f5a524; --orl: #fff5e0; --r: 14px; --sh: var(--bp-shadow);
+	padding-bottom: 60px; color: var(--tx); font-size: 15px; line-height: 1.45; }
+.head_c .dv_sub { margin-top: 6px; color: var(--bp-muted, #8a8f98); font-size: 15px; max-width: 900px; }
+.dv_c h2 { font-size: 18px; font-weight: 700; }
+.dv_c h3 { font-size: 15px; font-weight: 700; }
+.dv_c p { font-size: inherit; }
+.dv_c .mut, .dv_c small { color: var(--mut); }
+.dv_c small { font-size: 13px; }
+.dv_c a { color: inherit; }
+
+/* формалар: админдегі 56px өрістер */
+.dv_c input, .dv_c select, .dv_c textarea { width: 100%; min-height: 50px; max-height: none; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--tx); font-size: 15px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.dv_c select { cursor: pointer; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238a8f98' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 14px center; padding-right: 36px; }
+.dv_c input[type=checkbox] { -webkit-appearance: auto; appearance: auto; width: 18px; height: 18px; min-height: 0; padding: 0; box-shadow: none; accent-color: var(--g); }
+.dv_c input:hover, .dv_c select:hover { border-color: #d6d6d6; }
+.dv_c input:focus, .dv_c select:focus, .dv_c textarea:focus { border-color: var(--bl2); outline: none; }
+.dv_c label { display: block; font-size: 13px; font-weight: 700; color: var(--mut); }
+.dv_c label > input, .dv_c label > select, .dv_c label > textarea { margin-top: 6px; }
+.dv_c label.chk { display: flex; align-items: center; gap: 8px; color: var(--tx); font-weight: 600; font-size: 14px; cursor: pointer; }
+.dv_c label.chk input { margin: 0; }
+
+/* батырмалар: негізгісі админдегідей көк (.btn), қосымшалары */
+.dv_c .btn { min-height: 50px; padding: 0 22px; border-radius: 10px; gap: 8px; font-size: 15px; font-weight: 700; white-space: nowrap; }
+.dv_c .btn i:first-child, .dv_c .btn i:last-child { margin: 0; font-size: 16px; }
+.dv_c .btn.btn_g { background: var(--g); color: #fff; } .dv_c .btn.btn_g:hover { background: var(--g2); }
+.dv_c .btn.btn_l { background: #fff; color: var(--bl2); border: 1px solid var(--line); box-shadow: var(--sh); } .dv_c .btn.btn_l:hover { border-color: var(--bl2); }
+.dv_c .btn.btn_r { background: var(--redl); color: var(--red); } .dv_c .btn.btn_r:hover { background: #fadada; }
+.dv_c .btn.btn_s { min-height: 38px; padding: 0 14px; font-size: 13px; border-radius: 8px; }
+.dv_c .btn.btn_w { width: 100%; }
+.dv_c .btn[disabled] { opacity: .5; pointer-events: none; }
+/* ✕ (btn_dd) батырмасы дөңгелек қалады: 44×44 (2026-11-10) */
+.dv_c .btn.btn_dd:not(.btn_dd_54) { height: 44px; min-height: 44px; padding: 0; border-radius: 50%; }
+
+/* блоктар */
+.dv_c .card { background: #fff; border-radius: var(--r); box-shadow: var(--sh); padding: 20px; }
+.dv_c .card + .card { margin-top: 16px; }
+.dv_c .card_h { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.dv_c .card_h h2 i { color: var(--bl2); margin-right: 4px; }
+.dv_c .grid { display: grid; gap: 16px; }
+.dv_c .g2 { grid-template-columns: 1fr 1fr; }
+.dv_c .g3 { grid-template-columns: repeat(3, 1fr); }
+.dv_c .g12 { grid-template-columns: 1.2fr 1fr; align-items: start; }
+.dv_c .f_row { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 12px; }
+.dv_c .mb { margin-bottom: 12px; }
+.dv_c .mt { margin-top: 16px; }
+
+/* сандар */
+.dv_c .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.dv_c .kpi { background: #fff; border-radius: var(--r); box-shadow: var(--sh); padding: 16px 18px; }
+.dv_c .kpi small { display: block; font-weight: 600; font-size: 13px; }
+.dv_c .kpi b { display: block; font-size: 24px; font-weight: 800; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.dv_c .kpi.g b { color: var(--g); } .dv_c .kpi.r b { color: var(--red); } .dv_c .kpi.o b { color: #c27c00; } .dv_c .kpi.b b { color: var(--bl2); }
+
+/* кесте */
+.dv_c .tbl_w { overflow-x: auto; margin: 0 -20px; padding: 0 20px; }
+.dv_c table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+.dv_c .tbl th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .3px; color: var(--mut); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.dv_c .tbl td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+.dv_c .tbl tr:last-child td { border-bottom: 0; }
+.dv_c .tbl tbody tr.lnk { cursor: pointer; }
+.dv_c .tbl tbody tr.lnk:hover td { background: #f8f8f8; }
+.dv_c .tbl .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dv_c .tbl tr.off td { opacity: .45; text-decoration: line-through; }
+.dv_c .nm b { display: block; font-weight: 700; } .dv_c .nm small { display: block; }
+
+/* мәртебе */
+.dv_c .st { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.dv_c .st:before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.dv_c .st_paid { background: var(--gl); color: var(--g); }
+.dv_c .st_trial { background: var(--bll); color: var(--bl2); }
+.dv_c .st_soon { background: var(--orl); color: #b06f00; }
+.dv_c .st_debt { background: var(--redl); color: var(--red); }
+.dv_c .st_none { background: #f0f0f0; color: var(--mut); }
+
+/* ішкі мәзір: админдегі .tg1_topc сияқты ақ таблетка */
+.dv_c .tabs { display: inline-flex; gap: 4px; padding: 5px; background: #fff; border-radius: 14px; box-shadow: var(--sh); flex-wrap: wrap; }
+.dv_c .tabs a { height: 46px; display: flex; align-items: center; padding: 0 18px; border-radius: 10px; font-weight: 600; font-size: 15px; white-space: nowrap; }
+.dv_c .tabs a:hover { background: var(--bp-pill, #f5f5f5); }
+.dv_c .tabs a.on, .dv_c .tabs a.on:hover { background: var(--gl); color: var(--g); font-weight: 700; }
+.dv_c .tabs a i { font-style: normal; color: var(--mut); margin-left: 6px; font-size: 13px; }
+.dv_c .tabs a.on i { color: var(--g); }
+.dv_c .tools { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px; }
+.dv_c .tools input[type=search] { max-width: 300px; }
+
+.dv_c .dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 0; font-size: 14px; }
+.dv_c .dl dt { color: var(--mut); font-weight: 600; }
+.dv_c .dl dd { margin: 0; font-weight: 700; }
+.dv_c .hint { background: var(--gl); color: var(--g2); border-radius: 10px; padding: 10px 12px; font-size: 14px; font-weight: 700; margin: 0 0 12px; }
+.dv_c .note { font-size: 13px; color: var(--mut); margin-top: 10px; }
+.dv_c .empty { text-align: center; padding: 30px 10px; color: var(--mut); }
+.dv_c .link { color: var(--bl2); font-weight: 700; }
+.dv_c .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; background: #f2f2f2; padding: 3px 8px; border-radius: 6px; }
+.dv_c .copy { cursor: pointer; }
+.dv_c .trial_c { background: #f6fafd; box-shadow: var(--sh), inset 0 0 0 1px #cfe2f0; }
+.dv_c .badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; background: #fff; box-shadow: var(--sh); font-weight: 700; }
+
+@media (max-width: 900px) {
+	.dv_c .g2, .dv_c .g3, .dv_c .g12 { grid-template-columns: 1fr; }
+	.dv_c .tools input[type=search] { max-width: none; }
+	.dv_c .card { padding: 16px; }
+	.dv_c .tbl_w { margin: 0 -16px; padding: 0 16px; }
+	.dv_c .tabs { display: flex; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+}
+
+/* ай таңдау: 1, 3, 6, 12, 24 ай батырмалары */
+.dv_c .mon { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin: 6px 0 12px; }
+.dv_c .mon_i { cursor: pointer; }
+.dv_c .mon_i input { position: absolute; opacity: 0; pointer-events: none; }
+.dv_c .mon_i span { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 62px; border: 1px solid var(--line); border-radius: 10px; background: #fff; transition: .15s; }
+.dv_c .mon_i b { font-size: 16px; color: var(--tx); }
+.dv_c .mon_i small { font-size: 12px; color: var(--g); font-weight: 700; }
+.dv_c .mon_i:hover span { border-color: var(--bl2); }
+.dv_c .mon_i input:checked + span { background: var(--gl); border-color: var(--g); }
+.dv_c .mon_i input:checked + span b { color: var(--g); }
+
+/* Админнің block/menu.php ішіндегі стильдері (ашылмалы мәзір, «← Артқа»): сол күйі */
+.mp_dd{ position: relative; display: flex; }
+.mp_dd_t{ display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 18px; border-radius: 10px; font-size: 16px; font-weight: 600; color: var(--bp-text, #222); cursor: pointer; user-select: none; transition: .15s; }
+.mp_dd_t i{ font-size: 18px; line-height: 1; }
+.mp_dd_t .mp_dd_ar{ font-size: 14px; margin-left: -2px; transition: .15s; }
+.mp_dd:hover .mp_dd_t, .mp_dd:focus-within .mp_dd_t{ background: var(--bp-pill, #f5f5f5); }
+.mp_dd_act .mp_dd_t, .mp_dd_act:hover .mp_dd_t{ background: #e3f5ec; color: var(--bp-green, #0EA768); font-weight: 700; }
+.mp_dd:hover .mp_dd_ar, .mp_dd:focus-within .mp_dd_ar{ transform: rotate(180deg); }
+.mp_dd_c{ display: none; position: absolute; top: 100%; left: 0; z-index: 50; min-width: 100%; padding: 6px; background: #fff; border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.06); flex-direction: column; gap: 2px; margin-top: 10px; }
+.mp_dd_c::before{ content: ''; position: absolute; left: 0; right: 0; top: -10px; height: 10px; }
+.mp_dd:hover .mp_dd_c, .mp_dd:focus-within .mp_dd_c{ display: flex; }
+.mp_dd_i{ display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: 10px; font-size: 15px; font-weight: 600; color: var(--bp-text, #222); white-space: nowrap; transition: .15s; }
+.mp_dd_i i{ width: 18px; text-align: center; font-size: 17px; }
+.mp_dd_i:hover{ background: var(--bp-pill, #f5f5f5); }
+.mp_dd_i_act, .mp_dd_i_act:hover{ background: #e3f5ec; color: var(--bp-green, #0EA768); font-weight: 700; }
+.mp_dd_sep{ height: 1px; margin: 4px 8px; background: var(--bp-line, #e7e7e7); }
+.mp_dd_m{ display: none !important; }
+@media (max-width: 1500px){ .mp_dd_t{ padding: 0 12px; gap: 8px; font-size: 15px; } }
+.aheader_bk{ margin-right: auto; height: 66px; display: inline-flex; align-items: center; gap: 12px; padding: 0 24px 0 20px; background: #fff; border-radius: 14px; box-shadow: var(--bp-shadow, 0 2px 12px rgba(0,0,0,.06)); font-size: 15px; font-weight: 700; color: var(--bp-text, #222); white-space: nowrap; transition: .15s; }
+.aheader_bk i{ font-size: 15px; transition: .15s; }
+.aheader_bk:hover{ background: var(--bp-pill, #f5f5f5); }
+.aheader_bk:hover i{ transform: translateX(-3px); }
+.head_c .head_back_m{ display: none; }
+@media (max-width: 768px) { .aheader_bk{ display: none; } .head_c .head_back_m{ display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--bp-text, #222); margin-bottom: 6px; } .head_c.head_c_back{ flex-direction: column; } }
+/* тақырып пен оның асты: тақырып админдегідей сол жақта, мәзір оң жақта */
+.head_c .dv_ht{ min-width: 0; }
+.head_c_back .dv_ht{ margin-top: 70px; }
+@media (max-width: 768px) { .head_c_back .dv_ht{ margin-top: 0; } }
+.dv_c .grid > .card + .card, .dv_c .grid > form.card + form.card { margin-top: 0; }
+
+/* Компания тіркеу терезесі (админ pop_bl) */
+.cn_block .pop_bl_cl{ max-height: calc(100% - 84px); }
+.cn_block select.form_txt{ -webkit-appearance: none; appearance: none; cursor: pointer; padding-right: 36px; background: var(--gr05, #f7f7f7) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238a8f98' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 16px center; }
+.cn_block button.btn{ width: 100%; border: 0; font: inherit; cursor: pointer; }
+.cn_note{ margin-top: 10px; font-size: 12px; color: var(--bp-muted, #8a8f98); line-height: 1.4; }
+.cn_chk{ display: flex; align-items: center; gap: 10px; margin-top: 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.cn_chk input{ width: 18px; height: 18px; accent-color: var(--bp-green, #16a34a); }

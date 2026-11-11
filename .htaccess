@@ -1,2 +1,15 @@
 AddDefaultCharset utf-8
 ErrorDocument 404 /
+
+<FilesMatch "\.(sql|bak|example)$">
+	Require all denied
+</FilesMatch>
+
+# Әзірлеуші панелі - осы сайттың алиасы (dist → dlv сияқты): хост dev.* не devb.* болса (dev.berik.c, devb.gprog.kz),
+# /assets/ мен /dev/-дан басқа сұраудың бәрі dev/ папкасына барады, сілтемелер сол күйі қалады (/companies/ т.б.).
+# Басқа хосттан (админнен) /dev/ ашылмайды.
+RewriteEngine On
+RewriteCond %{HTTP_HOST} ^devb?\. [NC]
+RewriteRule ^(?!(?:dev|assets)/)(.*)$ dev/$1 [L]
+RewriteCond %{HTTP_HOST} !^devb?\. [NC]
+RewriteRule ^dev(/|$) - [R=404,L]
