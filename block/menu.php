@@ -38,11 +38,11 @@
 							<? else: ?>
 								<? // Аналитика беттері арасында ауысқанда таңдалған күн мен кезең (Күн/Апта/Ай/Жыл) сақталады
 									$an_d = null; $an_p = 'day';
-									if (@$menu_name == 'stats' && !empty($p_start_d) && isset($mode)) { $an_p = ['d' => 'day', 'w' => 'week', 'm' => 'month', 'y' => 'year'][$mode] ?? 'day'; $an_d = $mode == 'd' ? ($dd ?? $p_start_d) : ($mode == 'w' ? ($wd0 ?? $p_start_d) : $p_start_d); }
+									if (in_array(@$menu_name, ['stats', 'abc']) && !empty($p_start_d) && isset($mode)) { $an_p = ['d' => 'day', 'w' => 'week', 'm' => 'month', 'y' => 'year'][$mode] ?? 'day'; $an_d = $mode == 'd' ? ($dd ?? $p_start_d) : ($mode == 'w' ? ($wd0 ?? $p_start_d) : $p_start_d); }
 									elseif (in_array(@$menu_name, ['order_product', 'order_comp', 'order_user']) && isset($period)) { $an_p = $period; $an_d = $time_pick ?? $time_sort; }
 									$an_q = 'time='.urlencode($an_d ?: $time_sort).($an_d && $an_p != 'day' ? '&period='.$an_p : '');
 									$an_sq = !$an_d ? '' : '?'.($an_p == 'week' ? 'mode=w&w='.$an_d : ($an_p == 'month' ? 'mode=m&m='.substr($an_d, 0, 7) : ($an_p == 'year' ? 'mode=y&y='.substr($an_d, 0, 4) : 'mode=d&d='.$an_d))); ?>
-								<? $an_act = in_array($menu_name, ['order_product', 'order_comp', 'order_user', 'stats']) || strpos((string)$menu_name, 'client') === 0; ?>
+								<? $an_act = in_array($menu_name, ['order_product', 'order_comp', 'order_user', 'stats', 'abc']) || strpos((string)$menu_name, 'client') === 0; ?>
 								<!-- Аналитика мен Статистика: компьютерде бір батырма, ішінен екі бет ашылады. Телефондағы төменгі мәзір .mp_topi сілтемелерін бөлек көшіреді. -->
 								<div class="mp_dd <?=$an_act?'mp_dd_act':''?>">
 									<a class="mp_dd_t" href="/stats/<?=htmlspecialchars($an_sq)?>" tabindex="0"><i class="fal fa-chart-pie"></i><span><?=t::w('Analytics', 'Аналитика')?></span><i class="far fa-angle-down mp_dd_ar"></i></a>
@@ -52,12 +52,13 @@
 										<div class="mp_dd_sep"></div>
 										<a class="mp_dd_i <?=($menu_name=='order_product'?'mp_dd_i_act':'')?>" href="/dashboard/order_product.php?<?=htmlspecialchars($an_q)?>"><i class="fal fa-utensils"></i><span><?=t::w('Dishes', 'Тағамдар')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='order_comp'?'mp_dd_i_act':'')?>" href="/dashboard/order_comp.php?<?=htmlspecialchars($an_q)?>"><i class="fal fa-layer-group"></i><span><?=t::w('Ingredients', 'Құрамы')?></span></a>
+										<a class="mp_dd_i <?=($menu_name=='abc'?'mp_dd_i_act':'')?>" href="/abc/<?=htmlspecialchars($an_sq)?>"><i class="fal fa-sort-amount-down"></i><span><?=t::w('ABC analysis', 'ABC анализ')?></span></a>
 										<div class="mp_dd_sep"></div>
 										<a class="mp_dd_i <?=(strpos((string)$menu_name, 'client') === 0?'mp_dd_i_act':'')?>" href="/clients/"><i class="fal fa-users"></i><span><?=t::w('Clients', 'Клиенттер')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='order_user'?'mp_dd_i_act':'')?>" href="/dashboard/order_user.php?<?=htmlspecialchars($an_q)?>"><i class="fal fa-user-headset"></i><span><?=t::w('Operator', 'Оператор')?></span></a>
 									</div>
 									<!-- телефондағы төменгі мәзір үшін (компьютерде көрінбейді) -->
-									<a class="mp_topi mp_dd_m <?=(in_array($menu_name, ['order_product', 'order_comp', 'order_user'])?'mp_topi_act':'')?>" href="/stats/<?=htmlspecialchars($an_sq)?>"><i class="fal fa-chart-bar"></i><span><?=t::w('Analytics', 'Аналитика')?></span></a>
+									<a class="mp_topi mp_dd_m <?=(in_array($menu_name, ['order_product', 'order_comp', 'order_user', 'abc'])?'mp_topi_act':'')?>" href="/stats/<?=htmlspecialchars($an_sq)?>"><i class="fal fa-chart-bar"></i><span><?=t::w('Analytics', 'Аналитика')?></span></a>
 									<a class="mp_topi mp_dd_m <?=($menu_name=='stats'?'mp_topi_act':'')?>" href="/stats/<?=htmlspecialchars($an_sq)?>"><i class="fal fa-chart-line"></i><span><?=t::w('Statistics', 'Статистика')?></span></a>
 								</div>
 								<style>
