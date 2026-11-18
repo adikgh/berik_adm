@@ -110,6 +110,7 @@
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='comp'?'mp_dd_i_act':'')?>" href="/products/comp/"><i class="fal fa-layer-group"></i><span><?=t::w('Ingredients', 'Құрамы')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='raw'?'mp_dd_i_act':'')?>" href="/products/raw/"><i class="fal fa-box"></i><span><?=t::w('Raw and goods', 'Шикізат (тауар)')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='cost'?'mp_dd_i_act':'')?>" href="/products/cost/#missing"><i class="fal fa-calculator"></i><span><?=t::w('Cost sheet', 'Себес')?></span><?=$wbm_b($wbm['dish'], 'Граммовкасы жоқ сатылған тағам')?></a>
+										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='stop'?'mp_dd_i_act':'')?>" href="/products/stop/"><i class="fal fa-ban"></i><span><?=t::w('Stop list', 'Стоп-лист')?></span></a>
 									</div>
 									<!-- телефондағы төменгі мәзір үшін -->
 									<a class="mp_topi mp_dd_m <?=($menu_name=='products'?'mp_topi_act':'')?>" href="/products/"><i class="fal fa-utensils"></i><span><?=t::w('Dishes', 'Тағамдар')?></span></a>
@@ -157,6 +158,12 @@
 								</div>
 							</div>
 							<div class="acc_list">
+								<? if (@$user_right['positions_id'] != 3): // Компания баптаулары: company/index.php ?>
+									<a class="menu_ci" href="/company/">
+										<div class="menu_cin"><i class="fal fa-cog"></i></div>
+										<div class="menu_cih"><?=t::w('Company settings', 'Компания баптаулары')?></div>
+									</a>
+								<? endif ?>
 								<a class="menu_ci" href="/team/">
 									<div class="menu_cin"><i class="fal fa-user-headset"></i></div>
 									<div class="menu_cih"><?=t::w('Staff', 'Жұмысшылар')?></div>
@@ -177,6 +184,10 @@
 									<a class="menu_ci" href="/promo/">
 										<div class="menu_cin"><i class="fal fa-tags"></i></div>
 										<div class="menu_cih"><?=t::w('Promotions', 'Акциялар')?></div>
+									</a>
+									<a class="menu_ci" href="/pay/">
+										<div class="menu_cin"><i class="fal fa-wallet"></i></div>
+										<div class="menu_cih"><?=t::w('Plan payment', 'Оплата')?></div>
 									</a>
 								<? endif ?>
 								<a class="menu_ci ac_open" href="/acc/">
