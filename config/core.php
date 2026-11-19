@@ -89,6 +89,10 @@
       }
    } elseif (!$company && $my_companies) $company = (int)key($my_companies);
 
+   // тариф: модульдер, лимиттер, жазылым мерзімі (config/plan.php). Әзірге тек ескерту жолағы.
+   require_once __DIR__.'/plan.php';
+   plan::load($company);
+
    // branch
    $branch = 1; 
    if (@$user_right['branch_id']) $branch = $user_right['branch_id'];

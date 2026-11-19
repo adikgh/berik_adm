@@ -185,6 +185,36 @@ class dev {
 	public static function tariffs($all = false) {
 		return self::rows("select * from company_tariff " . ($all ? "" : "where arh = 0 ") . "order by number, id", 'id');
 	}
+	// Модульдер мен лимиттер (2026-11-18). tariff_id = 0 — тегін сынақ, оның лимиттері company_plan_conf-та
+	public static $lims = ['lim_kassa', 'lim_branch', 'lim_dish', 'lim_order_month'];
+	public static function modules() {
+		return self::rows("select * from company_module where arh = 0 order by sort, id", 'code');
+	}
+	// [tariff_id => [code => 1]]
+	public static function tariff_modules() {
+		$r = [];
+		foreach (self::rows("select tariff_id, module_code from company_tariff_module") as $x) $r[(int)$x['tariff_id']][$x['module_code']] = 1;
+		return $r;
+	}
+	public static function tariff_modules_save($tid, $codes) {
+		$tid = (int)$tid;
+		$ok = self::modules();
+		db::query("delete from company_tariff_module where tariff_id = '$tid'");
+		foreach ((array)$codes as $c) if (isset($ok[$c])) db::query("insert ignore into company_tariff_module (tariff_id, module_code) values ('$tid', '" . self::e($c) . "')");
+	}
+	public static function trial_lims() {
+		$r = [];
+		$c = self::rows("select k, v from company_plan_conf where k like 'trial_lim_%'", 'k');
+		foreach (self::$lims as $k) $r[$k] = (int)(@$c['trial_' . $k]['v']);
+		return $r;
+	}
+	public static function trial_lims_save($a) {
+		foreach (self::$lims as $k) db::query("replace into company_plan_conf (k, v) values ('trial_$k', '" . max(0, (int)@$a[$k]) . "')");
+	}
+	public static function lim_names() {
+		return ['lim_kassa' => t::w('Cash desks', 'Касса саны'), 'lim_branch' => t::w('Branches', 'Филиал саны'),
+			'lim_dish' => t::w('Dishes', 'Тағам саны'), 'lim_order_month' => t::w('Orders per month', 'Айына тапсырыс')];
+	}
 	public static function bonus_for($months) {
 		foreach (self::$bonus_months as $m => $b) if ($months >= $m) return $b;
 		return 0;

@@ -5,6 +5,21 @@
 	$tar = dev::tariffs(true);
 	$used = dev::rows("select tariff_id, count(*) n from company_sub where paid_until >= curdate() group by tariff_id", 'tariff_id');
 	$mo = t::w('mo.', 'ай');
+	$mods = dev::modules(); $tmods = dev::tariff_modules(); $lnames = dev::lim_names();
+	// Модуль белгілері + 4 лимит (0 = шексіз). $tm — [code => 1], $lim — [lim_* => n]
+	$plan_fields = function ($tm, $lim) use ($mods, $lnames) { ?>
+		<div class="mb"><b style="font-size:13px"><?=t::w('Modules', 'Модульдер')?></b>
+			<div style="display:grid;gap:6px;margin-top:6px">
+			<? foreach ($mods as $c => $m): ?>
+				<label class="chk" style="font-weight:500"><input type="checkbox" name="mod[]" value="<?=dev::h($c)?>" <?=isset($tm[$c]) ? 'checked' : ''?>> <?=dev::h($m['name'])?></label>
+			<? endforeach ?></div>
+		</div>
+		<div class="f_row" style="grid-template-columns:1fr 1fr">
+		<? foreach ($lnames as $k => $n): ?>
+			<label><?=$n?><input name="<?=$k?>" inputmode="numeric" value="<?=(int)@$lim[$k]?>"></label>
+		<? endforeach ?></div>
+		<p class="note" style="margin:-4px 0 12px"><?=t::w('0 = unlimited', '0 = шексіз')?></p>
+	<? };
 	$trial_n = 0; foreach (dev::trial_ids() as $cid => $x) if (dev::one("select paid_until from company_sub where company_id = '" . (int)$cid . "' and paid_until >= curdate()")) $trial_n++;
 ?>
 <? include "../block/header.php"; ?>
@@ -26,11 +41,13 @@
 		<p class="note"><?=t::w('The client pays for the months in the column; gift months are added for free. The last line shows the real monthly price.', 'Клиент бағандағы ай үшін төлейді, сыйлық айлар тегін қосылады. Астында бір айдың нақты бағасы.')?></p>
 	</div>
 	<div class="grid g3 mt">
-		<div class="card" style="margin:0;border:2px solid var(--bl2, #1f75a8)">
+		<form class="card" data-post="get.php?trial" style="margin:0;border:2px solid var(--bl2, #1f75a8)">
 			<div class="card_h"><h2><i class="fal fa-gift"></i> <?=t::w('Free trial', 'Тегін сынақ')?></h2><small><?=sprintf(t::w('%d active', '%d белсенді'), $trial_n)?></small></div>
 			<div class="kpi" style="padding:0;box-shadow:none"><b>0 ₸</b><small><?=sprintf(t::w('%d days', '%d күн'), dev::$trial_days)?></small></div>
-			<p class="note"><?=t::w('Chosen as a tariff when a company is registered or paid. Given once per company: not again after a trial, a payment or a set subscription. The paid period starts after the trial.', 'Компания тіркегенде не төлем енгізгенде тариф ретінде таңдалады. Әр компанияға бір рет: сынақ, төлем не жазылым мерзімі болған компанияға берілмейді. Ақылы мерзім сынақ біткен соң басталады.')?></p>
-		</div>
+			<p class="note mb"><?=t::w('Chosen as a tariff when a company is registered or paid. Given once per company: not again after a trial, a payment or a set subscription. The paid period starts after the trial.', 'Компания тіркегенде не төлем енгізгенде тариф ретінде таңдалады. Әр компанияға бір рет: сынақ, төлем не жазылым мерзімі болған компанияға берілмейді. Ақылы мерзім сынақ біткен соң басталады.')?></p>
+			<? $plan_fields(@$tmods[0] ?: [], dev::trial_lims()); ?>
+			<button class="btn btn_l" type="submit"><?=t::w('Save', 'Сақтау')?></button>
+		</form>
 	<? foreach ($tar as $t): ?>
 		<form class="card" data-post="get.php?save" style="margin:0;<?=$t['arh'] ? 'opacity:.55' : ''?>">
 			<input type="hidden" name="id" value="<?=$t['id']?>">
@@ -38,6 +55,7 @@
 			<label class="mb"><?=t::w('Title', 'Атауы')?><input name="name" value="<?=dev::h($t['name'])?>"></label>
 			<label class="mb"><?=t::w('Per month', 'Айына')?>, ₸<input name="price" inputmode="numeric" value="<?=(int)$t['price']?>"></label>
 			<label class="mb"><?=t::w('Description', 'Сипаттамасы')?><input name="descr" value="<?=dev::h($t['descr'])?>"></label>
+			<? $plan_fields(@$tmods[(int)$t['id']] ?: [], $t); ?>
 			<label class="chk mb"><input type="checkbox" name="arh" value="1" <?=$t['arh'] ? 'checked' : ''?>> <?=t::w('Hidden (not offered for new payments)', 'Жасырын (жаңа төлемге шықпайды)')?></label>
 			<button class="btn btn_l" type="submit"><?=t::w('Save', 'Сақтау')?></button>
 		</form>
