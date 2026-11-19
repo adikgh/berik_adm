@@ -170,21 +170,21 @@
 			<div class="c2_h"><?=t::w('c2 Sets: final cost', 'Сеттер: қорытынды себес')?> <span><?=count($sets)?></span></div>
 			<div class="c2_wrap"><table class="c2_tbl c2_sum">
 				<thead><tr>
-					<th>№</th><th class="c2_l"><?=t::w('c2 Set', 'Сет')?></th><th><?=t::w('c2 Ingredients', 'Ингредиент')?></th>
+					<th>№</th><th class="c2_l c2_srt" data-st="t"><?=t::w('c2 Set', 'Сет')?></th><th class="c2_srt" data-st="n"><?=t::w('c2 Ingredients', 'Ингредиент')?></th>
 					<th><?=t::w('c2 Salary', 'Айлық')?></th><th><?=t::w('c2 Rent', 'Аренда')?></th><th><?=t::w('c2 Utilities', 'К.у.')?></th><th><?=t::w('c2 Delivery', 'Доставка')?></th><th><?=t::w('c2 Advertising', 'Реклама')?></th>
-					<th class="c2_hl"><?=t::w('c2 Total cost', 'Толық себес')?></th><th><?=t::w('c2 Markup', 'Наценка')?> <?=$st['markup'] + 0?>%</th><th><?=t::w('c2 Total', 'Наценкамен')?></th>
-					<th class="c2_hl"><?=t::w('c2 Suggested', 'Ұсыныс')?></th><th><?=t::w('c2 Current price', 'Қазіргі баға')?></th><th><?=t::w('c2 Profit', 'Пайда')?></th>
+					<th class="c2_hl c2_srt" data-st="n"><?=t::w('c2 Total cost', 'Толық себес')?></th><th class="c2_srt" data-st="n"><?=t::w('c2 Markup', 'Наценка')?> <?=$st['markup'] + 0?>%</th><th class="c2_srt" data-st="n"><?=t::w('c2 Total', 'Наценкамен')?></th>
+					<th class="c2_hl c2_srt" data-st="n"><?=t::w('c2 Suggested', 'Ұсыныс')?></th><th class="c2_srt" data-st="n"><?=t::w('c2 Current price', 'Қазіргі баға')?></th><th class="c2_srt" data-st="n"><?=t::w('c2 Profit', 'Пайда')?></th>
 				</tr></thead>
 				<tbody>
 				<? $n = 0; foreach ($sets as $x): $n++; $pc = $x['profit'] < 0 ? 'c2_neg' : ($x['pct'] < 5 ? 'c2_warn' : 'c2_pos'); ?>
 					<tr class="c2_f" data-q="<?=$h(mb_strtolower($x['name']))?>">
 						<td class="c2_mut"><?=$n?></td>
-						<td class="c2_l c2_nm"><a href="#s<?=$x['id']?>" class="c2_go"><?=$h($x['name'])?></a><?=$x['arh'] ? ' <span class="c2_tag">'.t::w('c2 archive', 'архив').'</span>' : ''?><?=$x['miss'] ? ' <span class="c2_tag c2_tag_r" title="'.$h(t::w('c2 Some items have no cost', 'Кейбір затының себесі жоқ')).'">!</span>' : ''?></td>
-						<td><?=$f($x['sum'])?></td>
+						<td class="c2_l c2_nm" data-v="<?=$h($x['name'])?>"><a href="#s<?=$x['id']?>" class="c2_go"><?=$h($x['name'])?></a><?=$x['arh'] ? ' <span class="c2_tag">'.t::w('c2 archive', 'архив').'</span>' : ''?><?=$x['miss'] ? ' <span class="c2_tag c2_tag_r" title="'.$h(t::w('c2 Some items have no cost', 'Кейбір затының себесі жоқ')).'">!</span>' : ''?></td>
+						<td data-v="<?=round($x['sum'], 2)?>"><?=$f($x['sum'])?></td>
 						<td class="c2_mut"><?=$f($st['salary'])?></td><td class="c2_mut"><?=$f($st['rent'])?></td><td class="c2_mut"><?=$f($st['utility'])?></td><td class="c2_mut"><?=$f($st['delivery'])?></td><td class="c2_mut"><?=$f($st['ads'])?></td>
-						<td class="c2_hl"><b><?=$f($x['full'])?></b></td><td class="c2_mut"><?=$f($x['mk'])?></td><td><?=$f($x['total'])?></td>
-						<td class="c2_hl"><b><?=$f($x['nice'])?></b></td><td><?=$f($x['price'])?></td>
-						<td><span class="c2_p <?=$pc?>"><?=$f($x['profit'])?> <small><?=(int)round($x['pct'])?>%</small></span></td>
+						<td class="c2_hl" data-v="<?=round($x['full'], 2)?>"><b><?=$f($x['full'])?></b></td><td class="c2_mut" data-v="<?=round($x['mk'], 2)?>"><?=$f($x['mk'])?></td><td data-v="<?=round($x['total'], 2)?>"><?=$f($x['total'])?></td>
+						<td class="c2_hl" data-v="<?=(int)$x['nice']?>"><b><?=$f($x['nice'])?></b></td><td data-v="<?=(int)$x['price']?>"><?=$f($x['price'])?></td>
+						<td data-v="<?=round($x['profit'], 2)?>"><span class="c2_p <?=$pc?>"><?=$f($x['profit'])?> <small><?=(int)round($x['pct'])?>%</small></span></td>
 					</tr>
 				<? endforeach ?>
 				</tbody>
@@ -319,7 +319,29 @@
 			var v = qv().trim().toLowerCase();
 			document.querySelectorAll('.c2_f').forEach(function (el) { el.hidden = v !== '' && el.dataset.q.indexOf(v) < 0; });
 		}
-		function reload() { var keep = qv(); ajx('.c2_page', function () { var el = document.querySelector('.c2_q'); if (el && keep) { el.value = keep; filter(); } }); }
+		function reload() { var keep = qv(); ajx('.c2_page', function () { var el = document.querySelector('.c2_q'); if (el && keep) { el.value = keep; filter(); } sortApply(); }); }
+
+		// қорытынды кестені сұрыптау: бағанның атауын басу (сандар алдымен кемуі, атау өсуі), таңдау localStorage c2_sort-та
+		var SK = 'c2_sort';
+		var sortGet = function () { try { return JSON.parse(localStorage.getItem(SK) || 'null'); } catch (e) { return null; } };
+		var sortSet = function (v) { try { localStorage.setItem(SK, JSON.stringify(v)); } catch (e) {} };
+		function sortApply() {
+			var tb = document.querySelector('.c2_sum tbody'), s = sortGet(); if (!tb) return;
+			var ths = document.querySelectorAll('.c2_sum thead th');
+			ths.forEach(function (th) { th.classList.remove('c2_srt_a', 'c2_srt_d'); });
+			if (!s || !ths[s.c] || !ths[s.c].dataset.st) return;
+			var txt = ths[s.c].dataset.st == 't', dir = s.d == 'a' ? 1 : -1;
+			ths[s.c].classList.add(s.d == 'a' ? 'c2_srt_a' : 'c2_srt_d');
+			var rows = Array.prototype.slice.call(tb.rows), val = function (tr) { var td = tr.cells[s.c]; return td ? td.dataset.v || '' : ''; };
+			rows.sort(function (a, b) { var x = val(a), y = val(b); return dir * (txt ? x.localeCompare(y, ['kk', 'ru'], { sensitivity: 'base' }) : (parseFloat(x) || 0) - (parseFloat(y) || 0)); });
+			rows.forEach(function (tr, i) { tr.cells[0].textContent = i + 1; tb.appendChild(tr); });
+		}
+		$(document).on('click', '.c2_sum th.c2_srt', function () {
+			var c = this.cellIndex, s = sortGet();
+			var d = s && s.c == c ? (s.d == 'a' ? 'd' : 'a') : (this.dataset.st == 't' ? 'a' : 'd');
+			sortSet({ c: c, d: d }); sortApply();
+		});
+		sortApply(); $(document).on('ajx:done', sortApply);
 		function send(a, data, ok) {
 			var fd = new FormData(); for (var k in data) fd.append(k, data[k]);
 			return fetch('/products/cost2/get.php?a=' + a, { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {

@@ -127,3 +127,10 @@ select.c2_ein{ width: auto; text-align: left; }
 .c2_mod_ok{ width: 100%; height: 44px; border: 0; border-radius: 10px; background: #0EA768; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
 .c2_mod_ok:disabled{ opacity: .6; }
 @media (max-width: 560px){ .c2_mod_g{ grid-template-columns: 1fr; } }
+
+/* қорытынды кестені сұрыптау */
+.c2_sum th.c2_srt{ cursor: pointer; user-select: none; white-space: nowrap; }
+.c2_sum th.c2_srt:hover{ color: var(--bp-blue, #1f75a8); }
+.c2_sum th.c2_srt_a::after{ content: ' ▲'; font-size: 9px; }
+.c2_sum th.c2_srt_d::after{ content: ' ▼'; font-size: 9px; }
+.c2_sum th.c2_srt_a, .c2_sum th.c2_srt_d{ color: var(--bp-blue, #1f75a8); }
