@@ -145,9 +145,24 @@
 				<span><?=t::w('c2 Advertising', 'Реклама')?> <b><?=$f($st['ads'])?></b></span>
 				<span><?=t::w('c2 Markup', 'Наценка')?> <b><?=$st['markup'] + 0?>%</b></span>
 				<span class="c2_set_t"><?=t::w('c2 Per order', 'Бір заказға')?> <b><?=$f($over)?> ₸</b></span>
-				<a class="c2_set_ed" href="/products/cost/"><i class="fal fa-pen"></i> <?=t::w('c2 Change', 'Өзгерту')?></a>
+				<button type="button" class="c2_set_ed"><i class="fal fa-pen"></i> <?=t::w('c2 Change', 'Өзгерту')?></button>
 			</div>
 			<label class="c2_srch"><i class="fal fa-search"></i><input type="search" class="c2_q" placeholder="<?=$h(t::w('c2 Search', 'Іздеу'))?>"></label>
+		</div>
+
+		<!-- шығындар поп-апы: /products/cost/get.php?setting -->
+		<div class="c2_mod" hidden>
+			<div class="c2_mod_bg"></div>
+			<form class="c2_mod_c" autocomplete="off">
+				<div class="c2_mod_h"><b><?=t::w('c2 Costs', 'Шығындар')?></b><button type="button" class="c2_mod_x" aria-label="×"><i class="fal fa-times"></i></button></div>
+				<div class="c2_mod_g">
+				<? foreach (['orders_day' => t::w('c2 Orders per day', 'Заказ / күн'), 'salary' => t::w('c2 Salary', 'Айлық'), 'rent' => t::w('c2 Rent', 'Аренда'), 'utility' => t::w('c2 Utilities', 'К.у.'), 'delivery' => t::w('c2 Delivery', 'Доставка'), 'ads' => t::w('c2 Advertising', 'Реклама'), 'markup' => t::w('c2 Markup', 'Наценка').', %'] as $k => $l): ?>
+					<label><span><?=$h($l)?></span><input class="c2_in" name="<?=$k?>" inputmode="decimal" value="<?=$h($st[$k] + 0)?>"></label>
+				<? endforeach ?>
+				</div>
+				<p class="c2_mod_n"><?=t::w('c2 Costs hint', 'Сеттің толық себесі = тағамдар себесі + осы шығындар; ұсынылатын баға = толық себес + наценка')?></p>
+				<button type="submit" class="c2_mod_ok"><?=t::w('c2 Save', 'Сақтау')?></button>
+			</form>
 		</div>
 
 		<!-- 1. Қорытынды кесте (Google кестесінің оң жағы) -->
@@ -406,6 +421,26 @@
 				var id = t.slice(3);
 				$(document).one('ajx:done', function () { var b = document.getElementById('p' + id); if (b) { b.scrollIntoView({ block: 'center' }); var a = b.querySelector('.c2_add_b'); if (a) a.click(); } });
 			});
+		});
+
+		// шығындар поп-апы
+		// .c2_page ішіндегі z-index шапкадан төмен қалмауы үшін ашқанда body-ге көшеді (reload-тан кейін жаңа мәндермен қайта алынады)
+		var modClose = function () { document.querySelectorAll('.c2_mod').forEach(function (m) { m.hidden = true; }); };
+		$(document).on('click', '.c2_set_ed', function () {
+			var fresh = document.querySelector('.c2_page .c2_mod'), old = document.querySelector('body > .c2_mod');
+			if (fresh) { if (old) old.remove(); document.body.appendChild(fresh); }
+			var m = document.querySelector('body > .c2_mod'); if (!m) return;
+			m.querySelector('form').reset(); m.hidden = false; m.querySelector('[name=salary]').focus();
+		});
+		$(document).on('click', '.c2_mod_bg, .c2_mod_x', modClose);
+		document.addEventListener('keydown', function (e) { if (e.key == 'Escape') modClose(); });
+		$(document).on('submit', '.c2_mod_c', function (e) {
+			e.preventDefault();
+			var b = this.querySelector('.c2_mod_ok'); b.disabled = true;
+			fetch('/products/cost/get.php?setting', { method: 'POST', body: new FormData(this), credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {
+				b.disabled = false;
+				if (t.trim() == 'yes') { modClose(); mess(T.saved); reload(); } else mess(T.err, 'warn');
+			}).catch(function () { b.disabled = false; mess(T.net, 'err'); });
 		});
 
 		// жаңа сет: мәзірдегі тағам (әлі сет емес) + бірінші зат → si_add
