@@ -76,8 +76,11 @@
 			'items' => ['type' => 'array', 'items' => ['type' => 'object', 'additionalProperties' => false, 'required' => ['ref', 'name', 'qty'], 'properties' => [
 				'ref' => ['type' => 'string'], 'name' => ['type' => 'string'], 'qty' => ['type' => 'number']]]],
 			'note' => ['type' => 'string'], 'sure' => ['type' => 'string', 'enum' => ['high', 'medium', 'low']]]];
+		// модель: ортақ баптау (config/ai.php CLAUDE_MODEL). 'auto' болса алдымен арзан модель, жауап бос не сенімсіз болса қымбатырағы
 		claude::$feature = 'set_ai';
-		$d = claude::json($system, $content, $schema, 'medium');
+		$mdl = claude::model();
+		$d = claude::json($system, $content, $schema, 'low', $mdl == 'auto' ? claude::CHEAP : $mdl);
+		if ($mdl == 'auto' && (!$d || !@$d['items'] || @$d['sure'] == 'low')) { $d2 = claude::json($system, $content, $schema, 'medium', claude::MID); if ($d2) $d = $d2; }
 		if (!$d) $out(['ok' => 0, 'stop' => (int)preg_match('~кілт|баланс|қосылмаған~u', claude::$err), 'error' => claude::$err ?: 'ЖИ жауабы оқылмады, қайталаңыз']);
 
 		// жазу: алдымен ескі құрам өшеді

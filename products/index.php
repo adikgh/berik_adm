@@ -83,26 +83,38 @@
 
 			<div class="ctg_c">
 				<div class="pr_tools">
-					<div class="pr_tr">
+					<!-- 1-қатар: іздеу | ЖИ көмекші | Тағам қосу -->
+					<div class="pr_tr pr_tr_top">
 						<div class="form_im pr_srch">
 							<input type="text" placeholder="<?=t::w('Search dish', 'Тағам атауымен іздеу')?>" class="form_txt pr_search">
 							<i class="fal fa-search form_icon"></i>
 						</div>
+						<? if ($kind_on): ?>
+						<div class="pr_ai_grp" title="ЖИ көмекші">
+							<span class="pr_ai_lbl"><i class="fal fa-magic"></i> ЖИ</span>
+							<? if ($pr_unk_n): ?><button type="button" class="pr_ai_b pr_ai_kind" title="Атауы, каталогы мен сипаттамасына қарап, түрі белгісіз тағамдарды Сет не Позиция деп белгілейді"><span>Түрін анықтау (<?=$pr_unk_n?>)</span></button><? endif ?>
+							<button type="button" class="pr_ai_b pr_ai_all" title="Құрамы жазылмаған сеттердің фотосы мен сипаттамасына қарап, ішіндегі позицияларды жазады"><span>Сет құрамын фотодан жазу</span></button>
+						</div>
+						<? endif ?>
 						<div class="btn btn_cl product_add_pop pr_add_b"><i class="fal fa-plus"></i><span><?=t::w('Add dish', 'Тағам қосу')?></span></div>
 					</div>
-					<div class="pr_tr">
-						<div class="pr_seg pr_kind">
-							<button type="button" class="pr_kind_b pr_seg_b pr_seg_on" data-k="">Барлығы <small><?=$page_result?></small></button>
-							<button type="button" class="pr_kind_b pr_seg_b" data-k="set"><i class="fal fa-box-full"></i> Сеттер (жиынтық, комбо) <small class="pr_kind_n1"><?=$pr_set_n?></small></button>
-							<button type="button" class="pr_kind_b pr_seg_b" data-k="one"><i class="fal fa-hamburger"></i> Позициялар <small class="pr_kind_n0"><?=max(0, $page_result - $pr_set_n - $pr_unk_n)?></small></button>
-							<? if ($kind_on): ?><button type="button" class="pr_kind_b pr_seg_b pr_seg_red" data-k="unk"<?=(!$pr_unk_n ? ' hidden' : '')?>><i class="fal fa-question-circle"></i> Түрі белгісіз <small class="pr_kind_nu"><?=$pr_unk_n?></small></button><? endif ?>
+					<!-- 2-қатар: сүзгілер (түрі | граммовка) -->
+					<div class="pr_tr pr_tr_flt">
+						<div class="pr_fg">
+							<span class="pr_lbl">Түрі:</span>
+							<div class="pr_seg pr_kind">
+								<button type="button" class="pr_kind_b pr_seg_b pr_seg_on" data-k="">Барлығы <small><?=$page_result?></small></button>
+								<button type="button" class="pr_kind_b pr_seg_b" data-k="set" title="Сеттер, жинақтар, комбо"><i class="fal fa-box-full"></i> Сеттер <small class="pr_kind_n1"><?=$pr_set_n?></small></button>
+								<button type="button" class="pr_kind_b pr_seg_b" data-k="one" title="Жеке тағамдар"><i class="fal fa-hamburger"></i> Позициялар <small class="pr_kind_n0"><?=max(0, $page_result - $pr_set_n - $pr_unk_n)?></small></button>
+								<? if ($kind_on): ?><button type="button" class="pr_kind_b pr_seg_b pr_seg_red" data-k="unk"<?=(!$pr_unk_n ? ' hidden' : '')?>><i class="fal fa-question-circle"></i> Белгісіз <small class="pr_kind_nu"><?=$pr_unk_n?></small></button><? endif ?>
+							</div>
 						</div>
-						<? if ($kind_on && $pr_unk_n): ?><button type="button" class="pr_ai_kind" title="ЖИ тағамның атауы, каталогы мен сипаттамасына қарап Сет пе, Позиция ма, анықтайды"><i class="fal fa-magic"></i><span>ЖИ: түрін анықтау (<?=$pr_unk_n?>)</span></button><? endif ?>
-						<? if ($kind_on): ?><button type="button" class="pr_ai_all" title="Құрамы жазылмаған сеттердің фотосы мен сипаттамасына қарап, ЖИ құрамын жазады"><i class="fal fa-magic"></i><span>ЖИ: сеттердің құрамын фотодан жазу</span></button><? endif ?>
 						<? if ($nocomp): ?>
+						<div class="pr_fg">
+							<span class="pr_lbl">Граммовка:</span>
 							<div class="pr_seg" title="Граммовкасы толтырылмаған тағамдарды ғана көрсету">
-								<button type="button" class="pr_seg_b pr_seg_on" data-nc="">Барлық тағамдар <small><?=$page_result?></small></button>
-								<button type="button" class="pr_seg_b pr_seg_red" data-nc="1"><i class="fal fa-exclamation-circle"></i> Граммовкасы жоқ <small><?=count($nocomp)?></small></button>
+								<button type="button" class="pr_seg_b pr_seg_on" data-nc="">Барлығы <small><?=$page_result?></small></button>
+								<button type="button" class="pr_seg_b pr_seg_red" data-nc="1"><i class="fal fa-exclamation-circle"></i> Жоқ <small><?=count($nocomp)?></small></button>
 							</div>
 							<div class="pr_info" tabindex="0">
 								<i class="fal fa-info"></i>
@@ -112,14 +124,10 @@
 									<div><i class="fal fa-layer-group"></i> Түзеу үшін тағамның «Құрамы» кнопкасын не белгінің өзін басыңыз</div>
 								</div>
 							</div>
+						</div>
 						<? endif ?>
 					</div>
-					<? if ($rec_on): ?>
-						<div class="pr_tr pr_rec_info">
-							<i class="fas fa-star"></i>
-							<span>QR мәзірде тек ★ белгіленген тағамдар көрінеді (тағамның өзі не бүкіл санаты): қазір <b class="pr_rec_cn"><?=$rec_n?></b> тағам, <b class="pr_rec_ck"><?=$rec_k?></b> санат. Олар «Тағы қосасыз ба?» ұсынысына да шығады (12-ге дейін). Ештеңе белгіленбесе, мәзірде барлық тағам көрінеді.</span>
-						</div>
-					<? endif ?>
+					<!-- 3-қатар: каталог + архив -->
 					<div class="pr_tr">
 						<span class="pr_lbl">Каталог:</span>
 						<div class="k_br pr_cat_chips">
@@ -127,9 +135,15 @@
 							<? foreach ($catalogs as $cat): if (!$cat['items']) continue; ?>
 								<a class="k_br_i" href="#cat=<?=$cat['id']?>" data-cat="<?=$cat['id']?>"><span><?=htmlspecialchars($cat['name_'.$lang] ?: $cat['name_ru'])?></span><small class="pr_cat_cnt"><?=count($cat['items'])?></small></a>
 							<? endforeach ?>
-							<a class="k_br_i pr_arh_chip" href="#cat=arh" data-cat="arh"><i class="fal fa-archive"></i> <span>Архив</span><small class="pr_cat_cnt"><?=count($arh_items)?></small></a>
 						</div>
+						<a class="k_br_i pr_arh_chip" href="#cat=arh" data-cat="arh"><i class="fal fa-archive"></i> <span>Архив</span><small class="pr_cat_cnt"><?=count($arh_items)?></small></a>
 					</div>
+					<? if ($rec_on): ?>
+						<div class="pr_tr pr_rec_info">
+							<i class="fas fa-star"></i>
+							<span>QR мәзірде тек ★ белгіленген тағамдар көрінеді (тағамның өзі не бүкіл санаты): қазір <b class="pr_rec_cn"><?=$rec_n?></b> тағам, <b class="pr_rec_ck"><?=$rec_k?></b> санат. Олар «Тағы қосасыз ба?» ұсынысына да шығады (12-ге дейін). Ештеңе белгіленбесе, мәзірде барлық тағам көрінеді.</span>
+						</div>
+					<? endif ?>
 				</div>
 
 				<? $number = 0; foreach ($catalogs as $cat): if (!$cat['items']) continue; $clr = $cat['color'] ?: '#b3bac7'; ?>
@@ -297,8 +311,6 @@
 		.ctg_btns .pr_kt:hover{ opacity: 1; filter: brightness(.96); }
 		.ctg_btns .pr_kt.pr_kt_unk{ background: #fff3d6; color: #8a6100; } .ctg_btns .pr_kt.pr_kt_unk i{ color: #b07800; }
 		.pr_seg_b[hidden]{ display: none; }
-		.pr_ai_kind{ height: 48px; padding: 0 14px; border: 1px solid #f0d58a; border-radius: 12px; background: #fff8e1; color: #8a6100; font: inherit; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-		.pr_ai_kind[disabled]{ opacity: .6; cursor: wait; } @media (max-width: 700px){ .pr_ai_kind{ width: 100%; justify-content: center; } }
 		.pr_arh_chip i{ font-size: 13px; opacity: .7; }
 		.pr_arh_note{ margin-left: 12px; font-size: 13px; color: var(--bp-muted, #8a8f98); }
 		.pr_row_arh{ opacity: .85; } .pr_row_arh .ctg_name{ color: #5d6470; }
@@ -306,9 +318,17 @@
 		.ctg_btns .pr_unarh i{ color: var(--bp-green, #0EA768); }
 		@media (max-width: 700px){ .ctg_btns .pr_unarh span{ display: none; } .ctg_btns .pr_unarh{ width: 40px; padding: 0; justify-content: center; } .pr_arh_note{ display: block; margin: 4px 0 0; } }
 		.pr_kt_busy{ opacity: .4 !important; pointer-events: none; }
-		.pr_ai_all{ height: 48px; padding: 0 14px; border: 1px solid #d9d2f7; border-radius: 12px; background: #f5f2ff; color: #5b3fd6; font: inherit; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-		.pr_ai_all:hover{ background: #ece6ff; } .pr_ai_all[disabled]{ opacity: .6; cursor: wait; }
-		@media (max-width: 700px){ .ctg_btns .pr_kt{ min-width: 0; padding: 0; width: 40px; } .ctg_btns .pr_kt span{ display: none; } .pr_ai_all{ width: 100%; justify-content: center; } }
+		.pr_ai_grp{ display: inline-flex; align-items: center; gap: 4px; padding: 4px; height: 48px; border-radius: 12px; background: #f5f2ff; border: 1px solid #e4dcff; }
+		.pr_ai_lbl{ padding: 0 8px 0 6px; font-size: 13px; font-weight: 800; color: #6b4ce6; white-space: nowrap; }
+		.pr_ai_b{ height: 38px; padding: 0 12px; border: 0; border-radius: 9px; background: #fff; color: #4a32b8; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+		.pr_ai_b:hover{ background: #ece6ff; } .pr_ai_b[disabled]{ opacity: .6; cursor: wait; } .pr_ai_b[hidden]{ display: none; }
+		.pr_tr_flt{ gap: 10px 28px; }
+		.pr_fg{ display: inline-flex; align-items: center; gap: 8px; }
+		.pr_arh_chip{ margin-left: auto; height: 40px; padding: 0 12px; border: 1px solid var(--bp-line, #e6e9ef); border-radius: 10px; background: #fff; display: inline-flex; align-items: center; gap: 6px; }
+		.pr_arh_chip.k_br_act{ background: #eef0f3; border-color: #cfd4db; }
+		@media (max-width: 900px){ .pr_ai_grp{ order: 3; width: 100%; height: auto; flex-wrap: wrap; } .pr_ai_b{ flex: 1 1 auto; } .pr_arh_chip{ margin-left: 0; } }
+		@media (max-width: 768px){ .pr_fg{ width: 100%; } .pr_kind{ flex-wrap: wrap; } .pr_kind .pr_seg_b{ flex: 1 1 40%; } }
+		@media (max-width: 700px){ .ctg_btns .pr_kt{ min-width: 0; padding: 0; width: 40px; } .ctg_btns .pr_kt span{ display: none; } }
 		.pr_rec_p i, .pr_rec_k i{ color: #e0a100; }
 		.pr_rec_p.pr_rec_on{ background: #fff3c4; }
 		.pr_rec_p.pr_rec_on i, .pr_rec_k.pr_rec_on i{ color: #f5a700; }
@@ -351,7 +371,7 @@
 
 			// каталог чиптері + іздеу (қайта жүктемей)
 			var chips, inp, q0 = '';
-			function grab() { chips = document.querySelectorAll('.pr_cat_chips .k_br_i'); inp = document.querySelector('.pr_search'); }
+			function grab() { chips = document.querySelectorAll('.pr_cat_chips .k_br_i, .pr_arh_chip'); inp = document.querySelector('.pr_search'); }
 			grab();
 			var onlyNc = false;
 			// Сеттер | Позициялар
@@ -362,7 +382,7 @@
 				kind = b.dataset.k; kindShow(); apply();
 			});
 			var cur = (location.hash.match(/cat=(\d+|arh)/) || [])[1] || '';
-			if (cur && !document.querySelector('.pr_cat_chips [data-cat="' + cur + '"]')) cur = '';
+			if (cur && !document.querySelector('.pr_cat_chips [data-cat="' + cur + '"], .pr_arh_chip[data-cat="' + cur + '"]')) cur = '';
 			function apply() {
 				var q = inp ? inp.value.trim().toLowerCase() : '', shown = {}, any = false;
 				chips.forEach(function (c) { c.classList.toggle('k_br_act', c.dataset.cat === cur); });
@@ -376,7 +396,7 @@
 			}
 			// оқиғалар document-те: тізім AJAX-пен жаңарса да жұмыс істейді
 			document.addEventListener('click', function (e) {
-				var c = e.target.closest('.pr_cat_chips .k_br_i'); if (!c) return;
+				var c = e.target.closest('.pr_cat_chips .k_br_i, .pr_arh_chip'); if (!c) return;
 				e.preventDefault();
 				cur = c.dataset.cat;
 				history.replaceState(null, '', cur ? '#cat=' + cur : location.pathname + location.search);
@@ -392,7 +412,7 @@
 			// тізім AJAX-пен жаңарғанда (fun.js ajx): іздеу, каталог, граммовка сүзгісі орнында қалады
 			$(document).on('ajx:done', function () {
 				grab(); if (inp) inp.value = q0;
-				if (cur && !document.querySelector('.pr_cat_chips [data-cat="' + cur + '"]')) cur = '';
+				if (cur && !document.querySelector('.pr_cat_chips [data-cat="' + cur + '"], .pr_arh_chip[data-cat="' + cur + '"]')) cur = '';
 				if (!document.querySelector('.pr_seg_b')) onlyNc = false;
 				segShow(); kindShow(); if (chips.length) apply();
 			});
@@ -434,7 +454,7 @@
 				var a = document.querySelectorAll('.pr_row:not(.pr_row_arh)').length, n = document.querySelectorAll('.pr_row[data-set]').length, u = document.querySelectorAll('.pr_row[data-unk]').length;
 				var x = document.querySelector('.pr_kind_n1'), y = document.querySelector('.pr_kind_n0'), z = document.querySelector('.pr_kind_nu');
 				if (x) x.textContent = n; if (y) y.textContent = a - n - u; if (z) { z.textContent = u; z.parentNode.hidden = !u; }
-				var ak = document.querySelector('.pr_ai_kind span'); if (ak) { ak.textContent = 'ЖИ: түрін анықтау (' + u + ')'; ak.parentNode.hidden = !u; }
+				var ak = document.querySelector('.pr_ai_kind span'); if (ak) { ak.textContent = 'Түрін анықтау (' + u + ')'; ak.parentNode.hidden = !u; }
 			}
 			document.addEventListener('click', function (e) {
 				var b = e.target.closest('.pr_kt'); if (!b) return;

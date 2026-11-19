@@ -37,7 +37,11 @@
 			'items' => ['type' => 'array', 'items' => ['type' => 'object', 'additionalProperties' => false, 'required' => ['id', 'set'], 'properties' => [
 				'id' => ['type' => 'integer'], 'set' => ['type' => 'boolean']]]]]];
 		claude::$feature = 'kind_ai';
-		$d = claude::json($system, [['type' => 'text', 'text' => "Меню (id | название | категория | цена | описание):\n".implode("\n", $lines)]], $schema, 'low', claude::MID);
+		// модель: ортақ баптау (config/ai.php CLAUDE_MODEL). 'auto' болса алдымен арзан модель, тізімнің көбі жауапсыз қалса қымбатырағы
+		$content = [['type' => 'text', 'text' => "Меню (id | название | категория | цена | описание):\n".implode("\n", $lines)]];
+		$mdl = claude::model();
+		$d = claude::json($system, $content, $schema, 'low', $mdl == 'auto' ? claude::CHEAP : $mdl);
+		if ($mdl == 'auto' && (!$d || count((array)@$d['items']) < count($ids) * 0.8)) { $d2 = claude::json($system, $content, $schema, 'low', claude::MID); if ($d2) $d = $d2; }
 		if (!$d) $out(['ok' => 0, 'error' => claude::$err ?: 'ЖИ жауабы оқылмады, қайталаңыз']);
 		$set = []; $one = [];
 		foreach ((array)@$d['items'] as $it) {
