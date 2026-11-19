@@ -284,8 +284,7 @@ function rnpInit() {
 		var td = e.target.closest('td.rnp_spread');
 		if (!td) return;
 		var k = td.dataset.k, r = byKey[k];
-		var s = prompt('«' + r.n + '»: айлық соманы жазыңыз. Ол ' + R.days.length + ' күнге тең бөлінеді (бар мәндер ауысады).', '');
-		if (s === null) return;
+		askIn('«' + r.n + '»: айлық соманы жазыңыз. Ол ' + R.days.length + ' күнге тең бөлінеді (бар мәндер ауысады).', '', function (s) {
 		var total = parse(s);
 		if (total === null || total === '') return;
 		var n = R.days.length, per = Math.floor(total / n), rest = total - per * n, items = [];
@@ -298,6 +297,7 @@ function rnpInit() {
 		var ins = tb.querySelectorAll('input[data-k="' + k + '"]');
 		for (var i = 0; i < ins.length; i++) if (ins[i].dataset.c !== 'plan') ins[i].value = fmtIn(R.val[ins[i].dataset.c][k]);
 		refresh();
+		}, { mode: 'numeric', ph: '0 тг' });
 	});
 
 	build();

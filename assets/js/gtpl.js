@@ -11,7 +11,7 @@
 	function prices(ids, el, done) {
 		if (!ids || !ids.length) return done();
 		if (el) el.textContent = w('pp Pricing', 'Жаңа заттардың бағасы анықталуда (база, ЖИ)…') + ' ' + ids.length;
-		post('prices', { ids: JSON.stringify(ids) }).then(function (r) { if (r.error) alert(r.error); done(); }).catch(done);
+		post('prices', { ids: JSON.stringify(ids) }).then(function (r) { if (r.error) (window.mess ? mess(r.error, 'err') : alert(r.error)); done(); }).catch(done);
 	}
 	// браузердің confirm() орнына админнің ask() терезесі (fun.js)
 	var cf = function (q, yes, o) { if (window.ask) ask(q, yes, o || { ok: 'Иә, жалғастыру' }); else if (confirm(q)) yes(); };
@@ -115,8 +115,8 @@
 				go.disabled = true; go.textContent = 'Толтырылуда…';
 				post('all', { variant: v() }).then(function (r) {
 					prices(r.ids, prev, function () {
-						alert(r.ok.length + ' тағамға граммовка қойылды.' + (r.created ? ' Жаңа құрам / дайындама: ' + r.created + '.' : ''));
-						location.reload();
+						var t = r.ok.length + ' тағамға граммовка қойылды.' + (r.created ? ' Жаңа құрам / дайындама: ' + r.created + '.' : '');
+						if (window.mess) { mess(t, 'ok'); setTimeout(function () { location.reload(); }, 1500); } else { alert(t); location.reload(); }
 					});
 				});
 			};

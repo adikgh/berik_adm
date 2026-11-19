@@ -216,8 +216,8 @@ $(document).ready(function() {
 			if (!b.data('ok')) return ask(w('Remove mark?', 'Белгіні алып тастайық па?'), function () { b.data('ok', 1).click(); }, { ok: w('Remove', 'Алып тастау'), danger: true });
 			b.data('ok', 0); m = '';
 		} else if (m == 'mix') {
-			var v = prompt(w('Mix cash prompt', 'Қолма-қол қанша алды? Қалғаны Kaspi болып жазылады.') + ' (' + fmt(sum) + ' тг)', '');
-			if (v === null) return;
+			if (b.data('cash') == null) return askIn(w('Mix cash prompt', 'Қолма-қол қанша алды? Қалғаны Kaspi болып жазылады.') + ' (' + fmt(sum) + ' тг)', '', function (v) { b.data('cash', v).click(); }, { mode: 'numeric', ph: '0 тг' });
+			var v = b.data('cash'); b.removeData('cash');
 			cash = parseInt(String(v).replace(/\D/g, '')) || 0;
 			if (cash <= 0 || cash >= sum) { mess(w('Mix cash wrong', 'Сумма 0 мен жалпы соманың арасында болуы керек')); return; }
 		}

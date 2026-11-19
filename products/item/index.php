@@ -354,7 +354,7 @@
 					});
 					document.addEventListener('click', function (e) {
 						var b = e.target.closest('.si_c .si_edit');
-						if (b) { var tr = b.closest('.ci_tr'), q = prompt('Саны', tr.dataset.qty); if (q === null) return; send('si_qty', { id: tr.dataset.id, quantity: q }); return; }
+						if (b) { var tr = b.closest('.ci_tr'), q = askIn('Саны', tr.dataset.qty, function (q) { send('si_qty', { id: tr.dataset.id, quantity: q }); }, { mode: 'decimal' }); return; }
 						b = e.target.closest('.si_c .si_del');
 						if (b) { ask('Сеттен алып тастау керек пе?', function () { send('si_del', { id: b.closest('.ci_tr').dataset.id }); }, { ok: 'Алып тастау' }); return; }
 						b = e.target.closest('.si_ai_b');
