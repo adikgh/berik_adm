@@ -69,6 +69,9 @@
 			$pq = db::query("select id, name_kz, name_ru, price from product where id = '$pid' and company_id = '$cmp'");
 			$p = $pq ? mysqli_fetch_assoc($pq) : null;
 			if (!$p) exit('{"ok":0}');
+			// түрі: 1 сет, 0 позиция (қолмен белгі), null = белгісіз
+			$kind_on = fun::has_col('product', 'is_set'); $kind_v = null;
+			if ($kind_on) { $kq = db::query("select is_set from product where id = '$pid'"); $kr = $kq ? mysqli_fetch_row($kq) : null; if ($kr && $kr[0] !== null) $kind_v = (int)$kr[0]; }
 			if (!class_exists('cost')) include __DIR__."/../cost/lib.php";
 			$ready = cost::ready();
 			$all = $ready ? cost::comps($cmp) : [];
@@ -114,7 +117,7 @@
 				while ($r = mysqli_fetch_assoc($q)) $raws[] = ['v' => 'r'.$r['id'], 'nm' => (string)($r['name_ru'] ?: $r['name_kz']), 'cost' => (float)$r['price'], 'u' => fun::unit_norm($r['unit']) ?: 'шт'];
 			}
 			echo json_encode(['ok' => 1, 'ready' => $ready ? 1 : 0, 'id' => $pid, 'name' => strip_tags((string)($p['name_kz'] ?: $p['name_ru'])), 'price' => (int)$p['price'],
-				'rows' => $rows, 'comps' => array_values($comps), 'set' => $set, 'is_set' => isset($is_set[$pid]) ? 1 : 0, 'ai' => is_file(__DIR__.'/set_ai.php') ? 1 : 0, 'over' => $over, 'dishes' => $dishes, 'raws' => $raws], JSON_UNESCAPED_UNICODE);
+				'rows' => $rows, 'comps' => array_values($comps), 'set' => $set, 'is_set' => isset($is_set[$pid]) ? 1 : 0, 'kind' => $kind_v, 'kind_on' => $kind_on ? 1 : 0, 'ai' => is_file(__DIR__.'/set_ai.php') ? 1 : 0, 'over' => $over, 'dishes' => $dishes, 'raws' => $raws], JSON_UNESCAPED_UNICODE);
 		} catch (Throwable $e) { echo '{"ok":0}'; }
 		exit;
 	}

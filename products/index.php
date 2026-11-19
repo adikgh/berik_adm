@@ -20,11 +20,18 @@
 	if (($tq = db::query("show tables like 'product_set_item'")) && mysqli_num_rows($tq)) { $sq = db::query("select distinct si.set_id from product_set_item si join product p on p.id = si.set_id where p.company_id = '$company' and p.arh = 0"); while ($x = mysqli_fetch_assoc($sq)) $pr_sets[$x['set_id']] = 1; }
 	// қолмен белгі (product.is_set): 1 = сет, 0 = позиция, NULL = құрамына қарап (product_set_item бар болса сет)
 	$kind_on = fun::has_col('product', 'is_set');
-	$pr_set_n = 0;
+	$pr_set_n = 0; $pr_unk_n = 0;
+	// граммовкасы бар тағамдар (белгісі жоқ болса позиция деп саналады)
+	$pr_ci = [];
+	$cq = db::query("select distinct i.product_id from product_item i join product p on p.id = i.product_id where p.company_id = '$company' and i.comp_id > 0");
+	while ($cq && $x = mysqli_fetch_assoc($cq)) $pr_ci[$x['product_id']] = 1;
 	while ($pr_d = mysqli_fetch_assoc($product)) {
 		$pr_d['_set'] = ($kind_on && $pr_d['is_set'] !== null) ? (int)$pr_d['is_set'] === 1 : isset($pr_sets[$pr_d['id']]);
 		$pr_d['_has'] = isset($pr_sets[$pr_d['id']]);
+		// түрі белгісіз: қолмен белгі жоқ, сет құрамы да, граммовка да жоқ
+		$pr_d['_unk'] = $kind_on && $pr_d['is_set'] === null && !$pr_d['_has'] && !isset($pr_ci[$pr_d['id']]);
 		if ($pr_d['_set']) $pr_set_n++;
+		if ($pr_d['_unk']) $pr_unk_n++;
 		if ($pr_d['catalog_id'] && isset($catalogs[$pr_d['catalog_id']])) $catalogs[$pr_d['catalog_id']]['items'][] = $pr_d;
 		else $no_catalog['items'][] = $pr_d;
 	}
@@ -83,8 +90,10 @@
 						<div class="pr_seg pr_kind">
 							<button type="button" class="pr_kind_b pr_seg_b pr_seg_on" data-k="">Барлығы <small><?=$page_result?></small></button>
 							<button type="button" class="pr_kind_b pr_seg_b" data-k="set"><i class="fal fa-box-full"></i> Сеттер (жиынтық, комбо) <small class="pr_kind_n1"><?=$pr_set_n?></small></button>
-							<button type="button" class="pr_kind_b pr_seg_b" data-k="one"><i class="fal fa-hamburger"></i> Позициялар <small class="pr_kind_n0"><?=max(0, $page_result - $pr_set_n)?></small></button>
+							<button type="button" class="pr_kind_b pr_seg_b" data-k="one"><i class="fal fa-hamburger"></i> Позициялар <small class="pr_kind_n0"><?=max(0, $page_result - $pr_set_n - $pr_unk_n)?></small></button>
+							<? if ($kind_on): ?><button type="button" class="pr_kind_b pr_seg_b pr_seg_red" data-k="unk"<?=(!$pr_unk_n ? ' hidden' : '')?>><i class="fal fa-question-circle"></i> Түрі белгісіз <small class="pr_kind_nu"><?=$pr_unk_n?></small></button><? endif ?>
 						</div>
+						<? if ($kind_on && $pr_unk_n): ?><button type="button" class="pr_ai_kind" title="ЖИ тағамның атауы, каталогы мен сипаттамасына қарап Сет пе, Позиция ма, анықтайды"><i class="fal fa-magic"></i><span>ЖИ: түрін анықтау (<?=$pr_unk_n?>)</span></button><? endif ?>
 						<? if ($kind_on): ?><button type="button" class="pr_ai_all" title="Құрамы жазылмаған сеттердің фотосы мен сипаттамасына қарап, ЖИ құрамын жазады"><i class="fal fa-magic"></i><span>ЖИ: сеттердің құрамын фотодан жазу</span></button><? endif ?>
 						<? if ($nocomp): ?>
 							<div class="pr_seg" title="Граммовкасы толтырылмаған тағамдарды ғана көрсету">
@@ -131,7 +140,7 @@
 								data-name="<?=htmlspecialchars(mb_strtolower(fun::name_text($pr_d['name_kz']).' '.fun::name_text($pr_d['name_ru'])))?>"
 								data-name-kz="<?=htmlspecialchars(fun::name_save($pr_d['name_kz']))?>"
 								data-name-ru="<?=htmlspecialchars(fun::name_save($pr_d['name_ru']))?>"
-								data-catalog="<?=(int)$pr_d['catalog_id']?>"<?=($pr_d['_set'] ? ' data-set="1"' : '')?><?=($pr_d['_has'] ? ' data-has="1"' : '')?><?=(!empty($pr_d['img']) || trim((string)@$pr_d['description']) !== '' ? ' data-pic="1"' : '')?><?=(isset($nocomp[$pr_d['id']]) ? ' data-nocomp="1"' : '')?>
+								data-catalog="<?=(int)$pr_d['catalog_id']?>"<?=($pr_d['_set'] ? ' data-set="1"' : '')?><?=($pr_d['_has'] ? ' data-has="1"' : '')?><?=($pr_d['_unk'] ? ' data-unk="1"' : '')?><?=(!empty($pr_d['img']) || trim((string)@$pr_d['description']) !== '' ? ' data-pic="1"' : '')?><?=(isset($nocomp[$pr_d['id']]) ? ' data-nocomp="1"' : '')?>
 								data-price="<?=(int)$pr_d['price']?>"
 								data-desc="<?=htmlspecialchars((string)@$pr_d['description'])?>">
 								<div class="ctg_num"><?=$number?></div>
@@ -142,7 +151,7 @@
 								</a>
 								<div class="ctg_cnt pr_pr"><?=((int)$pr_d['price'] ? number_format((int)$pr_d['price'], 0, '', ' ').' тг' : '<m>'.t::w('No price', 'Бағасы жоқ').'</m>')?></div>
 								<div class="ctg_btns">
-									<? if ($kind_on): ?><div class="ctg_b pr_kt<?=($pr_d['_set'] ? ' pr_kt_set' : '')?><?=($pr_d['is_set'] === null ? ' pr_kt_auto' : '')?>" data-id="<?=$pr_d['id']?>" title="Басып ауыстыру: Сет (жиынтық) не Позиция (жеке тағам)"><i class="fal fa-<?=($pr_d['_set'] ? 'box-full' : 'hamburger')?>"></i><span><?=($pr_d['_set'] ? 'Сет' : 'Позиция')?></span></div><? endif ?>
+									<? if ($kind_on): ?><div class="ctg_b pr_kt<?=($pr_d['_set'] ? ' pr_kt_set' : '')?><?=($pr_d['_unk'] ? ' pr_kt_unk' : ($pr_d['is_set'] === null ? ' pr_kt_auto' : ''))?>" data-id="<?=$pr_d['id']?>" title="Басып ауыстыру: Сет (жинақ, комбо) не Позиция (жеке тағам)"><i class="fal fa-<?=($pr_d['_unk'] ? 'question' : ($pr_d['_set'] ? 'box-full' : 'hamburger'))?>"></i><span><?=($pr_d['_unk'] ? 'Түрі?' : ($pr_d['_set'] ? 'Сет' : 'Позиция'))?></span></div><? endif ?>
 									<? if ($rec_on): ?><div class="ctg_b pr_rec pr_rec_p<?=(!empty($pr_d['recommend']) ? ' pr_rec_on' : '')?>" data-id="<?=$pr_d['id']?>" title="QR мәзірде көрсету (★)"><i class="fa<?=(!empty($pr_d['recommend']) ? 's' : 'l')?> fa-star"></i></div><? endif ?>
 									<a class="ctg_b cpp_open" href="item/?id=<?=$pr_d['id']?>" data-id="<?=$pr_d['id']?>" title="<?=t::w('Ingredients', 'Құрамы (граммовка)')?>"><i class="fal fa-layer-group"></i></a>
 									<div class="ctg_b product2_add_pop" data-id="<?=$pr_d['id']?>" title="<?=t::w('Make copy', 'Көшірме жасау')?>"><i class="fal fa-clone"></i></div>
@@ -256,6 +265,10 @@
 		.ctg_btns .pr_kt.pr_kt_set{ background: #e8f0ff; color: #2f5bd3; } .ctg_btns .pr_kt.pr_kt_set i{ color: #2f5bd3; }
 		.ctg_btns .pr_kt.pr_kt_auto{ opacity: .6; border: 1px dashed #c3c8d0; }
 		.ctg_btns .pr_kt:hover{ opacity: 1; filter: brightness(.96); }
+		.ctg_btns .pr_kt.pr_kt_unk{ background: #fff3d6; color: #8a6100; } .ctg_btns .pr_kt.pr_kt_unk i{ color: #b07800; }
+		.pr_seg_b[hidden]{ display: none; }
+		.pr_ai_kind{ height: 48px; padding: 0 14px; border: 1px solid #f0d58a; border-radius: 12px; background: #fff8e1; color: #8a6100; font: inherit; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+		.pr_ai_kind[disabled]{ opacity: .6; cursor: wait; } @media (max-width: 700px){ .pr_ai_kind{ width: 100%; justify-content: center; } }
 		.pr_kt_busy{ opacity: .4 !important; pointer-events: none; }
 		.pr_ai_all{ height: 48px; padding: 0 14px; border: 1px solid #d9d2f7; border-radius: 12px; background: #f5f2ff; color: #5b3fd6; font: inherit; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
 		.pr_ai_all:hover{ background: #ece6ff; } .pr_ai_all[disabled]{ opacity: .6; cursor: wait; }
@@ -318,7 +331,7 @@
 				var q = inp ? inp.value.trim().toLowerCase() : '', shown = {}, any = false;
 				chips.forEach(function (c) { c.classList.toggle('k_br_act', c.dataset.cat === cur); });
 				document.querySelectorAll('.pr_row').forEach(function (r) {
-					var ok = (!cur || r.dataset.cat === cur) && (!q || r.dataset.name.indexOf(q) > -1) && (!onlyNc || r.dataset.nocomp) && (!kind || (kind == 'set') == !!r.dataset.set);
+					var ok = (!cur || r.dataset.cat === cur) && (!q || r.dataset.name.indexOf(q) > -1) && (!onlyNc || r.dataset.nocomp) && (!kind || (kind == 'unk' ? !!r.dataset.unk : !r.dataset.unk && (kind == 'set') == !!r.dataset.set));
 					r.style.display = ok ? '' : 'none';
 					if (ok) { shown[r.dataset.cat] = 1; any = true; }
 				});
@@ -382,9 +395,10 @@
 
 			// Сет / Позиция белгісі (products/get.php?kind): басқанда ауысады, бет жаңармайды
 			function kindCnt() {
-				var a = document.querySelectorAll('.pr_row').length, n = document.querySelectorAll('.pr_row[data-set]').length;
-				var x = document.querySelector('.pr_kind_n1'), y = document.querySelector('.pr_kind_n0');
-				if (x) x.textContent = n; if (y) y.textContent = a - n;
+				var a = document.querySelectorAll('.pr_row').length, n = document.querySelectorAll('.pr_row[data-set]').length, u = document.querySelectorAll('.pr_row[data-unk]').length;
+				var x = document.querySelector('.pr_kind_n1'), y = document.querySelector('.pr_kind_n0'), z = document.querySelector('.pr_kind_nu');
+				if (x) x.textContent = n; if (y) y.textContent = a - n - u; if (z) { z.textContent = u; z.parentNode.hidden = !u; }
+				var ak = document.querySelector('.pr_ai_kind span'); if (ak) { ak.textContent = 'ЖИ: түрін анықтау (' + u + ')'; ak.parentNode.hidden = !u; }
 			}
 			document.addEventListener('click', function (e) {
 				var b = e.target.closest('.pr_kt'); if (!b) return;
@@ -398,11 +412,27 @@
 						b.classList.remove('pr_kt_busy');
 						if (t.trim() != 'yes') { msg(T.err); return; }
 						if (on) r.dataset.set = '1'; else delete r.dataset.set;
-						b.classList.toggle('pr_kt_set', on); b.classList.remove('pr_kt_auto');
+						delete r.dataset.unk;
+						b.classList.toggle('pr_kt_set', on); b.classList.remove('pr_kt_auto', 'pr_kt_unk');
 						b.innerHTML = '<i class="fal fa-' + (on ? 'box-full' : 'hamburger') + '"></i><span>' + (on ? 'Сет' : 'Позиция') + '</span>';
 						kindCnt(); if (kind) apply();
 					})
 					.catch(function () { b.classList.remove('pr_kt_busy'); msg(T.err); });
+			});
+
+			document.addEventListener('pr:kind', function () { kindCnt(); if (kind) apply(); }); // «Құрамы» терезесінде түрі ауысса
+			// ЖИ: түрі белгісіз тағамдарды Сет / Позиция деп анықтау (item/kind_ai.php), бәрі бір сұраумен
+			document.addEventListener('click', function (e) {
+				var b = e.target.closest('.pr_ai_kind'); if (!b || b.disabled) return;
+				var n = document.querySelectorAll('.pr_row[data-unk]').length; if (!n) return;
+				if (!confirm('ЖИ ' + n + ' тағамның атауы, каталогы мен сипаттамасына қарап, Сет пе әлде Позиция ма, анықтайды. Кейін әр тағамда кнопкамен түзетуге болады. Бастау керек пе?')) return;
+				b.disabled = true; var sp = b.querySelector('span'), t0 = sp.textContent; sp.textContent = 'ЖИ анықтап жатыр...';
+				fetch('/products/item/kind_ai.php', { method: 'POST', credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) {
+					b.disabled = false; sp.textContent = t0;
+					if (!d.ok) { msg(d.error || T.err); return; }
+					msg('ЖИ анықтады: ' + d.set + ' сет, ' + d.one + ' позиция' + (d.left ? ', ' + d.left + ' тағам қалды (тағы басыңыз)' : '') + '.');
+					ajx('.pr_page');
+				}).catch(function () { b.disabled = false; sp.textContent = t0; msg(T.err); });
 			});
 
 			// ЖИ: құрамы жоқ сеттерді бірінен соң бірі толтыру (item/set_ai.php), фото не сипаттамасы барлары ғана

@@ -8,10 +8,12 @@
 		</div>
 		<div class="pop_bl_cl cpp_body">
 			<div class="cpp_stats"></div>
+			<div class="cpp_kq">Бұл не? Алдымен түрін таңдаңыз:</div>
 			<div class="cpp_tabs">
-				<button type="button" class="cpp_tab" data-t="dish">Тағам құрамы (граммовка)</button>
-				<button type="button" class="cpp_tab" data-t="set">Сет құрамы</button>
+				<button type="button" class="cpp_tab" data-t="dish"><i class="fal fa-hamburger"></i> Позиция <small>жеке тағам: граммовка</small></button>
+				<button type="button" class="cpp_tab" data-t="set"><i class="fal fa-box-full"></i> Сет <small>жинақ, комбо: ішіндегі тағамдар</small></button>
 			</div>
+			<div class="cpp_none" hidden>Түрін таңдасаңыз, соған сай құрамы ашылады: <b>Позиция</b> болса, қандай өнім қанша грамм кететіні; <b>Сет</b> болса, ішіне қандай тағамдар қанша дана кіретіні.</div>
 			<div class="cpp_ai" hidden><button type="button" class="cpp_ai_b"><i class="fal fa-magic"></i><span>ЖИ: құрамын фотодан жазу</span></button><small class="cpp_ai_t">Сеттің фотосы мен сипаттамасына қарап, ішіндегі позицияларды өзі жазады</small></div>
 			<div class="cpp_list"></div>
 			<div class="cpp_add">
@@ -42,7 +44,12 @@
 	.cpp_st b{ font-size: 17px; }
 	.cpp_st.cpp_pos b{ color: var(--bp-green, #0EA768); } .cpp_st.cpp_neg b{ color: #e5484d; }
 	.cpp_tabs{ display: flex; gap: 6px; background: var(--bp-pill, #f5f5f5); padding: 4px; border-radius: 12px; margin-bottom: 14px; }
-	.cpp_tab{ flex: 1; height: 38px; border: 0; border-radius: 9px; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: var(--bp-muted, #8a8f98); cursor: pointer; }
+	.cpp_kq{ font-size: 13px; font-weight: 600; color: var(--bp-muted, #8a8f98); margin-bottom: 6px; }
+	.cpp_kq[hidden], .cpp_none[hidden]{ display: none; }
+	.cpp_none{ padding: 18px 16px; border: 1px dashed var(--bp-line, #dcdfe4); border-radius: 12px; color: #5d6470; font-size: 14px; line-height: 1.5; }
+	.cpp_tab small{ display: block; font-size: 11px; font-weight: 500; opacity: .75; }
+	.cpp_tab i{ margin-right: 4px; }
+	.cpp_tab{ flex: 1; min-height: 46px; border: 0; border-radius: 9px; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: var(--bp-muted, #8a8f98); cursor: pointer; }
 	.cpp_tab_on{ background: #fff; color: var(--bp-green, #0EA768); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
 	.cpp_list{ border: 1px solid var(--bp-line, #e7e7e7); border-radius: 12px; overflow: hidden; }
 	.cpp_r{ display: grid; grid-template-columns: 1fr 118px 84px 34px; gap: 8px; align-items: center; padding: 8px 10px; border-top: 1px solid var(--bp-line, #e7e7e7); }
@@ -108,6 +115,14 @@
 		var qf = function (q) { return String(Math.round(q * 1000) / 1000).replace('.', ','); };
 		var num = function (v) { v = parseFloat(String(v).replace(',', '.').replace(/\s+/g, '')); return v > 0 ? v : 0; };
 		var compMap = {};
+		// түрі: қолмен белгі (D.kind), болмаса құрамына қарап; ештеңе жоқ болса null (белгісіз)
+		var kindOf = function () {
+			if (!D) return null;
+			if (D.kind === 0 || D.kind === 1) return D.kind;
+			if (D.set.length) return 1;
+			if (D.rows.length) return 0;
+			return D.kind_on ? null : 0;
+		};
 
 		var load = function () {
 			pop.querySelector('.cpp_body').classList.add('cpp_load');
@@ -178,8 +193,12 @@
 				$('.cpp_q').placeholder = 'Позиция, готовка не тауар іздеу (кола, ролл, қорап)...';
 				$('.cpp_hint').innerHTML = 'Сетке мәзір позициясын (ролл, кола), готовканы не тауарды тікелей қосуға болады. Позиция атауын бассаңыз, оның граммовкасы ашылады. «Позицияға байлау» басса, сеттегі зат мәзірдегі сол позицияның өзі болады, себесі бір жерден есептеледі.';
 			}
+			var unk = D.kind_on && kindOf() === null;
+			$('.cpp_kq').hidden = !unk;
+			if (unk) pop.querySelectorAll('.cpp_tab').forEach(function (b) { b.classList.remove('cpp_tab_on'); });
+			$('.cpp_none').hidden = !unk; $('.cpp_list').hidden = unk; $('.cpp_add').hidden = unk; $('.cpp_hint').hidden = unk; $('.cpp_stats').hidden = unk;
 			$('.cpp_list').innerHTML = h;
-			$('.cpp_ai').hidden = !(tab == 'set' && D.ai && D.ready);
+			$('.cpp_ai').hidden = unk || !(tab == 'set' && D.ai && D.ready);
 		};
 
 		// мөлшерді өзгерту
@@ -206,7 +225,23 @@
 			var g = e.target.closest('.cpp_go');
 			if (g) { e.preventDefault(); open(+g.dataset.id, 'dish'); return; }
 			var tb = e.target.closest('.cpp_tab');
-			if (tb) { tab = tb.dataset.t; closePick(); render(); return; }
+			if (tb) {
+				var t2 = tb.dataset.t, k = t2 == 'set' ? 1 : 0;
+				if (!D.kind_on) { tab = t2; closePick(); render(); return; }
+				if (kindOf() === k) return;
+				var other = k ? D.rows.length : D.set.length;
+				if (other && !confirm(k ? 'Бұл тағамның граммовкасы жазылған. Сет деп белгілейміз бе? (граммовка өшпейді, тек жасырылады)' : 'Бұл сеттің құрамы жазылған. Позиция деп белгілейміз бе? (сет құрамы өшпейді, тек жасырылады)')) return;
+				var fd = new FormData(); fd.append('id', PID); fd.append('v', k);
+				fetch('/products/get.php?kind', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {
+					if (t.trim() != 'yes') { msg('Қате, қайта көріңіз'); return; }
+					D.kind = k; tab = t2; closePick(); render();
+					var row = document.querySelector('.pr_row[data-id="' + PID + '"]'), kb = row && row.querySelector('.pr_kt');
+					if (row) { if (k) row.dataset.set = '1'; else delete row.dataset.set; delete row.dataset.unk; }
+					if (kb) { kb.classList.toggle('pr_kt_set', !!k); kb.classList.remove('pr_kt_auto', 'pr_kt_unk'); kb.innerHTML = '<i class="fal fa-' + (k ? 'box-full' : 'hamburger') + '"></i><span>' + (k ? 'Сет' : 'Позиция') + '</span>'; }
+					document.dispatchEvent(new Event('pr:kind'));
+				}).catch(function () { msg('Қате, қайта көріңіз'); });
+				return;
+			}
 			if (!e.target.closest('.cpp_srch')) $('.cpp_dd').classList.remove('cpp_dd_on');
 		});
 
@@ -278,7 +313,9 @@
 			pop.classList.add('pop_bl_act');
 			load().then(function () {
 				if (!D) return;
-				tab = t || ((D.set.length || D.is_set) && !D.rows.length ? 'set' : 'dish');
+				var k = kindOf();
+				tab = k === 1 ? 'set' : k === 0 ? 'dish' : (t || 'dish');
+				$('.cpp_title').textContent = D.name || 'Құрамы';
 				render();
 			});
 		};

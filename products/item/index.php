@@ -42,11 +42,20 @@
 			$is_set = false;
 			$stq = db::query("show tables like 'product_set_item'");
 			if ($stq && mysqli_num_rows($stq)) { $stq = db::query("select id from product_set_item where set_id = '$product_id' limit 1"); $is_set = $stq && mysqli_num_rows($stq) > 0; }
+			// түрі: 1 = сет (жинақ, комбо), 0 = позиция (жеке тағам), null = әлі белгісіз. Қолмен белгі (product.is_set) басым,
+			// болмаса құрамына қарап. Тек сол түрдің құрамы көрсетіледі.
+			$kind_on = fun::has_col('product', 'is_set');
+			$has_ci = ($hq = db::query("select id from product_item where product_id = '$product_id' and comp_id > 0 limit 1")) && mysqli_num_rows($hq) > 0;
+			if ($kind_on && $product_d['is_set'] !== null) $kind = (int)$product_d['is_set'] ? 1 : 0;
+			elseif ($is_set) $kind = 1;
+			elseif ($has_ci || !$kind_on) $kind = 0;
+			else $kind = null;
+			$is_set = $kind === 1;
 		?>
 		<? // граммовкасы жоқ болса — ескерту (толтырылғанда өзі жоғалады)
 			if (!class_exists('wb')) @include_once "../../waybill/lib.php";
 			$nc_st = class_exists('wb') ? (wb::comp_check($company)['dish'][$product_id] ?? '') : '';
-			if ($nc_st && !$is_set): ?>
+			if ($nc_st && $kind === 0): ?>
 			<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 12px;padding:12px 16px;border-radius:12px;background:<?=($nc_st == 'none' ? '#fdecec' : '#fff8e6')?>;color:<?=($nc_st == 'none' ? '#c0392b' : '#8a6100')?>;font-weight:700;font-size:14px">
 				<i class="fal fa-exclamation-triangle"></i>
 				<span><?=($nc_st == 'none' ? 'Граммовка жоқ: бұл тағам сатылғанда шикізат азаймайды. Құрамын төменде толтырыңыз.' : 'Граммовка толық емес: құрамындағы кейбір дайындама шикізатқа байланбаған (Себес → Дайындамалар).')?></span>
@@ -148,11 +157,48 @@
 				// 0.500 → 0,5; 2.000 → 2
 				$qfmt = function ($q) { return str_replace('.', ',', rtrim(rtrim(number_format((float)$q, 3, '.', ''), '0'), '.')); };
 			?>
+			<? if ($kind_on): ?>
+			<div class="item_c pk_c">
+				<div class="item_is">Бұл не?</div>
+				<div class="pk_seg">
+					<button type="button" class="pk_b<?=($kind === 0 ? ' pk_on' : '')?>" data-v="0"><i class="fal fa-hamburger"></i><b>Позиция</b><small>Жеке тағам (ролл, пицца, бургер, сусын). Граммовкасы жазылады: қандай өнім, қанша грамм.</small></button>
+					<button type="button" class="pk_b pk_set<?=($kind === 1 ? ' pk_on' : '')?>" data-v="1"><i class="fal fa-box-full"></i><b>Сет</b><small>Жинақ, комбо: бірнеше позицияның жиынтығы. Ішіне қандай тағам қанша дана кіретіні жазылады.</small></button>
+				</div>
+				<? if ($kind === null): ?><div class="pk_q"><i class="fal fa-info-circle"></i> Алдымен түрін таңдаңыз: сосын соған сай құрамы ашылады.</div><? endif ?>
+			</div>
+			<style>
+				.pk_seg{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+				.pk_b{ text-align: left; padding: 14px 16px; border: 2px solid var(--bp-line, #e7e7e7); border-radius: 14px; background: #fff; font: inherit; cursor: pointer; display: grid; grid-template-columns: 34px 1fr; column-gap: 8px; align-items: center; color: #1b1f27; }
+				.pk_b i{ grid-row: 1 / 3; font-size: 22px; color: #8a8f98; }
+				.pk_b b{ font-size: 16px; } .pk_b small{ font-size: 12px; color: #6b717c; line-height: 1.4; margin-top: 2px; }
+				.pk_b:hover{ border-color: #cfd5dd; }
+				.pk_b.pk_on{ border-color: var(--bp-green, #0EA768); background: #eefaf4; } .pk_b.pk_on i{ color: var(--bp-green, #0EA768); }
+				.pk_b.pk_set.pk_on{ border-color: #2f5bd3; background: #eef3ff; } .pk_b.pk_set.pk_on i{ color: #2f5bd3; }
+				.pk_q{ margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: #fff8e1; color: #8a6400; font-size: 14px; font-weight: 600; }
+				.pk_busy{ opacity: .5; pointer-events: none; }
+				@media (max-width: 600px){ .pk_seg{ grid-template-columns: 1fr; } }
+			</style>
+			<script>
+				(function () {
+					if (window.__pk_on) return; window.__pk_on = 1;
+					document.addEventListener('click', function (e) {
+						var b = e.target.closest('.pk_b'); if (!b || b.classList.contains('pk_on')) return;
+						var box = b.closest('.pk_c'), pid = document.querySelector('.pcard') ? document.querySelector('.pcard').dataset.id : 0;
+						var fd = new FormData(); fd.append('id', pid); fd.append('v', b.dataset.v);
+						box.classList.add('pk_busy');
+						fetch('/products/get.php?kind', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {
+							box.classList.remove('pk_busy');
+							if (t.trim() == 'yes') location.reload(); /* құрам блоктарының скрипті бет ашылғанда ғана іске қосылады */ else (window.mess || alert)('Қате, қайта көріңіз');
+						}).catch(function () { box.classList.remove('pk_busy'); });
+					});
+				})();
+			</script>
+			<? endif ?>
 			<style>.ci_lnk{ color: inherit; } .ci_lnk:hover{ color: var(--bp-blue, #1f75a8); text-decoration: underline; } .ci_lnk i{ font-size: 12px; color: var(--bp-blue, #1f75a8); margin-left: 4px; }</style>
-			<? if (!$is_set || $ci_rows): // сетте тағам құрамы жасырылады (бұрын жазылған болса ғана көрінеді) ?>
+			<? if ($kind === 0): // тек позицияда: граммовка ?>
 			<div class="item_c ci_c">
 				<div class="ci_head">
-					<div class="item_is"><?=t::w('Dish composition', 'Тағам құрамы')?></div>
+					<div class="item_is">Граммовка <small class="pk_sub">қандай өнім, қанша грамм кетеді</small></div>
 					<? if ($ci_rows): ?>
 						<div class="ci_sum">
 							<span><?=t::w('Cost', 'Өзіндік құны')?>: <b><?=$fmt($ci_cost)?> тг</b></span>
@@ -214,7 +260,7 @@
 						$si_rows[] = $r;
 					}
 					// блок сет құрамы бар тағамда, не тағам құрамы бос тағамда көрінеді
-					$si_on = $si_rows || !$ci_rows;
+					$si_on = $kind === 1;
 					if ($si_on) {
 						$si_st = cost::setting($company); $si_over = cost::overhead($si_st);
 						$si_full = $si_cost + ($si_rows ? $si_over : 0);
@@ -226,7 +272,7 @@
 			<? if ($si_on): ?>
 			<div class="item_c ci_c si_c">
 				<div class="ci_head">
-					<div class="item_is">Сет құрамы</div>
+					<div class="item_is">Сеттің ішінде <small class="pk_sub">қандай тағамдар, қанша дана</small></div>
 					<? if ($si_rows): ?>
 						<div class="ci_sum">
 							<span>Тағамдар: <b><?=$fmt($si_cost)?> тг</b></span>
@@ -257,12 +303,15 @@
 						<div class="ci_tr ci_tf"><div></div><div>Толық себес:</div><div></div><div><b><?=$fmt($si_full)?> тг</b></div><div></div></div>
 					</div>
 				<? else: ?>
-					<div class="ci_hint"><i class="fal fa-info-circle"></i> Бұл сет болса, ішіндегі тағамдар мен заттарды (қорап, сашэ) осында қосыңыз. Себесі Себес бетіндегідей есептеледі.</div>
+					<div class="ci_hint"><i class="fal fa-info-circle"></i> Сетке кіретін позицияларды (ролл, пицца, сусын) және қорап, сашэ сияқты заттарды қосыңыз. Сет себесі солардың себесінен өзі есептеледі.</div>
+				<? endif ?>
+				<? if (is_file(__DIR__.'/set_ai.php')): ?>
+				<div class="si_ai"><button type="button" class="si_ai_b"><i class="fal fa-magic"></i><span><?=($si_rows ? 'ЖИ: фотодан қайта жазу' : 'ЖИ: фотодан жазу')?></span></button><small>ЖИ сеттің фотосы мен сипаттамасына қарап, ішіндегі позицияларды мәзірден тауып, санын жазады. Кейін тексеріп түзетуге болады.</small></div>
 				<? endif ?>
 				<form class="si_add">
 					<select class="si_sel" required>
-						<option value="">Тағам немесе зат таңдаңыз</option>
-						<optgroup label="Тағамдар">
+						<option value="">Позиция не зат таңдаңыз</option>
+						<optgroup label="Мәзір позициялары">
 							<? while ($o = mysqli_fetch_assoc($si_opts)): ?><option value="p<?=$o['id']?>"><?=htmlspecialchars(strip_tags($o['name_ru'] ?: $o['name_kz']))?></option><? endwhile ?>
 						</optgroup>
 						<optgroup label="Құрамдар (қорап, сашэ, мәзірде жоқ тағам)">
@@ -279,6 +328,11 @@
 				.si_qty{ width: 80px; height: 46px; padding: 0 12px; border: 1px solid var(--bp-line, #e7e7e7); border-radius: 10px; font: inherit; font-size: 15px; text-align: center; }
 				.si_add_b{ height: 46px; border: 0; cursor: pointer; font: inherit; font-weight: 700; display: flex; align-items: center; gap: 8px; background: var(--bp-green, #0EA768) !important; color: #fff; }
 				.si_c .ci_nm a{ color: inherit; }
+				.pk_sub{ font-size: 13px; font-weight: 500; color: var(--bp-muted, #8a8f98); margin-left: 6px; }
+				.si_ai{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding: 10px 12px; border-radius: 12px; background: #f5f2ff; }
+				.si_ai_b{ height: 42px; padding: 0 16px; border: 0; border-radius: 10px; background: #6b4ce6; color: #fff; font: inherit; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+				.si_ai_b:hover{ background: #5a3cd4; } .si_ai_b[disabled]{ opacity: .6; cursor: wait; }
+				.si_ai small{ flex: 1; min-width: 200px; font-size: 12px; color: #6b5fa8; line-height: 1.4; }
 				.si_c .ci_nm a:hover{ color: var(--bp-blue, #1f75a8); }
 			</style>
 			<script>
@@ -302,7 +356,21 @@
 						var b = e.target.closest('.si_c .si_edit');
 						if (b) { var tr = b.closest('.ci_tr'), q = prompt('Саны', tr.dataset.qty); if (q === null) return; send('si_qty', { id: tr.dataset.id, quantity: q }); return; }
 						b = e.target.closest('.si_c .si_del');
-						if (b) ask('Сет құрамынан алып тастау керек пе?', function () { send('si_del', { id: b.closest('.ci_tr').dataset.id }); }, { ok: 'Алып тастау' });
+						if (b) { ask('Сеттен алып тастау керек пе?', function () { send('si_del', { id: b.closest('.ci_tr').dataset.id }); }, { ok: 'Алып тастау' }); return; }
+						b = e.target.closest('.si_ai_b');
+						if (b && !b.disabled) {
+							var go = function () {
+								b.disabled = true; var sp = b.querySelector('span'), t0 = sp.textContent; sp.textContent = 'ЖИ қарап жатыр...';
+								var fd = new FormData(); fd.append('id', PID);
+								fetch('/products/item/set_ai.php', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) {
+									b.disabled = false; sp.textContent = t0;
+									if (!d.ok) { msg(d.error || 'Қате, қайта көріңіз'); return; }
+									msg('ЖИ ' + d.n + ' позиция жазды' + (d.sure == 'low' ? ' (сенімсіз, тексеріңіз)' : '') + (d.note ? ': ' + d.note : '') + (d.new && d.new.length ? ' Мәзірде жоқтары жаңа зат болып қосылды: ' + d.new.join(', ') : ''));
+									ajx('.it_page');
+								}).catch(function () { b.disabled = false; sp.textContent = t0; msg('Қате, қайта көріңіз'); });
+							};
+							if (document.querySelector('.si_c .si_del')) ask('Қазіргі құрам өшіп, ЖИ жаңадан жазады. Жалғастырамыз ба?', go, { ok: 'Иә, жазсын' }); else go();
+						}
 					});
 				})();
 			</script>
