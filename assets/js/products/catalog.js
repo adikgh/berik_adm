@@ -97,8 +97,9 @@ $(document).ready(function() {
 					var fin = function () { mess('Сақталды'); ctgChanged = false; ctgClose(); ajx('.ctg_c') };
 					if (ctgFile && nid) ctgUpload(nid, ctgFile, fin); else fin();
 				}
-				else { mess('Қате!'); console.log(data) }
+				else { mess('Сақталмады: ' + $('<div>').text(String(data).replace(/^error:?\s*/, '') || 'белгісіз қате').html(), 'err'); console.log(data) }
 			},
+			error: function () { mess('Байланыс қатесі, қайта көріңіз', 'err') },
 		});
 	});
 	$('.ctg_name_kz_in, .ctg_name_ru_in').on('keydown', function(e){ if (e.key == 'Enter') $('.ctg_save').click() });

@@ -30,15 +30,19 @@
 		$icon = mysqli_real_escape_string(db::$connect, ctg_icon(@$_POST['icon']));
 		$icon = $icon === '' ? 'NULL' : "'$icon'";
 
+		// өзгерту уақыты: бағаны бар болса ғана (ескі базада ubd_dt, жаңасында upd_dt болуы мүмкін, жоқ болса сақтау құламасын)
+		$upd_dt = '';
+		foreach (['upd_dt', 'ubd_dt'] as $dc) if (fun::has_col('product_catalog', $dc)) { $upd_dt = ", `$dc` = '".date('Y-m-d H:i:s')."'"; break; }
+
 		if ($id) {
-			$upd = db::query("UPDATE `product_catalog` SET `name_kz` = '$name_kz', `name_ru` = '$name_ru', `color` = '$color', `icon` = $icon, `ubd_dt` = '".date('Y-m-d H:i:s')."' WHERE id = '$id' and company_id = '$company'");
+			$upd = db::query("UPDATE `product_catalog` SET `name_kz` = '$name_kz', `name_ru` = '$name_ru', `color` = '$color', `icon` = $icon$upd_dt WHERE id = '$id' and company_id = '$company'");
 		} else {
 			$new_id = (mysqli_fetch_assoc(db::query("SELECT max(id) m FROM `product_catalog`")))['m'] + 1;
 			$number = (mysqli_fetch_assoc(db::query("SELECT max(number) m FROM `product_catalog` where company_id = '$company' and (arh is null or arh = 0)")))['m'] + 1;
 			$upd = db::query("INSERT INTO `product_catalog` (`id`, `name_kz`, `name_ru`, `number`, `company_id`, `type`, `color`, `level`, `icon`) VALUES ('$new_id', '$name_kz', '$name_ru', '$number', '$company', 'main', '$color', 1, $icon)");
 			$id = $new_id;
 		}
-		echo $upd ? 'yes:'.$id : 'error'; // id: жаңа санатқа фотоны бірден жүктеу үшін
+		echo $upd ? 'yes:'.$id : 'error: '.mysqli_error(db::$connect); // id: жаңа санатқа фотоны бірден жүктеу үшін
 		exit();
 	}
 

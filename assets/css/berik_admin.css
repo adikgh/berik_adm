@@ -336,7 +336,15 @@ tr.k_cr_det > td{ height: auto; padding: 10px 20px 16px; background: #fafbfc; }
 .tst{ transform: translateY(30px) scale(.96); }
 .tst.tst_in{ transform: none; }
 .tst.tst_out{ transform: translateY(30px); }
-@media (max-width: 768px){ .tst_box{ top: auto; bottom: 10px; } }
+/* «Сақталуда..» сияқты күту хабары: келесі хабар шыққанда өзі жоғалады (2026-11-19) */
+.tst_wait{ --c: #5b6b82; } .tst_wait .tst_bar{ display: none; }
+/* Мобильде хабар жоғарыда, ортада, үстінен түседі (2026-11-19) */
+@media (max-width: 768px){
+	.tst_box{ top: calc(10px + env(safe-area-inset-top, 0px)); bottom: auto; left: 50%; right: auto; transform: translateX(-50%); width: calc(100vw - 20px); max-width: 420px; }
+	.tst{ transform: translateY(-30px) scale(.96); }
+	.tst.tst_in{ transform: none; }
+	.tst.tst_out{ transform: translateY(-30px); }
+}
 
 /* Растау терезесі (ask): браузердің confirm орнына (2026-11-03) */
 .ask_bg{ position: fixed; inset: 0; z-index: 200001; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(16,24,40,.45); opacity: 0; transition: opacity .2s; }

@@ -3,14 +3,17 @@
 // Түрі мәтінге қарай: сәтті (жасыл), қате (қызыл), қалғаны ескерту (сары). Қажет болса: mess('...', 'ok' | 'err' | 'warn')
 function mess(e, type) {
    var txt = $('<div>').html(e).text()
+   // «Сақталуда..», «Отправка..», «Фото жүктелуде..» — күту хабары: келесі хабар (нәтиже) шыққанда өзі жоғалады, екеуі қатар тұрмайды
+   if (!type && /(\.\.|…)\s*$/.test(txt)) type = 'wait'
    if (!type) type = /сәтті|cәтті|сақтал|көшірілді|успешно/i.test(txt) ? 'ok' : (/қате|ошибка|error|байланыс/i.test(txt) ? 'err' : 'warn')
-   var ico = { ok: 'fa-check-circle', err: 'fa-times-circle', warn: 'fa-exclamation-triangle' }[type]
+   var ico = { ok: 'fa-check-circle', err: 'fa-times-circle', warn: 'fa-exclamation-triangle', wait: 'fa-spinner fa-spin' }[type]
    var box = $('.tst_box'); if (!box.length) box = $('<div class="tst_box"></div>').appendTo('body')
+   box.find('.tst_wait').remove()
    box.find('.tst').filter(function(){ return $(this).data('t') === txt }).remove() // бірдей хабар қайталанбайды
    var t = $('<div class="tst tst_' + type + '"><i class="far ' + ico + ' tst_i"></i><div class="tst_t"></div><div class="tst_x"><i class="far fa-times"></i></div><span class="tst_bar"></span></div>')
    t.data('t', txt).find('.tst_t').html(e)
    box.append(t); if (box.children().length > 3) box.children().first().remove()
-   var left = 4000, start = Date.now(), timer
+   var left = type == 'wait' ? 15000 : 4000, start = Date.now(), timer
    function go(){ start = Date.now(); t.removeClass('tst_pause'); timer = setTimeout(close, left) }
    function close(){ clearTimeout(timer); t.addClass('tst_out'); setTimeout(function(){ t.remove() }, 250) }
    t.on('mouseenter', function(){ clearTimeout(timer); left -= Date.now() - start; t.addClass('tst_pause') }).on('mouseleave', go)
