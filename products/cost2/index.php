@@ -15,6 +15,7 @@
 		return rtrim(rtrim(number_format($qty, 3, ',', ' '), '0'), ',').' '.($u ?: 'шт');
 	};
 	// 1 кг / 1 шт бағасы (тиын болса 1 таңбамен)
+	$nv = function ($v) { return rtrim(rtrim(number_format((float)$v, 3, ',', ''), '0'), ','); };
 	$pf = function ($v) { return $v > 0 && $v < 100 && round($v) != $v ? number_format($v, 1, ',', ' ') : cost::fmt($v); };
 
 	if ($ready) {
@@ -47,10 +48,10 @@
 			if (!$c['parts']) continue;
 			$rows = []; $sum = 0;
 			foreach ($c['parts'] as $p) {
-				if ($p['raw_id']) { $x = $raw[(int)$p['raw_id']] ?? null; $nm = $x ? $x['name'] : '?'; $u = $x ? $x['unit'] : ''; $pr = $x ? $x['price'] : 0; $lnk = 'r'.(int)$p['raw_id']; if ($x) $raw[(int)$p['raw_id']]['used']++; }
-				else { $x = $comps[(int)$p['sub_comp_id']] ?? null; $nm = $x ? ($x['name_ru'] ?: $x['name_kz']) : '?'; $u = $x ? $x['unit'] : ''; $pr = $x ? $x['cost'] : 0; $lnk = 'p'.(int)$p['sub_comp_id']; }
+				if ($p['raw_id']) { $x = $raw[(int)$p['raw_id']] ?? null; $nm = $x ? $x['name'] : '?'; $u = $x ? $x['unit'] : ''; $pr = $x ? $x['price'] : 0; $lnk = 'r'.(int)$p['raw_id']; $pe = $x ? ['raw', (int)$p['raw_id'], 'price'] : null; if ($x) $raw[(int)$p['raw_id']]['used']++; }
+				else { $x = $comps[(int)$p['sub_comp_id']] ?? null; $nm = $x ? ($x['name_ru'] ?: $x['name_kz']) : '?'; $u = $x ? $x['unit'] : ''; $pr = $x ? $x['cost'] : 0; $lnk = $x && $x['parts'] ? 'p'.(int)$p['sub_comp_id'] : ($x && !empty($x['raw_id']) ? 'r'.(int)$x['raw_id'] : ''); $pe = $x && !$x['parts'] ? ['comp_price', (int)$x['id'], ''] : null; }
 				$s = $p['quantity'] * $pr; $sum += $s;
-				$rows[] = ['name' => $nm, 'qty' => $qf($p['quantity'], $u), 'price' => $pr, 'sum' => $s, 'lnk' => $lnk];
+				$rows[] = ['id' => (int)$p['id'], 'name' => $nm, 'qty' => $qf($p['quantity'], $u), 'qv' => $nv($isw($u) ? $p['quantity'] * 1000 : $p['quantity']), 'price' => $pr, 'pe' => $pe, 'sum' => $s, 'lnk' => $lnk];
 			}
 			$preps[$id] = ['id' => $id, 'name' => $c['name_ru'] ?: $c['name_kz'], 'unit' => $c['unit'] ?: 'шт', 'yield' => (float)$c['yield_qty'], 'sum' => $sum, 'cost' => $c['cost'], 'rows' => $rows, 'kind' => $c['kind']];
 		}
@@ -60,7 +61,7 @@
 		$q = db::query("select p.id, p.name_ru, p.name_kz, p.price, p.arh from product p where p.company_id = '$cmp'");
 		while ($q && $r = mysqli_fetch_assoc($q)) $prd[(int)$r['id']] = ['id' => (int)$r['id'], 'name' => trim(strip_tags($r['name_ru'] ?: $r['name_kz'])), 'price' => (int)preg_replace('/\D+/', '', (string)$r['price']), 'arh' => (int)$r['arh']];
 		$dishes = [];
-		$q = db::query("select pi.product_id, pi.comp_id, pi.quantity from product_item pi join product p on p.id = pi.product_id where p.company_id = '$cmp' and pi.comp_id > 0 order by pi.product_id, pi.id");
+		$q = db::query("select pi.id, pi.product_id, pi.comp_id, pi.quantity from product_item pi join product p on p.id = pi.product_id where p.company_id = '$cmp' and pi.comp_id > 0 order by pi.product_id, pi.id");
 		while ($q && $r = mysqli_fetch_assoc($q)) {
 			$pid = (int)$r['product_id']; $c = $comps[(int)$r['comp_id']] ?? null;
 			if (!$c || !isset($prd[$pid])) continue;
@@ -70,10 +71,11 @@
 			// граммен жазылған кг затты кестедегідей г етіп көрсетеміз
 			$qt = $d > 1 ? rtrim(rtrim(number_format($r['quantity'], 1, ',', ' '), '0'), ',').' '.(mb_strtolower(trim($u)) == 'л' ? 'мл' : 'г') : rtrim(rtrim(number_format($r['quantity'], 3, ',', ' '), '0'), ',').' '.($u ?: 'шт');
 			$lnk = $c['parts'] ? 'p'.(int)$c['id'] : (!empty($c['raw_id']) ? 'r'.(int)$c['raw_id'] : '');
+			$pe = $c['parts'] ? null : ['comp_price', (int)$c['id'], ''];
 			if (!$c['parts'] && !empty($c['raw_id']) && isset($raw[(int)$c['raw_id']])) $raw[(int)$c['raw_id']]['used']++;
 			if (!isset($dishes[$pid])) $dishes[$pid] = ['id' => $pid, 'name' => $prd[$pid]['name'], 'price' => $prd[$pid]['price'], 'sum' => 0, 'rows' => []];
 			$dishes[$pid]['sum'] += $s;
-			$dishes[$pid]['rows'][] = ['name' => $c['name_ru'] ?: $c['name_kz'], 'qty' => $qt, 'price' => $pr, 'sum' => $s, 'lnk' => $lnk];
+			$dishes[$pid]['rows'][] = ['id' => (int)$r['id'], 'name' => $c['name_ru'] ?: $c['name_kz'], 'qty' => $qt, 'qv' => $nv($r['quantity']), 'price' => $pr, 'pe' => $pe, 'sum' => $s, 'lnk' => $lnk];
 		}
 
 		// Сеттер
@@ -81,18 +83,26 @@
 		$q = db::query("select si.* from product_set_item si join product s on s.id = si.set_id where s.company_id = '$cmp' order by si.set_id, si.id");
 		while ($q && $r = mysqli_fetch_assoc($q)) {
 			$sid = (int)$r['set_id']; if (!isset($prd[$sid])) continue;
-			if ($r['product_id']) { $pid = (int)$r['product_id']; $nm = $prd[$pid]['name'] ?? '?'; $u = isset($dishes[$pid]) ? $dishes[$pid]['sum'] : 0; $lnk = isset($dishes[$pid]) ? 'd'.$pid : ''; $miss = !isset($dishes[$pid]); }
-			else { $c = $comps[(int)$r['comp_id']] ?? null; $nm = $c ? ($c['name_ru'] ?: $c['name_kz']) : '?'; $u = $c ? $c['cost'] : 0; $lnk = $c && $c['parts'] ? 'p'.(int)$c['id'] : ($c && !empty($c['raw_id']) ? 'r'.(int)$c['raw_id'] : ''); $miss = !$c || $u <= 0; }
+			if ($r['product_id']) { $pid = (int)$r['product_id']; $nm = $prd[$pid]['name'] ?? '?'; $u = isset($dishes[$pid]) ? $dishes[$pid]['sum'] : 0; $lnk = isset($prd[$pid]) ? 'd'.$pid : ''; $miss = $u <= 0; $pe = null; }
+			else { $c = $comps[(int)$r['comp_id']] ?? null; $nm = $c ? ($c['name_ru'] ?: $c['name_kz']) : '?'; $u = $c ? $c['cost'] : 0; $lnk = $c && $c['parts'] ? 'p'.(int)$c['id'] : ($c && !empty($c['raw_id']) ? 'r'.(int)$c['raw_id'] : ''); $miss = !$c || $u <= 0; $pe = $c && !$c['parts'] ? ['comp_price', (int)$c['id'], ''] : null; }
 			if (!isset($sets[$sid])) $sets[$sid] = ['id' => $sid, 'name' => $prd[$sid]['name'], 'price' => $prd[$sid]['price'], 'arh' => $prd[$sid]['arh'], 'sum' => 0, 'rows' => [], 'miss' => 0];
 			$s = $u * $r['quantity'];
 			$sets[$sid]['sum'] += $s;
 			if ($miss) $sets[$sid]['miss']++;
-			$sets[$sid]['rows'][] = ['name' => strip_tags($nm), 'qty' => ($r['quantity'] + 0), 'price' => $u, 'sum' => $s, 'lnk' => $lnk, 'miss' => $miss];
+			$sets[$sid]['rows'][] = ['id' => (int)$r['id'], 'name' => strip_tags($nm), 'qty' => ($r['quantity'] + 0), 'qv' => $nv($r['quantity']), 'price' => $u, 'pe' => $pe, 'sum' => $s, 'lnk' => $lnk, 'miss' => $miss];
 		}
-		// сет болып табылатын өнім Тағамдар бағанында қайталанбайды
+		// сет болып табылатын өнім Тағамдар бағанында қайталанбайды; құрамы жоқ тағамдар да шығады (бос блок, «+ Зат қосу»)
 		foreach ($sets as $sid => $x) unset($dishes[$sid]);
+		foreach ($prd as $pid => $p) if (!$p['arh'] && !isset($sets[$pid]) && !isset($dishes[$pid])) $dishes[$pid] = ['id' => $pid, 'name' => $p['name'], 'price' => $p['price'], 'sum' => 0, 'rows' => []];
 		$by_name = function ($a, $b) { return strcasecmp($a['name'], $b['name']); };
-		uasort($preps, $by_name); uasort($dishes, $by_name);
+		uasort($preps, $by_name);
+		uasort($dishes, function ($a, $b) { return [!$a['rows'], mb_strtolower($a['name'])] <=> [!$b['rows'], mb_strtolower($b['name'])]; });
+		// «+ Зат қосу» тізімдері: шикізат, құрам/дайындама, мәзір тағамы
+		$OPT = ['r' => [], 'c' => [], 'd' => []];
+		foreach ($raw as $x) $OPT['r'][] = ['c' => 'r'.$x['id'], 'n' => $x['name'], 'u' => $x['unit']];
+		foreach ($comps as $x) if ($x['parts'] || empty($x['raw_id'])) $OPT['c'][] = ['c' => 'c'.$x['id'], 'n' => $x['name_ru'] ?: $x['name_kz'], 'u' => (string)$x['unit']];
+		foreach ($prd as $x) if (!$x['arh'] && !isset($sets[$x['id']])) $OPT['d'][] = ['c' => 'd'.$x['id'], 'n' => $x['name'], 'u' => 'шт'];
+		$has_pp = is_file(__DIR__.'/../cost/prep_pop.php') && is_file(__DIR__.'/../../assets/js/prep_pop.js');
 		uasort($sets, function ($a, $b) { return [$a['arh'], $a['name']] <=> [$b['arh'], $b['name']]; });
 
 		// Қорытынды: сеттің толық себесі мен ұсынылатын бағасы (кестенің оң жағы)
@@ -115,6 +125,8 @@
 	$page_name = t::w('Cost table', 'Себес-2');
 	$page_key = 'Cost table';
 	$css = ['cost2'];
+	$js = [];
+	if (!empty($has_pp)) $js[] = 'prep_pop';
 ?>
 <? include "../../block/header.php"; ?>
 
@@ -164,7 +176,14 @@
 			</table></div>
 		</div>
 
-		<!-- 2. Кесте: Шикізат → Дайындамалар → Тағамдар → Сеттер -->
+		<!-- 2. Кесте: Шикізат → Дайындамалар → Тағамдар → Сеттер. Сұр астын сызылған мәнді басып өзгертуге болады -->
+		<?
+			// өзгертілетін ұяшық: [әрекет, id, өріс] + ағымдағы мән
+			$E = function ($e, $v) use ($h) { return $e ? ' class="c2_e" data-a="'.$e[0].'" data-id="'.$e[1].'" data-f="'.$e[2].'" data-v="'.$h($v).'"' : ''; };
+			$X = function ($a, $id) use ($h) { return '<button type="button" class="c2_x" data-a="'.$a.'" data-id="'.$id.'" title="'.$h(t::w('c2 Delete', 'Өшіру')).'"><i class="fal fa-times"></i></button>'; };
+			$ADD = function ($a, $to, $kind) { return '<tr class="c2_add" data-a="'.$a.'" data-to="'.$to.'" data-k="'.$kind.'"><td colspan="4"><button type="button" class="c2_add_b"><i class="far fa-plus"></i> '.t::w('c2 Add item', 'Зат қосу').'</button></td></tr>'; };
+			$NM = function ($r) use ($h) { return $r['lnk'] ? '<a href="#'.$r['lnk'].'" class="c2_go">'.$h($r['name']).'</a>' : $h($r['name']); };
+		?>
 		<div class="c2_grid">
 
 			<div class="c2_col">
@@ -175,29 +194,40 @@
 						<tbody>
 						<? foreach ($used_raw as $r): $d = $r['prev'] ? ($r['lastp'] - $r['prev']) / $r['prev'] * 100 : null; ?>
 							<tr class="c2_f" id="r<?=$r['id']?>" data-q="<?=$h(mb_strtolower($r['name']))?>">
-								<td class="c2_l c2_nm"><a href="/waybill/raw.php?id=<?=$r['id']?>"><?=$h($r['name'])?></a>
-									<? if ($r['last_d']): ?><div class="c2_sub"><?=date('d.m', strtotime($r['last_d']))?><?=$r['sup'] !== '' ? ' · '.$h($r['sup']) : ''?></div><? endif ?></td>
-								<td class="c2_mut"><?=$h($r['unit'] ?: 'шт')?></td>
-								<td><b><?=$pf($r['price'])?></b><? if ($d !== null && abs($d) >= 1): ?><div class="c2_sub <?=$d > 0 ? 'c2_up' : 'c2_dn'?>"><?=$d > 0 ? '▲' : '▼'?> <?=abs(round($d))?>%</div><? endif ?></td>
+								<td class="c2_l c2_nm"><span<?=$E(['raw', $r['id'], 'name'], $r['name'])?>><?=$h($r['name'])?></span>
+									<? if ($r['last_d']): ?><a class="c2_sub c2_sub_a" href="/waybill/raw.php?id=<?=$r['id']?>"><?=date('d.m', strtotime($r['last_d']))?><?=$r['sup'] !== '' ? ' · '.$h($r['sup']) : ''?></a><? endif ?></td>
+								<td><span<?=$E(['raw', $r['id'], 'unit'], $r['unit'] ?: 'шт')?>><?=$h($r['unit'] ?: 'шт')?></span></td>
+								<td><b<?=$E(['raw', $r['id'], 'price'], $nv($r['price']))?>><?=$pf($r['price'])?></b><? if ($d !== null && abs($d) >= 1): ?><div class="c2_sub <?=$d > 0 ? 'c2_up' : 'c2_dn'?>"><?=$d > 0 ? '▲' : '▼'?> <?=abs(round($d))?>%</div><? endif ?></td>
 							</tr>
 						<? endforeach ?>
 						</tbody>
+						<tfoot><tr class="c2_radd"><td colspan="3"><button type="button" class="c2_add_b c2_raw_b"><i class="far fa-plus"></i> <?=t::w('c2 Add raw material', 'Шикізат қосу')?></button></td></tr></tfoot>
 					</table>
 				</div>
 			</div>
 
 			<div class="c2_col">
-				<div class="c2_ch c2_ch2"><b>2</b> <?=t::w('c2 Semi-finished', 'Дайындамалар')?> <span><?=count($preps)?></span></div>
+				<div class="c2_ch c2_ch2"><b>2</b> <?=t::w('c2 Semi-finished', 'Дайындамалар')?> <span><?=count($preps)?></span><button type="button" class="c2_ch_b c2_prep_new" title="<?=$h(t::w('c2 Add semi-finished', 'Дайындама қосу'))?>"><i class="far fa-plus"></i></button></div>
+				<form class="c2_card c2_newp" hidden autocomplete="off">
+					<input class="c2_in" name="name" placeholder="<?=$h(t::w('c2 Name', 'Атауы'))?>" required>
+					<div class="c2_newp_r">
+						<select class="c2_in" name="unit"><option>кг</option><option>шт</option><option>л</option></select>
+						<input class="c2_in" name="yield" inputmode="decimal" placeholder="<?=$h(t::w('c2 Yield', 'Шығымы'))?>" required>
+						<button class="c2_ok" type="submit"><i class="far fa-check"></i></button>
+					</div>
+				</form>
+				<? if (!$preps): ?><button type="button" class="c2_card c2_empty c2_prep_new"><i class="far fa-plus"></i> <?=t::w('c2 Add semi-finished', 'Дайындама қосу')?></button><? endif ?>
 				<? foreach ($preps as $x): ?>
 					<div class="c2_card c2_blk c2_f" id="p<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
-						<div class="c2_bh"><a href="/products/cost/?prep=<?=$x['id']?>#prep" title="<?=$h(t::w('c2 Edit', 'Өзгерту'))?>"><?=$h($x['name'])?></a><span>₸ / <?=$h($x['unit'])?></span></div>
+						<div class="c2_bh"><b<?=$E(['prep', $x['id'], 'name'], $x['name'])?>><?=$h($x['name'])?></b><span>₸ / <?=$h($x['unit'])?></span><? if (!empty($has_pp)): ?><button type="button" class="c2_pp" data-id="<?=$x['id']?>" title="<?=$h(t::w('c2 Edit', 'Өзгерту'))?>"><i class="fal fa-pen"></i></button><? endif ?></div>
 						<table class="c2_tbl">
 							<tbody>
 							<? foreach ($x['rows'] as $r): ?>
-								<tr><td class="c2_l"><?=$r['lnk'] ? '<a href="#'.$r['lnk'].'" class="c2_go">'.$h($r['name']).'</a>' : $h($r['name'])?></td><td class="c2_mut"><?=$h($r['qty'])?></td><td class="c2_mut"><?=$pf($r['price'])?></td><td><?=$f($r['sum'])?></td></tr>
+								<tr><td class="c2_l"><?=$X('part_del', $r['id'])?><?=$NM($r)?></td><td><span<?=$E(['part', $r['id'], ''], $r['qv'])?>><?=$h($r['qty'])?></span></td><td class="c2_mut"><span<?=$E($r['pe'], $nv($r['price']))?>><?=$pf($r['price'])?></span></td><td><?=$f($r['sum'])?></td></tr>
 							<? endforeach ?>
+							<?=$ADD('part_add', $x['id'], 'rc')?>
 							</tbody>
-							<tfoot><tr><td class="c2_l"><?=t::w('c2 Yield', 'Шығымы')?> <?=$x['yield'] + 0?> <?=$h($x['unit'])?></td><td></td><td class="c2_mut"><?=$f($x['sum'])?></td><td class="c2_hl"><b><?=$pf($x['cost'])?></b></td></tr></tfoot>
+							<tfoot><tr><td class="c2_l"><?=t::w('c2 Yield', 'Шығымы')?> <span<?=$E(['prep', $x['id'], 'yield'], $nv($x['yield']))?>><?=$x['yield'] + 0?></span> <?=$h($x['unit'])?></td><td></td><td class="c2_mut"><?=$f($x['sum'])?></td><td class="c2_hl"><b><?=$pf($x['cost'])?></b></td></tr></tfoot>
 						</table>
 					</div>
 				<? endforeach ?>
@@ -206,15 +236,16 @@
 			<div class="c2_col">
 				<div class="c2_ch c2_ch3"><b>3</b> <?=t::w('c2 Dishes (grams)', 'Тағамдар (граммовка)')?> <span><?=count($dishes)?></span></div>
 				<? foreach ($dishes as $x): $pr = $x['price'] ? ($x['price'] - $x['sum']) / $x['price'] * 100 : 0; ?>
-					<div class="c2_card c2_blk c2_f" id="d<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
+					<div class="c2_card c2_blk c2_f<?=$x['rows'] ? '' : ' c2_blk_e'?>" id="d<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
 						<div class="c2_bh"><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?></div>
 						<table class="c2_tbl">
 							<tbody>
 							<? foreach ($x['rows'] as $r): ?>
-								<tr><td class="c2_l"><?=$r['lnk'] ? '<a href="#'.$r['lnk'].'" class="c2_go">'.$h($r['name']).'</a>' : $h($r['name'])?></td><td class="c2_mut"><?=$h($r['qty'])?></td><td class="c2_mut"><?=$pf($r['price'])?></td><td><?=$f($r['sum'])?></td></tr>
+								<tr><td class="c2_l"><?=$X('pi_del', $r['id'])?><?=$NM($r)?></td><td><span<?=$E(['pi', $r['id'], ''], $r['qv'])?>><?=$h($r['qty'])?></span></td><td class="c2_mut"><span<?=$E($r['pe'], $nv($r['price']))?>><?=$pf($r['price'])?></span></td><td><?=$f($r['sum'])?></td></tr>
 							<? endforeach ?>
+							<?=$ADD('pi_add', $x['id'], 'rc')?>
 							</tbody>
-							<tfoot><tr><td class="c2_l"><?=t::w('c2 Cost', 'Себес')?></td><td></td><td class="c2_mut"><?=$x['price'] ? round(100 - $pr).'%' : ''?></td><td class="c2_hl"><b><?=$f($x['sum'])?></b></td></tr></tfoot>
+							<? if ($x['rows']): ?><tfoot><tr><td class="c2_l"><?=t::w('c2 Cost', 'Себес')?></td><td></td><td class="c2_mut"><?=$x['price'] ? round(100 - $pr).'%' : ''?></td><td class="c2_hl"><b><?=$f($x['sum'])?></b></td></tr></tfoot><? endif ?>
 						</table>
 					</div>
 				<? endforeach ?>
@@ -228,8 +259,9 @@
 						<table class="c2_tbl">
 							<tbody>
 							<? foreach ($x['rows'] as $r): ?>
-								<tr<?=$r['miss'] ? ' class="c2_miss"' : ''?>><td class="c2_l"><?=$r['lnk'] ? '<a href="#'.$r['lnk'].'" class="c2_go">'.$h($r['name']).'</a>' : $h($r['name'])?></td><td class="c2_mut">× <?=$r['qty']?></td><td class="c2_mut"><?=$f($r['price'])?></td><td><?=$f($r['sum'])?></td></tr>
+								<tr<?=$r['miss'] ? ' class="c2_miss"' : ''?>><td class="c2_l"><?=$X('si_del', $r['id'])?><?=$NM($r)?></td><td>× <span<?=$E(['si', $r['id'], ''], $r['qv'])?>><?=$r['qty']?></span></td><td class="c2_mut"><span<?=$E($r['pe'], $nv($r['price']))?>><?=$f($r['price'])?></span></td><td><?=$f($r['sum'])?></td></tr>
 							<? endforeach ?>
+							<?=$ADD('si_add', $x['id'], 'drc')?>
 							</tbody>
 							<tfoot><tr><td class="c2_l"><?=t::w('c2 Ingredients', 'Ингредиент')?></td><td></td><td></td><td class="c2_hl"><b><?=$f($x['sum'])?></b></td></tr></tfoot>
 						</table>
@@ -238,24 +270,133 @@
 			</div>
 
 		</div>
+		<div class="c2_opt" hidden data-o="<?=$h(json_encode($OPT, JSON_UNESCAPED_UNICODE))?>"></div>
 	<? endif ?>
 	</div>
+	<? if (!empty($has_pp)) include __DIR__.'/../cost/prep_pop.php'; ?>
 
 	<script>
-	// Себес-2: іздеу және сілтеме бойынша блокқа өту (жарқырап көрсетеді)
+	// Себес-2: іздеу, блокқа өту, ұяшықты басып өзгерту, жол қосу/өшіру. Сақталғаннан кейін .c2_page AJAX-пен жаңарады (fun.js ajx)
 	(function () {
-		var q = document.querySelector('.c2_q');
-		if (q) q.addEventListener('input', function () {
-			var v = q.value.trim().toLowerCase();
+		if (window.c2Init) return; window.c2Init = 1;
+		var T = {
+			saved: <?=json_encode(t::w('c2 Saved', 'Сақталды'))?>, err: <?=json_encode(t::w('c2 Error, try again', 'Қате, қайта көріңіз'))?>,
+			net: <?=json_encode(t::w('c2 Connection error', 'Байланыс қатесі'))?>, pick: <?=json_encode(t::w('c2 Choose from the list', 'Тізімнен таңдаңыз'))?>,
+			qty: <?=json_encode(t::w('c2 Enter quantity', 'Мөлшерін жазыңыз'))?>, name: <?=json_encode(t::w('c2 Enter name', 'Атауын жазыңыз'))?>,
+			exists: <?=json_encode(t::w('c2 This name already exists', 'Мұндай атау бар'))?>, yield: <?=json_encode(t::w('c2 Enter yield', 'Шығымын жазыңыз'))?>,
+			self: <?=json_encode(t::w('c2 Cannot contain itself', 'Өз құрамына кіре алмайды'))?>, del: <?=json_encode(t::w('c2 Delete this row?', 'Бұл жолды өшіру керек пе? Тағы басыңыз'))?>,
+			item: <?=json_encode(t::w('c2 Item', 'Зат'))?>, price: <?=json_encode(t::w('c2 Price', 'Бағасы'))?>, nm: <?=json_encode(t::w('c2 Name', 'Атауы'))?>
+		};
+		var esc = function (t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; };
+		var W = function (u) { u = (u || '').toLowerCase().trim(); return u == 'кг' || u == 'л'; };
+		var uLab = function (u) { u = (u || '').toLowerCase().trim(); return u == 'кг' ? 'г' : (u == 'л' ? 'мл' : (u || 'шт')); };
+		var qv = function () { var el = document.querySelector('.c2_q'); return el ? el.value : ''; };
+		function filter() {
+			var v = qv().trim().toLowerCase();
 			document.querySelectorAll('.c2_f').forEach(function (el) { el.hidden = v !== '' && el.dataset.q.indexOf(v) < 0; });
-		});
+		}
+		function reload() { var keep = qv(); ajx('.c2_page', function () { var el = document.querySelector('.c2_q'); if (el && keep) { el.value = keep; filter(); } }); }
+		function send(a, data, ok) {
+			var fd = new FormData(); for (var k in data) fd.append(k, data[k]);
+			return fetch('/products/cost2/get.php?a=' + a, { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {
+				t = t.trim();
+				if (t == 'yes' || t.indexOf('id:') === 0) { mess(T.saved); if (ok) ok(t); reload(); return true; }
+				mess(T[t] || T.err, 'warn'); return false;
+			}).catch(function () { mess(T.net, 'err'); return false; });
+		}
+		$(document).on('input', '.c2_q', filter);
 		$(document).on('click', '.c2_go', function (e) {
 			var t = document.getElementById(this.getAttribute('href').slice(1));
 			if (!t) return;
 			e.preventDefault();
-			if (t.hidden) { q.value = ''; q.dispatchEvent(new Event('input')); }
+			if (t.hidden) { document.querySelector('.c2_q').value = ''; filter(); }
 			t.scrollIntoView({ behavior: 'smooth', block: 'center' });
 			t.classList.remove('c2_flash'); void t.offsetWidth; t.classList.add('c2_flash');
+		});
+
+		// ұяшықты өзгерту: басқанда input шығады, Enter/сыртқа басу — сақтау, Esc — болдырмау
+		$(document).on('click', '.c2_e', function (e) {
+			var el = this; if (el.querySelector('input,select')) return;
+			e.preventDefault(); e.stopPropagation();
+			var old = el.innerHTML, f = el.dataset.f, inp;
+			if (f == 'unit') { inp = document.createElement('select'); inp.innerHTML = '<option>кг</option><option>шт</option><option>л</option>'; inp.value = el.dataset.v; }
+			else { inp = document.createElement('input'); inp.value = el.dataset.v; if (f != 'name') inp.inputMode = 'decimal'; }
+			inp.className = 'c2_ein' + (f == 'name' ? ' c2_ein_w' : '');
+			el.innerHTML = ''; el.appendChild(inp); inp.focus(); if (inp.select) inp.select();
+			var done = false;
+			var close = function (save) {
+				if (done) return; done = true;
+				var v = inp.value.trim();
+				if (!save || v === el.dataset.v || v === '') { el.innerHTML = old; return; }
+				el.innerHTML = esc(v);
+				send(el.dataset.a, { id: el.dataset.id, f: f, v: v }).then(function (ok) { if (!ok) el.innerHTML = old; });
+			};
+			inp.addEventListener('keydown', function (ev) { if (ev.key == 'Enter') { ev.preventDefault(); close(true); } if (ev.key == 'Escape') close(false); });
+			inp.addEventListener('blur', function () { close(true); });
+			if (f == 'unit') inp.addEventListener('change', function () { close(true); });
+		});
+
+		// жолды өшіру (екінші басу растайды)
+		$(document).on('click', '.c2_x', function (e) {
+			e.preventDefault(); e.stopPropagation();
+			var b = this;
+			if (!b.classList.contains('c2_x_ask')) { b.classList.add('c2_x_ask'); b.title = T.del; setTimeout(function () { b.classList.remove('c2_x_ask'); }, 2500); return; }
+			send(b.dataset.a, { id: b.dataset.id });
+		});
+
+		// «+ Зат қосу»: тізімнен іздеп таңдау + мөлшер
+		var dl = 0;
+		function opts(k) {
+			var O = JSON.parse(document.querySelector('.c2_opt').dataset.o), res = [];
+			k.split('').forEach(function (t) { res = res.concat(O[t] || []); });
+			return res;
+		}
+		$(document).on('click', '.c2_add_b:not(.c2_raw_b)', function () {
+			var tr = this.closest('.c2_add'), list = opts(tr.dataset.k), id = 'c2dl' + (++dl);
+			var td = tr.firstElementChild;
+			td.innerHTML = '<div class="c2_addf"><input class="c2_ein c2_ein_w c2_it" list="' + id + '" placeholder="' + esc(T.item) + '"><datalist id="' + id + '">' +
+				list.map(function (x) { return '<option value="' + esc(x.n) + '">'; }).join('') + '</datalist>' +
+				'<input class="c2_ein c2_aq" inputmode="decimal"><span class="c2_au"></span><button type="button" class="c2_ok"><i class="far fa-check"></i></button></div>';
+			var it = td.querySelector('.c2_it'), aq = td.querySelector('.c2_aq'), au = td.querySelector('.c2_au');
+			var find = function () { var v = it.value.trim().toLowerCase(); for (var i = 0; i < list.length; i++) if (list[i].n.trim().toLowerCase() == v) return list[i]; return null; };
+			var isSet = tr.dataset.a == 'si_add';
+			it.addEventListener('input', function () { var x = find(); au.textContent = x ? (isSet ? 'дана' : uLab(x.u)) : ''; });
+			it.focus();
+			var go = function () {
+				var x = find(); if (!x) { mess(T.pick, 'warn'); it.focus(); return; }
+				var q = parseFloat(aq.value.replace(',', '.')); if (!(q > 0)) { mess(T.qty, 'warn'); aq.focus(); return; }
+				send(tr.dataset.a, { to: tr.dataset.to, item: x.c, q: aq.value });
+			};
+			td.querySelector('.c2_ok').addEventListener('click', go);
+			aq.addEventListener('keydown', function (ev) { if (ev.key == 'Enter') { ev.preventDefault(); go(); } });
+			it.addEventListener('keydown', function (ev) { if (ev.key == 'Enter') { ev.preventDefault(); aq.focus(); } });
+		});
+
+		// жаңа шикізат
+		$(document).on('click', '.c2_raw_b', function () {
+			var td = this.parentNode;
+			td.innerHTML = '<div class="c2_addf"><input class="c2_ein c2_ein_w c2_rn" placeholder="' + esc(T.nm) + '"><select class="c2_ein c2_ru"><option>кг</option><option>шт</option><option>л</option></select>' +
+				'<input class="c2_ein c2_rp" inputmode="decimal" placeholder="' + esc(T.price) + '"><button type="button" class="c2_ok"><i class="far fa-check"></i></button></div>';
+			var go = function () { send('raw_add', { name: td.querySelector('.c2_rn').value, unit: td.querySelector('.c2_ru').value, price: td.querySelector('.c2_rp').value }); };
+			td.querySelector('.c2_ok').addEventListener('click', go);
+			td.querySelector('.c2_rp').addEventListener('keydown', function (ev) { if (ev.key == 'Enter') { ev.preventDefault(); go(); } });
+			td.querySelector('.c2_rn').focus();
+		});
+
+		// жаңа дайындама: Себес бетінің ортақ терезесі (шаблон, ЖИ) болса — сол, болмаса осы жердегі қысқа форма
+		$(document).on('click', '.c2_prep_new', function () {
+			if (typeof window.openPrep == 'function') { window.openPrep(null); return; }
+			var f = document.querySelector('.c2_newp'); f.hidden = !f.hidden; if (!f.hidden) f.querySelector('[name=name]').focus();
+		});
+		$(document).on('click', '.c2_pp', function () { if (typeof window.openPrep == 'function') window.openPrep(+this.dataset.id); });
+		document.addEventListener('prep:saved', function () { reload(); });
+		$(document).on('submit', '.c2_newp', function (e) {
+			e.preventDefault();
+			var f = this;
+			send('prep_add', { name: f.name.value, unit: f.unit.value, yield: f.yield.value }, function (t) {
+				var id = t.slice(3);
+				$(document).one('ajx:done', function () { var b = document.getElementById('p' + id); if (b) { b.scrollIntoView({ block: 'center' }); var a = b.querySelector('.c2_add_b'); if (a) a.click(); } });
+			});
 		});
 	})();
 	</script>
