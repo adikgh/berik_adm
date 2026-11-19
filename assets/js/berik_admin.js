@@ -213,8 +213,8 @@ $(document).ready(function() {
 	$('html').on('click', '.cpay_i', function() {
 		var b = $(this), box = b.closest('.cpay'), sum = +box.attr('data-sum'), m = b.attr('data-m'), cash = 0;
 		if (b.hasClass('cpay_act')) {
-			if (!confirm(w('Remove mark?', 'Белгіні алып тастайық па?'))) return;
-			m = '';
+			if (!b.data('ok')) return ask(w('Remove mark?', 'Белгіні алып тастайық па?'), function () { b.data('ok', 1).click(); }, { ok: w('Remove', 'Алып тастау'), danger: true });
+			b.data('ok', 0); m = '';
 		} else if (m == 'mix') {
 			var v = prompt(w('Mix cash prompt', 'Қолма-қол қанша алды? Қалғаны Kaspi болып жазылады.') + ' (' + fmt(sum) + ' тг)', '');
 			if (v === null) return;

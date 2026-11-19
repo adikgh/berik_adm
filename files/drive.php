@@ -52,7 +52,7 @@
 			<? endif ?>
 		<? else: ?>
 			<p>Қосулы<?=(!empty($tok['email']) ? ': <b>'.htmlspecialchars($tok['email']).'</b>' : '')?>. Файлдар Drive-та «<?=htmlspecialchars(GDRIVE_ROOT)?>» папкасына жиналады, хостингте сақталмайды.</p>
-			<form method="post" onsubmit="return confirm('Google Drive-ты ажыратамыз ба? Бұрынғы файлдар Drive-та қалады, бірақ сайт оларды аша алмайды.')">
+			<form method="post" onsubmit="var f = this; if (!window.ask) return confirm('Google Drive-ты ажыратамыз ба?'); ask('Google Drive-ты ажыратамыз ба? Бұрынғы файлдар Drive-та қалады, бірақ сайт оларды аша алмайды.', function () { var i = document.createElement('input'); i.type = 'hidden'; i.name = 'disconnect'; i.value = '1'; f.appendChild(i); f.submit(); }, { ok: 'Ажырату', danger: true }); return false">
 				<button class="wb_btn wb_btn_red" name="disconnect" value="1"><i class="fal fa-unlink"></i> Ажырату</button>
 			</form>
 		<? endif ?>
