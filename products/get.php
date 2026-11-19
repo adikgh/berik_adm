@@ -130,6 +130,14 @@
       exit();
 	}
 
+	// архивтен шығару (arh = 0)
+	if (isset($_GET['product_restore'])) {
+		if (!$user_id || !$company) exit('error');
+		$id = intval(@$_POST['id']); $cmp = (int)$company;
+		$upd = db::query("UPDATE `product` SET arh = 0 WHERE id = '$id' and company_id = '$cmp'");
+		exit($upd ? 'yes' : 'error');
+	}
+
    // product_delete
 	// if(isset($_GET['product_delete'])) {
 	// 	$id = strip_tags($_POST['id']);

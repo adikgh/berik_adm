@@ -36,6 +36,10 @@
 		else $no_catalog['items'][] = $pr_d;
 	}
 	if ($no_catalog['items']) $catalogs[0] = $no_catalog;
+	// архивтегі тағамдар бөлек «Архив» санатында (жалпы тізімде көрінбейді)
+	$arh_items = [];
+	$aq = db::query("select * from product where company_id = '$company' and arh = 1 order by COALESCE(NULLIF(TRIM(name_kz), ''), name_ru) asc, id asc");
+	while ($aq && $x = mysqli_fetch_assoc($aq)) $arh_items[] = $x;
 	// QR мәзірдегі «Ұсыныс» (★): тағам өзі не бүкіл санаты белгіленеді
 	$rec_on = fun::has_col('product', 'recommend') && fun::has_col('product_catalog', 'recommend');
 	$rec_n = 0; $rec_k = 0;
@@ -123,6 +127,7 @@
 							<? foreach ($catalogs as $cat): if (!$cat['items']) continue; ?>
 								<a class="k_br_i" href="#cat=<?=$cat['id']?>" data-cat="<?=$cat['id']?>"><span><?=htmlspecialchars($cat['name_'.$lang] ?: $cat['name_ru'])?></span><small class="pr_cat_cnt"><?=count($cat['items'])?></small></a>
 							<? endforeach ?>
+							<? if ($arh_items): ?><a class="k_br_i pr_arh_chip" href="#cat=arh" data-cat="arh"><i class="fal fa-archive"></i> <span>Архив</span><small class="pr_cat_cnt"><?=count($arh_items)?></small></a><? endif ?>
 						</div>
 					</div>
 				</div>
@@ -162,6 +167,30 @@
 						<? endforeach ?>
 					</div>
 				<? endforeach ?>
+				<? if ($arh_items): ?>
+					<div class="pr_grp pr_grp_arh" data-cat="arh">
+						<span class="pr_grp_clr" style="background:#9aa1ab"></span>
+						<span class="pr_grp_name">Архив</span>
+						<span class="pr_grp_cnt"><?=count($arh_items)?></span>
+						<span class="pr_arh_note">Бұл тағамдар кассада, мәзірде сатылмайды. Қайтару үшін «Архивтен шығару» басыңыз.</span>
+					</div>
+					<div class="ctg_list">
+						<? $an = 0; foreach ($arh_items as $pr_d): $an++; ?>
+							<div class="ctg_i pr_row pr_row_arh" data-id="<?=$pr_d['id']?>" data-cat="arh" data-name="<?=htmlspecialchars(mb_strtolower(fun::name_text($pr_d['name_kz']).' '.fun::name_text($pr_d['name_ru'])))?>">
+								<div class="ctg_num"><?=$an?></div>
+								<div class="ctg_clr" style="background:#c3c8d0"><? if (!empty($pr_d['img'])): ?><img class="pph_img" src="<?=(preg_match('~^https?://~', $pr_d['img']) ? htmlspecialchars($pr_d['img']) : '/assets/uploads/products/'.rawurlencode($pr_d['img']))?>" alt="" loading="lazy" onerror="this.remove()"><? endif ?></div>
+								<a class="ctg_name" href="item/?id=<?=$pr_d['id']?>">
+									<div class="ctg_name_kz"><?=fun::name_html($pr_d['name_kz'] ?: $pr_d['name_ru'])?></div>
+									<div class="ctg_name_ru"><?=($pr_d['name_ru'] && fun::name_text($pr_d['name_ru']) != fun::name_text($pr_d['name_kz']) ? fun::name_html($pr_d['name_ru']) : '')?></div>
+								</a>
+								<div class="ctg_cnt pr_pr"><?=((int)$pr_d['price'] ? number_format((int)$pr_d['price'], 0, '', ' ').' тг' : '—')?></div>
+								<div class="ctg_btns">
+									<div class="ctg_b pr_unarh" data-id="<?=$pr_d['id']?>" title="Архивтен шығарып, қайта сатуға қою"><i class="fal fa-box-open"></i><span>Архивтен шығару</span></div>
+								</div>
+							</div>
+						<? endforeach ?>
+					</div>
+				<? endif ?>
 				<div class="ds_nr pr_none" style="display:none"><i class="fal fa-search"></i><p><?=t::w('Nothing found', 'Ештеңе табылмады')?></p></div>
 			</div>
 
@@ -269,6 +298,12 @@
 		.pr_seg_b[hidden]{ display: none; }
 		.pr_ai_kind{ height: 48px; padding: 0 14px; border: 1px solid #f0d58a; border-radius: 12px; background: #fff8e1; color: #8a6100; font: inherit; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
 		.pr_ai_kind[disabled]{ opacity: .6; cursor: wait; } @media (max-width: 700px){ .pr_ai_kind{ width: 100%; justify-content: center; } }
+		.pr_arh_chip i{ font-size: 13px; opacity: .7; }
+		.pr_arh_note{ margin-left: 12px; font-size: 13px; color: var(--bp-muted, #8a8f98); }
+		.pr_row_arh{ opacity: .85; } .pr_row_arh .ctg_name{ color: #5d6470; }
+		.ctg_btns .pr_unarh{ width: auto; padding: 0 12px; gap: 6px; display: inline-flex; align-items: center; font-size: 13px; font-weight: 700; color: var(--bp-green, #0EA768); background: #eefaf4; cursor: pointer; }
+		.ctg_btns .pr_unarh i{ color: var(--bp-green, #0EA768); }
+		@media (max-width: 700px){ .ctg_btns .pr_unarh span{ display: none; } .ctg_btns .pr_unarh{ width: 40px; padding: 0; justify-content: center; } .pr_arh_note{ display: block; margin: 4px 0 0; } }
 		.pr_kt_busy{ opacity: .4 !important; pointer-events: none; }
 		.pr_ai_all{ height: 48px; padding: 0 14px; border: 1px solid #d9d2f7; border-radius: 12px; background: #f5f2ff; color: #5b3fd6; font: inherit; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
 		.pr_ai_all:hover{ background: #ece6ff; } .pr_ai_all[disabled]{ opacity: .6; cursor: wait; }
@@ -325,13 +360,13 @@
 				var b = e.target.closest('.pr_kind_b'); if (!b) return;
 				kind = b.dataset.k; kindShow(); apply();
 			});
-			var cur = (location.hash.match(/cat=(\d+)/) || [])[1] || '';
+			var cur = (location.hash.match(/cat=(\d+|arh)/) || [])[1] || '';
 			if (cur && !document.querySelector('.pr_cat_chips [data-cat="' + cur + '"]')) cur = '';
 			function apply() {
 				var q = inp ? inp.value.trim().toLowerCase() : '', shown = {}, any = false;
 				chips.forEach(function (c) { c.classList.toggle('k_br_act', c.dataset.cat === cur); });
 				document.querySelectorAll('.pr_row').forEach(function (r) {
-					var ok = (!cur || r.dataset.cat === cur) && (!q || r.dataset.name.indexOf(q) > -1) && (!onlyNc || r.dataset.nocomp) && (!kind || (kind == 'unk' ? !!r.dataset.unk : !r.dataset.unk && (kind == 'set') == !!r.dataset.set));
+					var ok = (cur ? r.dataset.cat === cur : r.dataset.cat !== 'arh') &&  (!q || r.dataset.name.indexOf(q) > -1) && (!onlyNc || cur === 'arh' || r.dataset.nocomp) && (!kind || cur === 'arh' || (kind == 'unk' ? !!r.dataset.unk : !r.dataset.unk && (kind == 'set') == !!r.dataset.set));
 					r.style.display = ok ? '' : 'none';
 					if (ok) { shown[r.dataset.cat] = 1; any = true; }
 				});
@@ -395,7 +430,7 @@
 
 			// Сет / Позиция белгісі (products/get.php?kind): басқанда ауысады, бет жаңармайды
 			function kindCnt() {
-				var a = document.querySelectorAll('.pr_row').length, n = document.querySelectorAll('.pr_row[data-set]').length, u = document.querySelectorAll('.pr_row[data-unk]').length;
+				var a = document.querySelectorAll('.pr_row:not(.pr_row_arh)').length, n = document.querySelectorAll('.pr_row[data-set]').length, u = document.querySelectorAll('.pr_row[data-unk]').length;
 				var x = document.querySelector('.pr_kind_n1'), y = document.querySelector('.pr_kind_n0'), z = document.querySelector('.pr_kind_nu');
 				if (x) x.textContent = n; if (y) y.textContent = a - n - u; if (z) { z.textContent = u; z.parentNode.hidden = !u; }
 				var ak = document.querySelector('.pr_ai_kind span'); if (ak) { ak.textContent = 'ЖИ: түрін анықтау (' + u + ')'; ak.parentNode.hidden = !u; }
@@ -421,6 +456,19 @@
 			});
 
 			document.addEventListener('pr:kind', function () { kindCnt(); if (kind) apply(); }); // «Құрамы» терезесінде түрі ауысса
+			// архивтен шығару (products/get.php?product_restore), тізім бет жаңартпай жаңарады
+			document.addEventListener('click', function (e) {
+				var b = e.target.closest('.pr_unarh'); if (!b || b.classList.contains('pr_kt_busy')) return;
+				e.preventDefault();
+				var fd = new FormData(); fd.append('id', b.dataset.id);
+				b.classList.add('pr_kt_busy');
+				fetch('/products/get.php?product_restore', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {
+					b.classList.remove('pr_kt_busy');
+					if (t.trim() != 'yes') { msg(T.err); return; }
+					msg('Архивтен шығарылды'); ajx('.pr_page');
+				}).catch(function () { b.classList.remove('pr_kt_busy'); msg(T.err); });
+			});
+
 			// ЖИ: түрі белгісіз тағамдарды Сет / Позиция деп анықтау (item/kind_ai.php), бәрі бір сұраумен
 			document.addEventListener('click', function (e) {
 				var b = e.target.closest('.pr_ai_kind'); if (!b || b.disabled) return;
