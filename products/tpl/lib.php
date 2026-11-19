@@ -138,9 +138,12 @@ class gtpl {
 	// Жаңа шикізаттың бағасы: басқа компаниялардағы сол аттас заттың медианасы, болмаса ортақ кэш (бұрын ЖИ бағалаған)
 	public static function price_guess($cmp, $name, $unit) {
 		$cmp = (int)$cmp; $e = self::e($name); $u = self::e($unit); $p = [];
-		$q = db::query("select price from product_raw where company_id <> '$cmp' and lower(name_ru) = lower('$e') and unit = '$u' and price > 0
-			union all select c.price from product_comp c where c.company_id <> '$cmp' and lower(c.name_ru) = lower('$e') and c.unit = '$u' and c.price > 0
-			".(self::col('product_comp', 'price_src') ? "and (c.price_src is null or c.price_src <> 'ai')" : "")." and not exists (select 1 from product_comp_part x where x.comp_id = c.id)");
+		// ЖИ бағалаған шикізат (оған байланған құрамның price_src = ai) медианаға кірмейді
+		$ai = self::col('product_comp', 'price_src');
+		$q = db::query("select r.price from product_raw r where r.company_id <> '$cmp' and lower(r.name_ru) = lower('$e') and r.unit = '$u' and r.price > 0
+			".($ai ? "and not exists (select 1 from product_comp a where a.raw_id = r.id and a.price_src = 'ai')" : "")."
+			union all select c.price from product_comp c where c.company_id <> '$cmp' and lower(c.name_ru) = lower('$e') and c.unit = '$u' and c.price > 0 and (c.raw_id is null or c.raw_id = 0)
+			".($ai ? "and (c.price_src is null or c.price_src <> 'ai')" : "")." and not exists (select 1 from product_comp_part x where x.comp_id = c.id)");
 		while ($q && $r = mysqli_fetch_row($q)) $p[] = (int)$r[0];
 		if ($p) { sort($p); return [$p[(int)floor((count($p) - 1) / 2)], 'db']; }
 		$t = db::query("show tables like 'grammovka_price'");
@@ -160,6 +163,8 @@ class gtpl {
 			where company_id = '$cmp' and (lower(name_ru) = lower('$e') or lower(name_kz) = lower('$e')) order by parts desc, id limit 1");
 		if ($q && ($r = mysqli_fetch_assoc($q))) {
 			$id = (int)$r['id'];
+			// бұрын закупсыз ашылған шикізат (kind raw, рецептсіз) — закупқа байланады, бағасы сақталады
+			if ((!$semi || (int)$r['price']) && !$r['parts'] && !$r['raw_id'] && $r['kind'] == 'raw') self::link_raw($id);
 			if ($semi && $depth < 5 && !$r['parts'] && !$r['raw_id'] && !(int)$r['price'] && ($t = self::tpl($semi))) {
 				$y = (float)$t['yield_qty'] > 0 ? (float)$t['yield_qty'] : 1; $u = self::unit($t['unit'] ?: $unit);
 				db::query("update product_comp set kind = 'semi', unit = '$u', yield_qty = '$y', ubd_dt = NOW() where id = '$id'");
@@ -175,18 +180,58 @@ class gtpl {
 			self::semi_parts($cmp, $id, $semi, $variant, $created, $depth);
 			return $id;
 		}
-		// шикізат: закупта (product_raw) аттасы болса соған байланады, болмаса баға басқа компаниялардан / кэштен
-		$u = self::unit($unit); $raw = 0; $price = 0; $src = '';
-		$r = mysqli_fetch_assoc(db::query("select id, price from product_raw where company_id = '$cmp' and (lower(name_ru) = lower('$e') or lower(name_kz) = lower('$e')) order by id limit 1"));
-		if ($r) { $raw = (int)$r['id']; $price = (int)$r['price']; }
-		else list($price, $src) = self::price_guess($cmp, $name, $u);
+		// шикізат: «+ Шикізат қосу» сияқты закупқа (product_raw) жазылады — аттасы болса соған байланады,
+		// болмаса жаңасы ашылады, бағасы басқа компаниялардан / кэштен (табылмаса ЖИ бағалайды)
+		$u = self::unit($unit); $price = 0; $src = '';
+		$raw = self::raw_id($cmp, $name, $u, $price, $src, $new);
+		if (!$raw) return 0;
 		$sc = $pc && $src !== '' ? ", price_src" : ''; $sv = $sc ? ", '$src'" : '';
-		if (!db::query("insert into product_comp (company_id, name_kz, name_ru, unit, kind, price, raw_id$sc) values ('$cmp', '$e', '$e', '$u', 'raw', '$price', ".($raw ?: 'null')."$sv)")) return 0;
+		if (!db::query("insert into product_comp (company_id, name_kz, name_ru, unit, kind, price, raw_id$sc) values ('$cmp', '$e', '$e', '$u', 'raw', '$price', '$raw'$sv)")) return 0;
 		$id = (int)mysqli_insert_id(db::$connect); $created++;
-		if (!$raw && !$price) self::$noprice[] = $id;
+		if ($new && !$price) self::$noprice[] = $id;
 		return $id;
 	}
+	// Компанияның закуптағы шикізаты атымен, жоқ болса ашылады ($new = 1). $price, $src — бағасы және көзі (жаңасында)
+	public static function raw_id($cmp, $name, $unit, &$price = 0, &$src = '', &$new = 0) {
+		$cmp = (int)$cmp; $e = self::e(trim((string)$name)); $new = 0; $src = '';
+		$r = mysqli_fetch_assoc(db::query("select id, price from product_raw where company_id = '$cmp' and (lower(name_ru) = lower('$e') or lower(name_kz) = lower('$e')) order by id limit 1"));
+		if ($r) { $price = (int)$r['price']; return (int)$r['id']; }
+		$u = self::unit($unit);
+		list($price, $src) = self::price_guess($cmp, $name, $u);
+		if (!db::query("insert into product_raw (company_id, name_kz, name_ru, unit, price) values ('$cmp', '$e', '$e', '$u', '".(int)$price."')")) return 0;
+		$new = 1;
+		return (int)mysqli_insert_id(db::$connect);
+	}
 	public static function unit($u) { return in_array($u, ['кг', 'л', 'шт']) ? $u : 'шт'; }
+
+	// Закупсыз шикізат-құрамды (comp) закупқа байлау: product_raw табылады / ашылады (comp бағасымен),
+	// дайындамалардағы сол құрам жолдары шикізат жолына (raw_id) ауысады — қолмен қосылғандай. Қайта іске қосуға болады.
+	public static function link_raw($comp_id) {
+		$comp_id = (int)$comp_id;
+		$c = mysqli_fetch_assoc(db::query("select id, company_id, name_ru, name_kz, unit, price, raw_id from product_comp c where id = '$comp_id'
+			and kind = 'raw' and not exists (select 1 from product_comp_part p where p.comp_id = c.id)"));
+		if (!$c) return 0;
+		$raw = (int)$c['raw_id'];
+		if (!$raw) {
+			$cmp = (int)$c['company_id']; $nm = trim($c['name_ru'] ?: $c['name_kz']); $e = self::e($nm); $u = self::unit($c['unit']); $p = (int)$c['price'];
+			$r = mysqli_fetch_assoc(db::query("select id, price from product_raw where company_id = '$cmp' and (lower(name_ru) = lower('$e') or lower(name_kz) = lower('$e')) order by id limit 1"));
+			if ($r) { $raw = (int)$r['id']; if (!(int)$r['price'] && $p > 0) db::query("update product_raw set price = '$p' where id = '$raw'"); }
+			elseif (db::query("insert into product_raw (company_id, name_kz, name_ru, unit, price) values ('$cmp', '".self::e($c['name_kz'] ?: $nm)."', '$e', '$u', '$p')")) $raw = (int)mysqli_insert_id(db::$connect);
+			if (!$raw) return 0;
+			db::query("update product_comp set raw_id = '$raw', unit = '$u', ubd_dt = NOW() where id = '$comp_id'");
+		}
+		db::query("update product_comp_part set raw_id = '$raw', sub_comp_id = null where sub_comp_id = '$comp_id'");
+		return $raw;
+	}
+	// Компанияның шаблон/ЖИ ашқан закупсыз шикізатын түгел байлау ($since — осы күннен ашылғандары)
+	public static function link_all($cmp, $since = '2026-11-19') {
+		$cmp = (int)$cmp; $s = self::e($since); $n = 0;
+		$q = db::query("select id from product_comp c where company_id = '$cmp' and kind = 'raw' and (raw_id is null or raw_id = 0) and ins_dt >= '$s'
+			and not exists (select 1 from product_comp_part p where p.comp_id = c.id) order by id");
+		while ($r = mysqli_fetch_row($q)) if (self::link_raw($r[0])) $n++;
+		if ($n) self::recalc($cmp);
+		return $n;
+	}
 
 	// Дайындаманың құрамын шаблоннан жазу (бар құрамы ауыстырылады). Шикізат закупқа байланса — raw_id, әйтпесе құрам (sub_comp_id)
 	public static function semi_parts($cmp, $comp_id, $tpl_id, $variant, &$created = 0, $depth = 0) {
@@ -339,7 +384,8 @@ class gtpl {
 	public static function noprice_ids($cmp) {
 		$cmp = (int)$cmp; $ids = [];
 		$pc = self::col('product_comp', 'price_src') ? " and (c.price_src is null or c.price_src = '')" : '';
-		$q = db::query("select c.id from product_comp c where c.company_id = '$cmp' and (c.price is null or c.price = 0) and (c.raw_id is null or c.raw_id = 0)
+		$q = db::query("select c.id from product_comp c where c.company_id = '$cmp' and (c.price is null or c.price = 0)
+			and (c.raw_id is null or c.raw_id = 0 or exists (select 1 from product_raw r where r.id = c.raw_id and (r.price is null or r.price = 0)))
 			and (c.kind is null or c.kind = 'raw')$pc and not exists (select 1 from product_comp_part p where p.comp_id = c.id)
 			and (exists (select 1 from product_item i where i.comp_id = c.id) or exists (select 1 from product_comp_part p where p.sub_comp_id = c.id)) order by c.id limit 60");
 		while ($r = mysqli_fetch_row($q)) $ids[] = (int)$r[0];

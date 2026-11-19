@@ -213,5 +213,7 @@ class gtpl_ai {
 	public static function set_price($id, $p, $src) {
 		$id = (int)$id; $p = (int)$p; $s = gtpl::e($src);
 		db::query("update product_comp set price = '$p'".(gtpl::col('product_comp', 'price_src') ? ", price_src = '$s'" : '').", ubd_dt = NOW() where id = '$id' and (price is null or price = 0)");
+		// закупқа байланған болса, баға шикізаттың өзіне (Себес «Шикізат» бағаны) жазылады
+		db::query("update product_raw r join product_comp c on c.raw_id = r.id set r.price = '$p' where c.id = '$id' and (r.price is null or r.price = 0)");
 	}
 }
