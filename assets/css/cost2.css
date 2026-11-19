@@ -1,0 +1,75 @@
+/* Тағамдар ▸ Себес-2: Google кестесі стиліндегі бір бет */
+.c2_page{ padding-bottom: 40px; }
+.c2_card{ background: #fff; border-radius: 12px; box-shadow: var(--bp-shadow, 0 6px 20px rgba(0,0,0,.07)); padding: 16px 18px; margin-bottom: 14px; }
+.c2_note{ color: var(--bp-muted, #8a8f98); }
+.c2_h{ font-size: 17px; font-weight: 700; color: var(--bp-text, #222); margin: 0 0 12px; }
+.c2_h span{ font-size: 13px; font-weight: 600; color: var(--bp-muted, #8a8f98); background: var(--bp-pill, #f5f5f5); border-radius: 6px; padding: 2px 7px; margin-left: 6px; }
+
+/* жоғарғы жолақ */
+.c2_top{ display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: -4px 0 14px; }
+.c2_set{ flex: 1 1 auto; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: #fff; border-radius: 12px; box-shadow: var(--bp-shadow, 0 6px 20px rgba(0,0,0,.07)); padding: 8px 10px; }
+.c2_set span{ font-size: 13px; color: var(--bp-muted, #8a8f98); background: var(--bp-pill, #f5f5f5); border-radius: 8px; padding: 6px 10px; white-space: nowrap; }
+.c2_set span b{ color: var(--bp-text, #222); margin-left: 3px; }
+.c2_set .c2_set_t{ background: #e3f5ec; color: #0b8a55; }
+.c2_set .c2_set_t b{ color: #0b8a55; }
+.c2_set_ed{ margin-left: auto; font-size: 13px; font-weight: 600; color: var(--bp-blue, #1f75a8); padding: 6px 8px; white-space: nowrap; }
+.c2_srch{ flex: 0 1 260px; display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 14px; background: #fff; border-radius: 12px; box-shadow: var(--bp-shadow, 0 6px 20px rgba(0,0,0,.07)); color: var(--bp-muted, #8a8f98); }
+.c2_srch input{ border: 0; outline: 0; font: inherit; font-size: 15px; width: 100%; background: transparent; color: var(--bp-text, #222); }
+
+/* кесте (Google Sheets сияқты тығыз) */
+.c2_wrap{ overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
+.c2_tbl{ width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.c2_tbl th{ font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .2px; color: var(--bp-muted, #8a8f98); padding: 6px 8px; border-bottom: 1px solid var(--bp-line, #e7e7e7); white-space: nowrap; text-align: right; background: #fafbfc; }
+.c2_tbl td{ padding: 5px 8px; border-bottom: 1px solid #f0f1f3; white-space: nowrap; text-align: right; color: var(--bp-text, #222); }
+.c2_tbl .c2_l{ text-align: left; }
+.c2_tbl td.c2_l{ white-space: normal; }
+.c2_tbl tbody tr:hover td{ background: #f7fbff; }
+.c2_tbl tfoot td{ border-top: 1px solid var(--bp-line, #e7e7e7); border-bottom: 0; font-weight: 600; background: #fafbfc; }
+.c2_tbl a{ color: var(--bp-text, #222); }
+.c2_tbl a:hover{ color: var(--bp-blue, #1f75a8); }
+.c2_hl{ background: #fff8e1 !important; }
+.c2_mut{ color: var(--bp-muted, #8a8f98) !important; }
+.c2_nm{ font-weight: 600; }
+.c2_sub{ font-size: 11px; font-weight: 500; color: var(--bp-muted, #8a8f98); }
+.c2_up{ color: #c93636; }
+.c2_dn{ color: #0b8a55; }
+.c2_sum td{ padding: 7px 8px; }
+.c2_sum td.c2_nm{ min-width: 160px; }
+.c2_tag{ font-size: 11px; font-weight: 600; background: var(--bp-pill, #f5f5f5); border-radius: 6px; padding: 1px 6px; color: var(--bp-muted, #8a8f98); }
+.c2_tag_r{ background: #fdeaea; color: #c93636; }
+.c2_miss td{ color: #c93636 !important; }
+.c2_miss td a{ color: #c93636; }
+
+.c2_p{ display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+.c2_p small{ font-weight: 600; opacity: .75; }
+.c2_pos{ background: #e3f5ec; color: #0b8a55; }
+.c2_warn{ background: #fff4d6; color: #a87300; }
+.c2_neg{ background: #fdeaea; color: #c93636; }
+
+/* 4 баған: Шикізат | Дайындамалар | Тағамдар | Сеттер */
+.c2_grid{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.c2_ch{ position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: #fff; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+.c2_ch b{ width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,.25); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+.c2_ch span{ margin-left: auto; font-size: 12px; background: rgba(255,255,255,.25); border-radius: 6px; padding: 1px 7px; }
+.c2_ch1{ background: #5b6b7f; }
+.c2_ch2{ background: #c98a00; }
+.c2_ch3{ background: #1f75a8; }
+.c2_ch4{ background: #0EA768; }
+.c2_blk{ padding: 0; overflow: hidden; margin-bottom: 10px; }
+.c2_blk .c2_tbl td:first-child, .c2_blk .c2_tbl th:first-child{ padding-left: 12px; }
+.c2_blk .c2_tbl td:last-child, .c2_blk .c2_tbl th:last-child{ padding-right: 12px; }
+.c2_bh{ display: flex; align-items: baseline; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--bp-line, #e7e7e7); background: #f6f7f9; }
+.c2_bh a{ font-size: 14px; font-weight: 700; color: var(--bp-text, #222); }
+.c2_bh a:hover{ color: var(--bp-blue, #1f75a8); }
+.c2_bh span{ margin-left: auto; font-size: 12px; font-weight: 600; color: var(--bp-muted, #8a8f98); white-space: nowrap; }
+.c2_f[hidden]{ display: none; }
+.c2_flash{ animation: c2fl 1.6s ease; }
+@keyframes c2fl{ 0%, 40%{ box-shadow: 0 0 0 3px #f5b400; } 100%{ box-shadow: var(--bp-shadow, 0 6px 20px rgba(0,0,0,.07)); } }
+
+@media (max-width: 1500px){ .c2_grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px){
+	.c2_grid{ grid-template-columns: 1fr; }
+	.c2_srch{ flex: 1 1 100%; }
+	.c2_set_ed{ margin-left: 0; }
+	.c2_ch{ top: 0; }
+}

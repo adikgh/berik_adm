@@ -110,6 +110,7 @@
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='comp'?'mp_dd_i_act':'')?>" href="/products/comp/"><i class="fal fa-layer-group"></i><span><?=t::w('Ingredients', 'Құрамы')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='raw'?'mp_dd_i_act':'')?>" href="/products/raw/"><i class="fal fa-box"></i><span><?=t::w('Raw and goods', 'Шикізат (тауар)')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='cost'?'mp_dd_i_act':'')?>" href="/products/cost/#missing"><i class="fal fa-calculator"></i><span><?=t::w('Cost sheet', 'Себес')?></span><?=$wbm_b($wbm['dish'], 'Граммовкасы жоқ сатылған тағам')?></a>
+										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='cost2'?'mp_dd_i_act':'')?>" href="/products/cost2/"><i class="fal fa-table"></i><span><?=t::w('Cost table', 'Себес-2')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='products' && $pm=='stop'?'mp_dd_i_act':'')?>" href="/products/stop/"><i class="fal fa-ban"></i><span><?=t::w('Stop list', 'Стоп-лист')?></span></a>
 									</div>
 									<!-- телефондағы төменгі мәзір үшін -->
