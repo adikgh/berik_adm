@@ -2,7 +2,9 @@
 // ЖИ толтыру: шаблоны жоқ дайындама/тағамның орташа рецептін Claude құрады (интернет + базадағы ұқсас рецептер),
 // жаңа шикізаттың орташа бағасын табады. Нәтиже ортақ шаблон болып arh = 2 (тексерілмеген) сақталады:
 // келесі жолы сол атау ЖИ-сіз шаблоннан келеді, әзірлеуші dev /tpl/ бетінде бекітеді.
-// Шығын company_ai_log-та: semi_ai (дайындама), dish_ai (тағам), price_ai (баға).
+// Шығын company_ai_log-та: semi_ai (дайындама), dish_ai (тағам), price_ai (баға); модельдің аты да жазылады.
+// Модель: CLAUDE_MODEL = auto болса алдымен арзаны (Haiku), жауабы жарамсыз болса ғана Sonnet (ask()).
+// Мөлшер: ЖИ г / мл / шт береді, бізде кг/л жолы ГРАММ/МЛ-мен сақталады; кг/л-мен келсе ×1000 (gtpl::in_kg, gtpl::grams).
 require_once __DIR__.'/../../config/claude.php';
 require_once __DIR__.'/lib.php';
 
@@ -35,7 +37,7 @@ class gtpl_ai {
 		$arh = (int)@mysqli_fetch_row(db::query("select count(*) from information_schema.columns where table_schema = database() and table_name = 'company_sub' and column_name = 'arh'"))[0];
 		$co = $arh ? " and not exists (select 1 from company_sub s where s.company_id = c.company_id and s.arh = 1)" : '';
 		$q = db::query("select c.id, c.name_ru, c.unit, c.yield_qty from product_comp c where ".self::like('c.name_ru', $name)."$co
-			and exists (select 1 from product_comp_part p where p.comp_id = c.id) order by c.id desc limit 5");
+			and exists (select 1 from product_comp_part p where p.comp_id = c.id) order by c.id desc limit 3");
 		while ($q && $c = mysqli_fetch_assoc($q)) {
 			$ps = [];
 			$p = db::query("select coalesce(r.name_ru, s.name_ru) n, coalesce(r.unit, s.unit) u, p.quantity from product_comp_part p left join product_raw r on r.id = p.raw_id left join product_comp s on s.id = p.sub_comp_id where p.comp_id = '{$c['id']}'");
@@ -43,14 +45,14 @@ class gtpl_ai {
 			$out[] = 'Заготовка «'.$c['name_ru'].'», выход '.($c['yield_qty'] + 0).' '.$c['unit'].': '.implode(', ', $ps);
 		}
 		$q = db::query("select p.id, p.name_ru from product p where ".self::like('p.name_ru', $name)." and (p.arh is null or p.arh = 0)
-			and exists (select 1 from product_item i where i.product_id = p.id and i.comp_id > 0) order by p.id desc limit 3");
+			and exists (select 1 from product_item i where i.product_id = p.id and i.comp_id > 0) order by p.id desc limit 2");
 		while ($q && $d = mysqli_fetch_assoc($q)) {
 			$ps = [];
 			$p = db::query("select c.name_ru n, c.unit u, i.quantity from product_item i join product_comp c on c.id = i.comp_id where i.product_id = '{$d['id']}'");
 			while ($x = mysqli_fetch_assoc($p)) $ps[] = $x['n'].' '.(in_array($x['u'], ['кг', 'л']) ? round($x['quantity']).($x['u'] == 'л' ? ' мл' : ' г') : ($x['quantity'] + 0).' шт');
 			$out[] = 'Блюдо «'.strip_tags($d['name_ru']).'» (1 порция): '.implode(', ', $ps);
 		}
-		$q = db::query("select id, name_ru, kind, unit, yield_qty from grammovka_tpl where arh in (0, 2) and ".self::like('name_ru', $name)." order by arh, id limit 3");
+		$q = db::query("select id, name_ru, kind, unit, yield_qty from grammovka_tpl where arh in (0, 2) and ".self::like('name_ru', $name)." order by arh, id limit 2");
 		while ($q && $t = mysqli_fetch_assoc($q)) {
 			$its = gtpl::var_items($t['id'], 2);
 			$out[] = 'Наш шаблон «'.$t['name_ru'].'»'.($t['kind'] == 'semi' ? ', выход '.($t['yield_qty'] + 0).' '.$t['unit'] : ', 1 порция').': '
@@ -62,20 +64,46 @@ class gtpl_ai {
 	// Бар шаблондағы құрам аттары (ЖИ солармен атаса, компанияның шикізатымен сәйкеседі)
 	public static function known() {
 		$a = [];
-		$q = db::query("select i.name_ru, i.unit, count(*) n from grammovka_tpl_item i join grammovka_tpl t on t.id = i.tpl_id and t.arh = 0 group by i.name_ru, i.unit order by n desc limit 200");
-		while ($r = mysqli_fetch_assoc($q)) $a[] = $r['name_ru'].' ('.$r['unit'].')';
+		$q = db::query("select i.name_ru, i.unit, count(*) n from grammovka_tpl_item i join grammovka_tpl t on t.id = i.tpl_id and t.arh = 0 group by i.name_ru, i.unit order by n desc limit 120");
+		while ($r = mysqli_fetch_assoc($q)) $a[] = $r['name_ru'].' ('.(['кг' => 'г', 'л' => 'мл'][$r['unit']] ?? $r['unit']).')';
 		return $a;
 	}
 
-	public static function items($list) {
-		$items = [];
+	// ЖИ құрамы → шаблон жолдары: [['name', 'unit' => кг|л|шт, 'q' => [э, с, п] грамм/мл/дана]]. $dish = бір порция (тым үлкен мән тексеріледі)
+	public static function items($list, $dish = true) {
+		$items = []; $um = ['г' => 'кг', 'гр' => 'кг', 'g' => 'кг', 'мл' => 'л', 'ml' => 'л', 'кг' => 'кг', 'kg' => 'кг', 'л' => 'л', 'l' => 'л', 'шт' => 'шт', 'pcs' => 'шт'];
 		foreach ((array)$list as $i) {
 			$nm = trim((string)@$i['name']); if ($nm === '') continue;
-			$u = in_array(@$i['unit'], ['кг', 'л', 'шт']) ? $i['unit'] : 'кг';
-			$q = array_map(function ($x) { return max(0, round((float)$x, 3)); }, array_slice(array_pad((array)@$i['q'], 3, 0), 0, 3));
+			$ru = mb_strtolower(trim((string)@$i['unit']), 'UTF-8'); $u = $um[$ru] ?? 'кг';
+			$q = array_map(function ($x) { return max(0, round((float)str_replace(',', '.', (string)$x), 3)); }, array_slice(array_pad((array)@$i['q'], 3, 0), 0, 3));
+			// «кг»/«л» деп жазса — шын килограмм/литр: бөлшегі ×1000
+			if (in_array($ru, ['кг', 'kg', 'л', 'l'])) $q = array_map(function ($x) { return $x > 0 && $x < 1 ? $x * 1000 : $x; }, $q);
 			if (array_sum($q) > 0) $items[] = ['name' => mb_strtoupper(mb_substr($nm, 0, 1)).mb_substr($nm, 1), 'unit' => $u, 'q' => $q];
 		}
+		$kg = gtpl::in_kg($items);
+		foreach ($items as &$it) { $un = $it['unit']; $it['q'] = array_map(function ($x) use ($un, $kg, $dish) { return gtpl::grams($un, $x, $kg, $dish); }, $it['q']); }
+		unset($it);
 		return $items;
+	}
+	// Жауаптың жарамдылығы: Стандарт (не Эконом) нұсқада кемі 2 жол
+	public static function items_ok($items) {
+		$n = 0; foreach ((array)$items as $it) if ((float)$it['q'][1] > 0 || (float)$it['q'][0] > 0) $n++;
+		return $n >= 2;
+	}
+
+	// ЖИ шақыру. CLAUDE_MODEL = auto: алдымен арзан модель (claude::CHEAP), жауабы оқылмаса не $ok өтпесе — claude::MID.
+	// Нақты модель қойылса — тек сол. Әр шақыру (моделімен) company_ai_log-та. claude::$usd = барлық әрекеттің жалпы бағасы.
+	public static function ask($system, $user, $feature, $searches, $ok, $max_tokens = 12000) {
+		$mdl = claude::model(); $usd = 0; $d = null;
+		foreach ($mdl == 'auto' ? [claude::CHEAP, claude::MID] : [$mdl] as $m) {
+			$d = claude::web($system, $user, $feature, $searches, $m, 'medium', $max_tokens);
+			$usd += claude::$usd;
+			if ($d && $ok($d)) break;
+			if ($d) { error_log("$feature: $m answer rejected"); $d = null; claude::$err = 'json'; }
+			if (in_array(claude::$err, ['no_key', 'balance', 'key', 'refusal'])) break;
+		}
+		claude::$usd = $usd;
+		return $d;
 	}
 
 	// Орташа рецепт. $kind = semi (дайындама) / dish (тағам). Қайтарады: ['id' => шаблон id, 'new' => жаңадан жасалған шаблондар саны] не null
@@ -97,25 +125,25 @@ class gtpl_ai {
 			.($semi ? "Нужна техкарта ЗАГОТОВКИ (полуфабриката): соус, тесто, рис для суши, бульон, маринованное мясо и т.п. Количества — на весь выход (yield).\n"
 				: "Нужна граммовка ОДНОЙ ПОРЦИИ блюда.\n")
 			."Обязательно сначала поищи в интернете (web_search, 1-2 запроса) типичные рецепты/техкарты (2-3 источника), учти рецепты из нашей базы (ниже) и составь СРЕДНИЙ рецепт в 3 вариантах: 1 = Эконом (дешевле), 2 = Стандарт (типичный), 3 = Премиум (лучше ингредиенты; можно нули, если не отличается).\n"
-			."Правила:\n- unit \"кг\": количество в ГРАММАХ; unit \"л\": в МИЛЛИЛИТРАХ; unit \"шт\": в штуках. Если ингредиента нет в варианте — 0.\n"
+			."Правила:\n- Единицы ингредиентов ТОЛЬКО \"г\" (граммы), \"мл\" (миллилитры) или \"шт\". Никаких кг/л и дробей: рис 0.7 кг — неверно, пиши {\"unit\":\"г\",\"q\":[600,700,750]}; соус 50 мл — {\"unit\":\"мл\",\"q\":[40,50,60]}. Если ингредиента нет в варианте — 0.\n"
 			."- Воду не включай (она бесплатна), но учитывай её в выходе.\n- Упаковку не включай".($semi ? '' : ', кроме случаев, когда она есть в наших примерах')." .\n"
 			."- Если ингредиент сам является заготовкой, которую кухня готовит сама (соус, тесто, рис для суши, бульон, готовая курица, кляр, маринад), поставь \"semi\": true и дай его техкарту в списке semis (со своими ingredients, unit, yield; вложенность до 2 уровней). Если такая заготовка уже есть в нашем списке — просто используй её название, техкарту не давай.\n"
 			."- Названия ингредиентов — как в нашем списке, если это тот же продукт (не заменяй продукт другим: спагетти не лапша, бекон не колбаса); иначе коротко по-русски, с заглавной буквы, без брендов.\n"
 			."- yield — выход заготовки в её unit (например 1 кг соуса, 2.3 кг риса, 10 л бульона).\n- keys: 2-5 вариантов названия через | для поиска.\n- note: 1 короткое предложение, на чём основано (источники, типичный выход).\n"
 			."Ответь в конце ТОЛЬКО одним блоком ```json ... ``` вида:\n"
-			."{\"name\":\"...\",".($semi ? "\"unit\":\"кг\",\"yield\":1," : "\"cat\":\"...\",")."\"keys\":\"...\",\"note\":\"...\",\"ingredients\":[{\"name\":\"...\",\"unit\":\"кг\",\"q\":[0,0,0],\"semi\":false}],"
+			."{\"name\":\"...\",".($semi ? "\"unit\":\"кг\",\"yield\":1," : "\"cat\":\"...\",")."\"keys\":\"...\",\"note\":\"...\",\"ingredients\":[{\"name\":\"...\",\"unit\":\"г\",\"q\":[0,0,0],\"semi\":false}],"
 			."\"semis\":[{\"name\":\"...\",\"unit\":\"кг\",\"yield\":1,\"keys\":\"...\",\"note\":\"...\",\"ingredients\":[...]}]}\n\n"
 			."Наши ингредиенты: ".implode(', ', self::known())."\n\nНаши готовые заготовки (у них уже есть техкарта): ".implode(', ', $have);
 		$user = ($semi ? 'Техкарта заготовки' : 'Граммовка блюда').": «".$name."»".($cat !== '' ? " (категория меню: $cat)" : '')
 			."\n\nПохожие рецепты из нашей базы:\n".($ctx ? '- '.implode("\n- ", $ctx) : '(нет)');
-		$d = claude::web($system, $user, $semi ? 'semi_ai' : 'dish_ai', 3);
+		$d = self::ask($system, $user, $semi ? 'semi_ai' : 'dish_ai', 2, function ($d) use ($semi) { return self::items_ok(self::items(@$d['ingredients'], !$semi)); });
 		if (!$d) return null;
-		$items = self::items(@$d['ingredients']);
+		$items = self::items(@$d['ingredients'], !$semi);
 		if (!$items) { claude::$err = 'json'; return null; }
 		$new = 0;
 		// ішкі дайындамалар алдымен (бізде жоқтары ғана)
 		foreach ((array)@$d['semis'] as $s) {
-			$sn = trim((string)@$s['name']); $si = self::items(@$s['ingredients']);
+			$sn = trim((string)@$s['name']); $si = self::items(@$s['ingredients'], false);
 			if ($sn === '' || !$si || gtpl::semi_find($sn) || gtpl::norm($sn) === gtpl::norm($name)) continue;
 			foreach ((array)@$s['semis'] as $s2) $d['semis'][] = $s2; // 2-деңгей
 			if (self::store(0, $sn, 'Дайындама', (string)@$s['keys'], $si, 2, (string)@$s['note'], 'semi', @$s['unit'], @$s['yield'])) $new++;
@@ -193,7 +221,11 @@ class gtpl_ai {
 				."Ответь в конце ТОЛЬКО блоком ```json {\"items\":[{\"id\":0,\"name\":\"как в запросе\",\"unit\":\"кг\",\"price\":0,\"note\":\"источник кратко\"}]} ```. price — целое число тенге за 1 unit.";
 			$user = "Позиции:\n".implode("\n", array_map(function ($r) { return '- id '.$r['id'].': '.$r['name_ru'].' (за 1 '.$r['unit'].')'; }, $ask))
 				."\n\nНаши закупочные цены для ориентира:\n".($own ? implode("\n", $own) : '(нет)');
-			$d = claude::web($system, $user, 'price_ai', min(8, 2 + count($ask)));
+			$need = count($ask);
+			$d = self::ask($system, $user, 'price_ai', min(6, 1 + $need), function ($d) use ($need) {
+				$n = 0; foreach ((array)@$d['items'] as $it) if ((float)@$it['price'] > 0) $n++;
+				return $n >= ceil($need * 0.7); // кемі 70%-ына баға
+			});
 			$usd = claude::$usd;
 			if (!$d) return ['n' => $n, 'usd' => $usd, 'error' => self::err()];
 			$by = []; foreach ($ask as $id => $r) $by[gtpl::norm($r['name_ru'])][] = $id;

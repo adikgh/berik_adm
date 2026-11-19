@@ -34,7 +34,7 @@
 	// Бір тағамға қолдану
 	if (isset($_GET['apply'])) {
 		$cr = 0;
-		$r = gtpl::apply($cmp, (int)@$_POST['pid'], (int)@$_POST['tpl'], (int)@$_POST['variant'], !empty($_POST['replace']), $cr);
+		$r = gtpl::apply($cmp, (int)@$_POST['pid'], (int)@$_POST['tpl'], (int)@$_POST['variant'], !empty($_POST['replace']), $cr, !empty($_POST['set_ok']));
 		$out(['result' => $r, 'created' => $cr, 'noprice' => $noprice()]);
 	}
 
@@ -83,10 +83,12 @@
 		$pid = (int)@$_POST['pid'];
 		$d = mysqli_fetch_assoc(db::query("select p.name_ru, p.name_kz, c.name_ru cat from product p left join product_catalog c on c.id = p.catalog_id where p.id = '$pid' and p.company_id = '$cmp'"));
 		if (!$d) $out(['error' => 'error']);
+		// сетке ЖИ құрам жазбайды (жаппай толтыруда мүлде, тағам картасында — ескертіп, растаса ғана). ЖИ шақырылмай тұрып тексеріледі.
+		if (empty($_POST['set_ok']) && gtpl::is_set($pid)) $out(['result' => 'set']);
 		$r = gtpl_ai::recipe(trim(strip_tags($d['name_ru'] ?: $d['name_kz'])), 'dish', (string)$d['cat']);
 		if (!$r) $out(['error' => gtpl_ai::err()]);
 		$usd = claude::$usd; $cr = 0;
-		$res = gtpl::apply($cmp, $pid, $r['id'], (int)@$_POST['variant'] ?: 2, !empty($_POST['replace']), $cr);
+		$res = gtpl::apply($cmp, $pid, $r['id'], (int)@$_POST['variant'] ?: 2, !empty($_POST['replace']), $cr, !empty($_POST['set_ok']));
 		$out(['result' => $res, 'created' => $cr, 'noprice' => $noprice(), 'ai' => $r['new'], 'usd' => round($usd, 3)]);
 	}
 

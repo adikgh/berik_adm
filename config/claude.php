@@ -114,13 +114,15 @@ class claude {
 			$body = [
 				'model' => $model, 'max_tokens' => $max_tokens,
 				'system' => [['type' => 'text', 'text' => $system, 'cache_control' => ['type' => 'ephemeral']]],
-				'output_config' => ['effort' => $effort], 'messages' => $messages, 'fallbacks' => 'default',
+				'output_config' => ['effort' => $effort], 'messages' => $messages,
 			];
+			$fb = (bool)preg_match('~^claude-(opus|sonnet|fable)-~', $model); // сервер fallback-і Haiku-да жоқ
+			if ($fb) $body['fallbacks'] = 'default';
 			if ($searches > 0) $body['tools'] = [['type' => 'web_search_20260209', 'name' => 'web_search', 'max_uses' => (int)$searches]];
 			$ch = curl_init(defined('CLAUDE_WEB_URL') ? CLAUDE_WEB_URL : 'https://api.anthropic.com/v1/messages'); // CLAUDE_WEB_URL тек тест үшін
 			curl_setopt_array($ch, [
 				CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 200, CURLOPT_CONNECTTIMEOUT => 20,
-				CURLOPT_HTTPHEADER => ['content-type: application/json', 'x-api-key: '.ANTHROPIC_API_KEY, 'anthropic-version: 2026-10-21', 'anthropic-beta: server-side-fallback-2026-07-01'],
+				CURLOPT_HTTPHEADER => array_merge(['content-type: application/json', 'x-api-key: '.ANTHROPIC_API_KEY, 'anthropic-version: 2026-10-21'], $fb ? ['anthropic-beta: server-side-fallback-2026-07-01'] : []),
 				CURLOPT_POSTFIELDS => json_encode($body, JSON_UNESCAPED_UNICODE),
 			]);
 			$res = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); $cerr = curl_error($ch); curl_close($ch);

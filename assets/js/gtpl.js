@@ -13,6 +13,7 @@
 		if (el) el.textContent = w('pp Pricing', 'Жаңа заттардың бағасы анықталуда (база, ЖИ)…') + ' ' + ids.length;
 		post('prices', { ids: JSON.stringify(ids) }).then(function (r) { if (r.error) alert(r.error); done(); }).catch(done);
 	}
+	var SET_ASK = w('tpl Set ask', 'Бұл сет (жинақ / комбо) сияқты: сеттің құрамы «Сет құрамында» тағамдармен толтырылады. Бәрібір шикізат граммовкасын жазамыз ба?');
 	function qty(it) { var q = +it.qty; q = Math.round(q * 1000) / 1000; return it.unit === 'кг' ? q + ' г' : it.unit === 'л' ? q + ' мл' : q + ' шт'; }
 
 	// ---------- тағам картасы ----------
@@ -49,19 +50,26 @@
 			var rep = box.dataset.has === '1';
 			if (rep && !confirm('Тағамның қазіргі құрамы өшіп, шаблонмен ауыстырылады. Жалғастырамыз ба?')) return;
 			b.disabled = true;
-			post('apply', { pid: pid, tpl: b.dataset.tpl, variant: b.dataset.v, replace: rep ? 1 : 0 }).then(function (r) {
-				if (r.result === 'yes') prices(r.noprice, b, function () { location.reload(); });
-				else { b.disabled = false; alert('Қолдану мүмкін болмады: ' + (r.result || r.error)); }
-			});
+			(function go(setOk) {
+				post('apply', { pid: pid, tpl: b.dataset.tpl, variant: b.dataset.v, replace: rep ? 1 : 0, set_ok: setOk ? 1 : 0 }).then(function (r) {
+					if (r.result === 'set' && !setOk && confirm(SET_ASK)) return go(true);
+					if (r.result === 'yes') prices(r.noprice, b, function () { location.reload(); });
+					else { b.disabled = false; if (r.result !== 'set') alert('Қолдану мүмкін болмады: ' + (r.result || r.error)); }
+				});
+			})(false);
 		});
 		box.querySelector('.gt_ai').addEventListener('click', function () {
 			var b = this, sp = box.querySelector('.gt_ais'), rep = box.dataset.has === '1';
 			if (rep && !confirm('Тағамның қазіргі құрамы өшіп, ЖИ граммовкасымен ауыстырылады. Жалғастырамыз ба?')) return;
-			b.disabled = true; sp.textContent = w('tpl AI dish working', 'ЖИ граммовка құрастыруда (базадағы ұқсас рецептер + интернет), 30-90 сек…');
-			post('dish_ai', { pid: pid, variant: box.querySelector('.gt_av').value, replace: rep ? 1 : 0 }).then(function (r) {
-				if (r.result === 'yes') prices(r.noprice, sp, function () { location.reload(); });
-				else { b.disabled = false; sp.textContent = (r.error || r.result || 'Қате') + ' · ' + w('pp Fill by hand', 'құрамын қолмен толтыруға болады'); }
-			}).catch(function () { b.disabled = false; sp.textContent = w('pp AI timeout', 'ЖИ жауап бермеді, қайталаңыз'); });
+			b.disabled = true;
+			(function go(setOk) {
+				sp.textContent = w('tpl AI dish working', 'ЖИ граммовка құрастыруда (базадағы ұқсас рецептер + интернет), 30-90 сек…');
+				post('dish_ai', { pid: pid, variant: box.querySelector('.gt_av').value, replace: rep ? 1 : 0, set_ok: setOk ? 1 : 0 }).then(function (r) {
+					if (r.result === 'set' && !setOk && confirm(SET_ASK)) return go(true);
+					if (r.result === 'yes') prices(r.noprice, sp, function () { location.reload(); });
+					else { b.disabled = false; sp.textContent = (r.result === 'set' ? w('tpl Is set', 'Бұл сет: құрамы «Сет құрамында» толтырылады') : (r.error || r.result || 'Қате') + ' · ' + w('pp Fill by hand', 'құрамын қолмен толтыруға болады')); }
+				}).catch(function () { b.disabled = false; sp.textContent = w('pp AI timeout', 'ЖИ жауап бермеді, қайталаңыз'); });
+			})(false);
 		});
 		load('');
 	}
@@ -122,7 +130,7 @@
 			var d = list[i++];
 			prev.innerHTML = '<span class="gt_spin"></span> ' + i + ' / ' + list.length + ': <b>' + esc(d.name) + '</b>';
 			post('dish_ai', { pid: d.id, variant: variant }).then(function (r) {
-				if (r.result === 'yes') { ok++; ids = ids.concat(r.noprice || []); usd += r.usd || 0; } else bad.push(d.name + (r.error ? ' (' + r.error + ')' : ''));
+				if (r.result === 'yes') { ok++; ids = ids.concat(r.noprice || []); usd += r.usd || 0; } else bad.push(d.name + (r.result === 'set' ? ' (' + w('tpl set skipped', 'сет, өткізілді') + ')' : r.error ? ' (' + r.error + ')' : ''));
 				next();
 			}).catch(function () { bad.push(d.name); next(); });
 		})();

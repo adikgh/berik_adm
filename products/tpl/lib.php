@@ -111,13 +111,33 @@ class gtpl {
 		$tpl_id = (int)$tpl_id; $v = [1 => [], 2 => [], 3 => []];
 		$sc = self::semi_ready() ? ', semi_id' : '';
 		$q = db::query("select variant, name_ru, unit, quantity$sc from grammovka_tpl_item where tpl_id = '$tpl_id' order by variant, number, id");
-		while ($r = mysqli_fetch_assoc($q)) {
+		$rows = [];
+		while ($r = mysqli_fetch_assoc($q)) $rows[] = $r;
+		$kg = self::in_kg(array_map(function ($r) { return ['unit' => $r['unit'], 'q' => [$r['quantity']]]; }, $rows));
+		$t = $rows ? self::tpl($tpl_id) : null; $dish = !$t || @$t['kind'] != 'semi';
+		foreach ($rows as $r) {
 			$s = (int)@$r['semi_id'];
 			if (!$s && $sc) $s = self::semi_find($r['name_ru']);
 			if ($s == $tpl_id) $s = 0;
-			$v[(int)$r['variant']][] = ['name' => $r['name_ru'], 'unit' => $r['unit'], 'qty' => (float)$r['quantity'], 'semi' => $s];
+			$v[(int)$r['variant']][] = ['name' => $r['name_ru'], 'unit' => $r['unit'], 'qty' => self::grams($r['unit'], $r['quantity'], $kg, $dish), 'semi' => $s];
 		}
 		return $v;
+	}
+
+	// Шаблон мөлшері: кг/л үшін ГРАММ/МЛ (product_item сияқты). ЖИ кейде кг/л-мен береді (Рис 0.7 = 700 г, Семга 0.1 = 100 г).
+	// Рецепттегі кг/л мәндерінің жартысынан көбі < 1 болса — рецепт кг-мен жазылған: < 1 мәндер ×1000 (бекітілген шаблондарда < 1 мән жоқ,
+	// ал грамм рецептте жалғыз 0.5 г бұрыш сияқты мән өзгермейді). $items: [['unit' => .., 'q' => [мәндер]], ...]
+	public static function in_kg(array $items) {
+		$n = 0; $lt = 0;
+		foreach ($items as $it) if (in_array(@$it['unit'], ['кг', 'л'])) foreach ((array)@$it['q'] as $x) if ((float)$x > 0) { $n++; if ((float)$x < 1) $lt++; }
+		return $n > 0 && $lt * 2 > $n;
+	}
+	public static function grams($unit, $q, $kg, $dish = true) {
+		$q = (float)$q;
+		if (!in_array($unit, ['кг', 'л']) || $q <= 0) return $q;
+		if ($kg && $q < 1) $q *= 1000;
+		if ($dish && $q > 5000) $q /= 1000; // бір порцияға 5 кг/л-ден көп — ×1000 қатесі
+		return round($q, 3);
 	}
 	// Таңдалған нұсқа бос болса — Стандарт, ол да бос болса — Эконом (Премиум толтырылмауы мүмкін)
 	public static function var_items($tpl_id, $variant) {
@@ -128,6 +148,27 @@ class gtpl {
 	public static function tpl($id) {
 		$id = (int)$id;
 		return mysqli_fetch_assoc(db::query("select * from grammovka_tpl where id = '$id'"));
+	}
+
+	// Сет пе (ЖИ / шаблон құрамды сетке жазбайды): product.is_set = 1, сет құрамы (product_set_item) бар,
+	// не атауы/каталогы сетке ұқсайды («Сет …», «Комбо», «… + Кола»). Қолмен is_set = 0 («позиция») болса — атауына қаралмайды.
+	public static function is_set($pid) {
+		$pid = (int)$pid;
+		$d = mysqli_fetch_assoc(db::query("select p.name_ru, p.name_kz, c.name_ru cat".(self::col('product', 'is_set') ? ", p.is_set" : "")."
+			from product p left join product_catalog c on c.id = p.catalog_id where p.id = '$pid'"));
+		return $d ? self::set_like($d, $pid) : false;
+	}
+	public static function set_like(array $d, $pid = 0) {
+		static $si = null;
+		if (isset($d['is_set']) && (int)$d['is_set'] === 1) return true;
+		$pid = (int)$pid;
+		if ($pid) {
+			if ($si === null) { $t = db::query("show tables like 'product_set_item'"); $si = $t && mysqli_num_rows($t) > 0; }
+			if ($si && mysqli_num_rows(db::query("select id from product_set_item where set_id = '$pid' limit 1"))) return true;
+		}
+		if (isset($d['is_set']) && $d['is_set'] !== null) return false; // қолмен «позиция»
+		$n = self::norm(@$d['name_ru'] ?: @$d['name_kz']); $c = self::norm(@$d['cat']);
+		return (bool)(preg_match('/(^|\s)(сет|комбо|combo)/u', $c) || preg_match('/(^|\s)(сет|комбо|combo)(ы|\s|$)/u', $n) || preg_match('/\s\+\s?|\+\s/u', $n));
 	}
 
 	public static function has_items($pid) {
@@ -273,10 +314,12 @@ class gtpl {
 	}
 
 	// Бір тағамға шаблон қолдану. $replace = бар құрамын ауыстыру
-	public static function apply($cmp, $pid, $tpl_id, $variant, $replace = false, &$created = 0) {
+	// $set_ok = сет екені ескертілді, пайдаланушы бәрібір қояды (тек тағам картасынан). Әйтпесе сетке 'set' қайтарады.
+	public static function apply($cmp, $pid, $tpl_id, $variant, $replace = false, &$created = 0, $set_ok = false) {
 		$cmp = (int)$cmp; $pid = (int)$pid; $variant = (int)$variant;
 		if (!isset(self::$var_names[$variant])) return 'variant';
 		if (!mysqli_num_rows(db::query("select id from product where id = '$pid' and company_id = '$cmp'"))) return 'error';
+		if (!$set_ok && self::is_set($pid)) return 'set';
 		$items = self::var_items($tpl_id, $variant); // нұсқа бос болса — Стандарт / Эконом
 		if (!$items) return 'empty';
 		if (self::has_items($pid)) {
@@ -312,10 +355,8 @@ class gtpl {
 			and not exists (select 1 from product_item i where i.product_id = p.id and i.comp_id > 0)$set
 			order by c.number, p.number, p.id");
 		while ($r = mysqli_fetch_assoc($q)) {
-			// сеттер шаблонсыз: олардың құрамы «Сет құрамында»
-			$nn = gtpl::norm($r['name_ru'] ?: $r['name_kz']);
-			if (isset($r['is_set']) && $r['is_set'] === '0') { $rows[] = $r; continue; } // қолмен «позиция» деп белгіленген
-			if (preg_match('/(^|\s)сет/u', gtpl::norm($r['cat'])) || preg_match('/^сет\b/u', $nn) || preg_match('/\s\+\s?|\+\s/u', $nn)) continue; // «… + Кола» комбо да сет
+			// сеттер шаблонсыз: құрамы «Сет құрамында» («Сет …», «… + Кола» комбо да сет; қолмен «позиция» болса — кіреді)
+			if (self::set_like($r)) continue;
 			$rows[] = $r;
 		}
 		return $rows;
