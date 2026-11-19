@@ -108,7 +108,7 @@
 							</div>
 							<div class="ctg_cnt cr_pr"><?=((int)$r['price'] ? number_format((int)$r['price'], 0, '', ' ').' тг'.($un !== '' ? ' / '.htmlspecialchars($un) : '') : '<m>'.t::w('No price', 'Бағасы жоқ').'</m>')?></div>
 							<div class="ctg_btns">
-								<? if (!empty($m['prep'])): ?><a class="ctg_b" href="/products/cost/?prep=<?=$r['id']?>#prep" title="Рецептін ашу"><i class="fal fa-layer-group"></i></a><? endif ?>
+								<? if (!empty($m['prep'])): ?><a class="ctg_b" href="/products/cost2/?prep=<?=$r['id']?>" title="Рецептін ашу"><i class="fal fa-layer-group"></i></a><? endif ?>
 								<div class="ctg_b cr_edit" title="<?=t::w('Edit', 'Өзгерту')?>"><i class="fal fa-pen"></i></div>
 							</div>
 						</div>
@@ -234,7 +234,7 @@
 			document.querySelectorAll('.cr_row').forEach(function (r) {
 				r.addEventListener('click', function (e) {
 					if (e.target.closest('a, .ctg_b') || (window.getSelection && String(window.getSelection()))) return;
-					if (r.dataset.prep) location.href = '/products/cost/?prep=' + r.dataset.id + '#prep'; else open(r);
+					if (r.dataset.prep) location.href = '/products/cost2/?prep=' + r.dataset.id; else open(r);
 				});
 			});
 			pop.querySelectorAll('.cr_back').forEach(function (b) { b.addEventListener('click', function () { pop.classList.remove('pop_bl_act'); }); });

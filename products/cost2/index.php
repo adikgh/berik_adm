@@ -1,6 +1,6 @@
 <? include "../../config/core.php";
 	include "../cost/lib.php";
-	// Тағамдар ▸ Себес-2: Google кестесі сияқты бір бетте бәрі —
+	// Тағамдар ▸ Себес (бұрынғы «Себес-2», папкасы cost2): Google кестесі сияқты бір бетте бәрі —
 	// шикізат (закуп бағасы) → дайындамалар → тағамдар (граммовка) → сеттер → қорытынды баға
 	if (!$user_id) { header('location: /'); exit(); }
 	$cmp = (int)$company;
@@ -141,8 +141,8 @@
 	$menu_name = 'products';
 	$pod_menu_name = 'cost2';
 	$pm = 'cost2';
-	$page_name = t::w('Cost table', 'Себес-2');
-	$page_key = 'Cost table';
+	$page_name = t::w('Cost sheet', 'Себес');
+	$page_key = 'Cost sheet';
 	$css = ['cost2'];
 	$js = [];
 	if (!empty($gt_all)) { $css[] = 'gtpl'; $js[] = 'gtpl'; }
@@ -333,7 +333,7 @@
 	<? if (!empty($has_pp)) include __DIR__.'/../cost/prep_pop.php'; ?>
 
 	<script>
-	// Себес-2: іздеу, блокқа өту, ұяшықты басып өзгерту, жол қосу/өшіру. Сақталғаннан кейін .c2_page AJAX-пен жаңарады (fun.js ajx)
+	// Себес: іздеу, блокқа өту, ұяшықты басып өзгерту, жол қосу/өшіру. Сақталғаннан кейін .c2_page AJAX-пен жаңарады (fun.js ajx)
 	(function (f) { if (document.readyState == 'loading') document.addEventListener('DOMContentLoaded', f); else f(); })(function () {
 		if (window.c2Init) return; window.c2Init = 1;
 		var T = {
@@ -375,6 +375,14 @@
 			sortSet({ c: c, d: d }); sortApply();
 		});
 		sortApply(); $(document).on('ajx:done', sortApply);
+
+		// ескі Себес сілтемелері: ?prep=N — дайындама терезесі, #missing — граммовкасы жоқтар, #prep — дайындамалар
+		window.addEventListener('load', function () {
+			var m = location.search.match(/[?&]prep=(\d+)/), h = location.hash.slice(1);
+			if (m) { if (typeof window.openPrep == 'function') window.openPrep(+m[1]); else { var b = document.getElementById('p' + m[1]); if (b) b.scrollIntoView({ block: 'center' }); } }
+			else if (h == 'missing') { var t = document.querySelector('.c2_tab_miss'); if (t) t.click(); }
+			else if (h == 'prep') { var c = document.getElementById('c2_col_p'); if (c) c.scrollIntoView({ block: 'start' }); }
+		});
 		function send(a, data, ok) {
 			var fd = new FormData(); for (var k in data) fd.append(k, data[k]);
 			return fetch('/products/cost2/get.php?a=' + a, { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {

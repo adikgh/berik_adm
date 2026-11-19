@@ -167,7 +167,7 @@
 				if (!D.rows.length) h += '<div class="cpp_empty">Әзірге бос. Төменнен өнімді іздеп, граммын жазып қосыңыз.</div>';
 				D.rows.forEach(function (r) {
 					var c = compMap[r.comp];
-					var nm = c ? (c.prep ? '<a href="/products/cost/?prep=' + c.id + '#prep" target="_blank" title="Рецептін ашу">' + esc(c.nm) + '<i class="fal fa-layer-group"></i></a>' : esc(c.nm)) : '<m>Өшірілген құрам</m>';
+					var nm = c ? (c.prep ? '<a href="/products/cost2/?prep=' + c.id + '" target="_blank" title="Рецептін ашу">' + esc(c.nm) + '<i class="fal fa-layer-group"></i></a>' : esc(c.nm)) : '<m>Өшірілген құрам</m>';
 					h += '<div class="cpp_r" data-id="' + r.id + '"><div class="cpp_nm">' + nm + (c ? '<small>' + fmt(c.price) + ' тг / ' + esc(c.pu) + '</small>' : '') + '</div>' +
 						'<div class="cpp_qw"><input class="cpp_qi" data-k="ci" value="' + qf(r.qty) + '" inputmode="decimal"><span class="cpp_u">' + esc(c ? c.qu : 'шт') + '</span></div>' +
 						'<div class="cpp_cs">' + fmt(r.cost) + ' тг</div><button type="button" class="cpp_del" data-k="ci" title="Алып тастау"><i class="fal fa-times"></i></button></div>';

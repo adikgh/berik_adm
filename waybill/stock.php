@@ -132,11 +132,11 @@
 
 	<? if ($miss || wb::$sale_missing_comp): ?>
 		<div class="wb_box">
-			<div class="wb_box_h"><span>Граммовкасы жоқ тағамдар</span><a class="wb_small" href="/products/cost/">Себес бетінде толтыру →</a></div>
+			<div class="wb_box_h"><span>Граммовкасы жоқ тағамдар</span><a class="wb_small" href="/products/cost2/#missing">Себес бетінде толтыру →</a></div>
 			<div class="wb_small" style="margin-bottom:10px">Бұлар сатылды, бірақ құрамы жазылмағандықтан шикізаттан азайтылмады.</div>
 			<div class="wbs_miss">
 				<? foreach ($miss as $m): ?><a class="wb_st wb_st_draft" href="/products/item/?id=<?=$m['id']?>"><?=wb::h($m['name'])?> · <?=wb::qty($m['n'])?> дана</a><? endforeach ?>
-				<? foreach (wb::$sale_missing_comp as $cid => $cn): ?><a class="wb_st wb_st_draft" href="/products/cost/#prep">Дайындама «<?=wb::h($cn)?>» шикізатқа байланбаған</a><? endforeach ?>
+				<? foreach (wb::$sale_missing_comp as $cid => $cn): ?><a class="wb_st wb_st_draft" href="/products/cost2/#prep">Дайындама «<?=wb::h($cn)?>» шикізатқа байланбаған</a><? endforeach ?>
 			</div>
 		</div>
 	<? endif ?>

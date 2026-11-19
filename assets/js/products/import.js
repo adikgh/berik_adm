@@ -177,7 +177,7 @@
 			return price();
 		}).then(function () {
 			$('.mi_bar_i').style.width = '100%';
-			finish((fails ? fails + ' тағам толтырылмады (қызыл жолдар). ' : '') + (fixed ? fixed + ' бірлік түзетілді. ' : '') + 'ЖИ бағалаған шикізат бағаларын Себес-2-де тексеріңіз.');
+			finish((fails ? fails + ' тағам толтырылмады (қызыл жолдар). ' : '') + (fixed ? fixed + ' бірлік түзетілді. ' : '') + 'ЖИ бағалаған шикізат бағаларын Себес бетінде тексеріңіз.');
 		});
 	}
 	function finish(t) { $('.mi_stat').textContent = 'Дайын. ' + (t || ''); page.querySelector('.mi_done').hidden = false; }

@@ -216,7 +216,7 @@
 						<? foreach ($ci_rows as $i => $r): $c = $r['c']; ?>
 							<div class="ci_tr" data-id="<?=$r['id']?>" data-comp="<?=(int)$r['comp_id']?>" data-qty="<?=$qfmt($r['quantity'])?>">
 								<div class="ci_n"><?=$i + 1?></div>
-								<div class="ci_nm"><?=($c ? '<a class="ci_lnk" href="'.(isset($ci_prep[$c['id']]) ? '/products/cost/?prep='.(int)$c['id'].'#prep' : '/products/comp/?q='.rawurlencode($c['nm'])).'" title="'.(isset($ci_prep[$c['id']]) ? 'Рецептін ашу' : 'Бағасын ашу').'">'.htmlspecialchars($c['nm']).(isset($ci_prep[$c['id']]) ? ' <i class="fal fa-layer-group"></i>' : '').'</a>' : '<m>'.t::w('Deleted item', 'Өшірілген құрам').'</m>')?>
+								<div class="ci_nm"><?=($c ? '<a class="ci_lnk" href="'.(isset($ci_prep[$c['id']]) ? '/products/cost2/?prep='.(int)$c['id'] : '/products/comp/?q='.rawurlencode($c['nm'])).'" title="'.(isset($ci_prep[$c['id']]) ? 'Рецептін ашу' : 'Бағасын ашу').'">'.htmlspecialchars($c['nm']).(isset($ci_prep[$c['id']]) ? ' <i class="fal fa-layer-group"></i>' : '').'</a>' : '<m>'.t::w('Deleted item', 'Өшірілген құрам').'</m>')?>
 									<? if ($c): ?><small><?=$fmt($c['price'])?> тг / <?=htmlspecialchars($c['pu'])?></small><? endif ?></div>
 								<div class="ci_q"><b><?=$qfmt($r['quantity'])?></b> <?=htmlspecialchars($c['qu'] ?? 'шт')?></div>
 								<div class="ci_cost"><?=$fmt($r['cost'])?> тг</div>

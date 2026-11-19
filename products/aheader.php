@@ -5,8 +5,8 @@
       <a class="tg1_topi <?=($pod_menu_name=='catalog'?'tg1_topi_act':'')?>" href="/products/catalog/"><?=t::w('Catalog', 'Каталог')?></a>
       <a class="tg1_topi <?=($pod_menu_name=='comp'?'tg1_topi_act':'')?>" href="/products/comp/"><?=t::w('Ingredients', 'Құрамы')?></a>
       <a class="tg1_topi <?=($pod_menu_name=='raw'?'tg1_topi_act':'')?>" href="/products/raw/"><?=t::w('Raw and goods', 'Шикізат (тауар)')?></a>
-      <a class="tg1_topi <?=($pod_menu_name=='cost'?'tg1_topi_act':'')?>" href="/products/cost/"><?=t::w('Cost sheet', 'Себес')?></a>
-      <a class="tg1_topi <?=($pod_menu_name=='cost2'?'tg1_topi_act':'')?>" href="/products/cost2/"><?=t::w('Cost table', 'Себес-2')?></a>
+      <? /* ескі Себес (/products/cost/) архивте: /products/cost/?old=1 */ ?>
+      <a class="tg1_topi <?=($pod_menu_name=='cost2' || $pod_menu_name=='cost'?'tg1_topi_act':'')?>" href="/products/cost2/"><?=t::w('Cost sheet', 'Себес')?></a>
       <a class="tg1_topi <?=($pod_menu_name=='stop'?'tg1_topi_act':'')?>" href="/products/stop/"><?=t::w('Stop list', 'Стоп-лист')?></a>
       <!-- <a class="tg1_topi <?=($pod_menu_name=='displacement'?'tg1_topi_act':'')?>" href="/products/#displacement/">Перемещения</a> -->
       <!-- <a class="tg1_topi <?=($pod_menu_name=='warehouses'?'tg1_topi_act':'')?>" href="/products/#warehouses/">Склады</a> -->

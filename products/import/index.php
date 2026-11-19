@@ -80,7 +80,7 @@
 			<div class="mi_log"></div>
 			<div class="mi_done" hidden>
 				<a class="btn" href="/products/"><i class="fal fa-list"></i><span>Тағамдар</span></a>
-				<a class="btn btn_cl" href="/products/cost2/"><i class="fal fa-table"></i><span>Себес-2</span></a>
+				<a class="btn btn_cl" href="/products/cost2/"><i class="fal fa-table"></i><span><?=t::w('Cost sheet', 'Себес')?></span></a>
 			</div>
 		</div>
 	</div>

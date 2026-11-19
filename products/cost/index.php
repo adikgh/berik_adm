@@ -2,6 +2,8 @@
 	include "lib.php";
 	// Тағамдар ▸ Себес: өзіндік құн және ұсынылатын баға
 	if (!$user_id) { header('location: /'); exit(); }
+	// ескі Себес архивте: негізгі бет — Себес-2 (/products/cost2/). ?old=1 болса ескі бет ашылады
+	if (empty($_GET['old'])) { $qs = $_GET; unset($qs['old']); header('location: /products/cost2/'.($qs ? '?'.http_build_query($qs) : '')); exit(); }
 	$cmp = (int)$company;
 	$ready = cost::ready();
 

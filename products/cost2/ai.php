@@ -197,7 +197,7 @@ class c2ai {
 			$tid = (int)@$m['tpl'];
 			if (!$tid && $it) {
 				$items = gtpl_ai::items(array_map(function ($i) { $i['q'] = [0, @$i['q'], 0]; return $i; }, (array)@$it['ingredients']), true);
-				if (gtpl_ai::items_ok($items)) $tid = gtpl_ai::store(0, $m['name'], trim((string)@$it['cat']), $m['name'], $items, 2, 'Себес-2: ЖИ (сет «'.trim(strip_tags($set['name_ru'])).'»)', 'dish');
+				if (gtpl_ai::items_ok($items)) $tid = gtpl_ai::store(0, $m['name'], trim((string)@$it['cat']), $m['name'], $items, 2, 'Себес: ЖИ (сет «'.trim(strip_tags($set['name_ru'])).'»)', 'dish');
 			}
 			if (!$tid) { $msgs[] = $m['name']; continue; }
 			$pid = (int)@$m['pid'];
