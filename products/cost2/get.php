@@ -31,6 +31,18 @@
 	// r12 / c5 / d7 → [түрі, id]
 	$code = function ($v) { return preg_match('/^([rcd])(\d+)$/', (string)$v, $m) ? [$m[1], (int)$m[2]] : [null, 0]; };
 
+	// ── ЖИ: сеттегі жоқ / граммовкасыз / бағасыз заттарды толтыру (products/cost2/ai.php). Жауап JSON
+	if ($a == 'ai_set' || $a == 'ai_sets') {
+		@set_time_limit(300);
+		header('Content-Type: application/json; charset=utf-8');
+		try {
+			include_once __DIR__.'/ai.php';
+			if ($a == 'ai_sets') exit(json_encode(['ids' => c2ai::sets($cmp)]));
+			if (!claude::ready()) exit(json_encode(['error' => gtpl_ai::err()], JSON_UNESCAPED_UNICODE));
+			exit(json_encode(c2ai::fill($cmp, (int)@$_POST['id']), JSON_UNESCAPED_UNICODE));
+		} catch (Throwable $e) { error_log('cost2 ai: '.$e->getMessage()); exit(json_encode(['error' => 'error'])); }
+	}
+
 	// ── Шикізат
 	if ($a == 'raw') {
 		$r = $raw_of(@$_POST['id']); if (!$r) exit('error');

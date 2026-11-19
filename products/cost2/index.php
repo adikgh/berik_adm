@@ -89,7 +89,7 @@
 			$s = $u * $r['quantity'];
 			$sets[$sid]['sum'] += $s;
 			if ($miss) $sets[$sid]['miss']++;
-			$sets[$sid]['rows'][] = ['id' => (int)$r['id'], 'name' => strip_tags($nm), 'qty' => ($r['quantity'] + 0), 'qv' => $nv($r['quantity']), 'price' => $u, 'pe' => $pe, 'sum' => $s, 'lnk' => $lnk, 'miss' => $miss];
+			$sets[$sid]['rows'][] = ['id' => (int)$r['id'], 'name' => strip_tags($nm), 'qty' => ($r['quantity'] + 0), 'qv' => $nv($r['quantity']), 'price' => $u, 'pe' => $pe, 'sum' => $s, 'lnk' => $lnk, 'miss' => $miss, 'cid' => (int)$r['comp_id']];
 		}
 		// сет болып табылатын өнім Тағамдар бағанында қайталанбайды; құрамы жоқ тағамдар да шығады (бос блок, «+ Зат қосу»)
 		foreach ($sets as $sid => $x) unset($dishes[$sid]);
@@ -129,6 +129,13 @@
 		@include_once __DIR__.'/../tpl/lib.php';
 		$gt_all = class_exists('gtpl') && gtpl::ready();
 		$gt_semi = $gt_all && gtpl::semi_ready();
+		// ЖИ толтыру (products/cost2/ai.php): батырмалар және «ЖИ толтырды» белгілері (cost2_ai кестесі)
+		require_once __DIR__.'/../../config/claude.php';
+		$ai_ok = $gt_all && claude::ready();
+		$n_aiset = 0; foreach ($sets as $x) if ($x['miss']) $n_aiset++;
+		$aim = ['p' => [], 'r' => [], 'c' => []];
+		$t = db::query("show tables like 'cost2_ai'");
+		if ($t && mysqli_num_rows($t)) { $q = db::query("select kind, ref_id from cost2_ai where company_id = '$cmp'"); while ($q && $r = mysqli_fetch_row($q)) $aim[$r[0]][(int)$r[1]] = 1; }
 	}
 
 	$menu_name = 'products';
@@ -213,7 +220,12 @@
 			$E = function ($e, $v) use ($h) { return $e ? ' class="c2_e" data-a="'.$e[0].'" data-id="'.$e[1].'" data-f="'.$e[2].'" data-v="'.$h($v).'"' : ''; };
 			$X = function ($a, $id) use ($h) { return '<button type="button" class="c2_x" data-a="'.$a.'" data-id="'.$id.'" title="'.$h(t::w('c2 Delete', 'Өшіру')).'"><i class="fal fa-times"></i></button>'; };
 			$ADD = function ($a, $to, $kind) { return '<tr class="c2_add" data-a="'.$a.'" data-to="'.$to.'" data-k="'.$kind.'"><td colspan="4"><button type="button" class="c2_add_b"><i class="far fa-plus"></i> '.t::w('c2 Add item', 'Зат қосу').'</button></td></tr>'; };
-			$NM = function ($r) use ($h) { return $r['lnk'] ? '<a href="#'.$r['lnk'].'" class="c2_go">'.$h($r['name']).'</a>' : $h($r['name']); };
+			$AIT = '<span class="c2_aitag" title="'.$h(t::w('c2 AI filled, check', 'ЖИ толтырды, тексеріңіз')).'">ЖИ</span>';
+			$NM = function ($r) use ($h, $aim, $AIT) {
+				$t = $r['lnk'] ? '<a href="#'.$r['lnk'].'" class="c2_go">'.$h($r['name']).'</a>' : $h($r['name']);
+				$k = $r['lnk'] ? $r['lnk'][0] : ''; $i = (int)substr((string)$r['lnk'], 1);
+				return $t.(($k == 'd' && isset($aim['p'][$i])) || ($k == 'r' && isset($aim['r'][$i])) || (!empty($r['cid']) && isset($aim['c'][$r['cid']])) ? ' '.$AIT : '');
+			};
 		?>
 		<div class="c2_grid">
 
@@ -225,7 +237,7 @@
 						<tbody>
 						<? foreach ($used_raw as $r): $d = $r['prev'] ? ($r['lastp'] - $r['prev']) / $r['prev'] * 100 : null; ?>
 							<tr class="c2_f" id="r<?=$r['id']?>" data-q="<?=$h(mb_strtolower($r['name']))?>">
-								<td class="c2_l c2_nm"><span<?=$E(['raw', $r['id'], 'name'], $r['name'])?>><?=$h($r['name'])?></span>
+								<td class="c2_l c2_nm"><span<?=$E(['raw', $r['id'], 'name'], $r['name'])?>><?=$h($r['name'])?></span><?=isset($aim['r'][$r['id']]) ? ' '.$AIT : ''?>
 									<? if ($r['last_d']): ?><a class="c2_sub c2_sub_a" href="/waybill/raw.php?id=<?=$r['id']?>"><?=date('d.m', strtotime($r['last_d']))?><?=$r['sup'] !== '' ? ' · '.$h($r['sup']) : ''?></a><? endif ?></td>
 								<td><span<?=$E(['raw', $r['id'], 'unit'], $r['unit'] ?: 'шт')?>><?=$h($r['unit'] ?: 'шт')?></span></td>
 								<td><b<?=$E(['raw', $r['id'], 'price'], $nv($r['price']))?>><?=$pf($r['price'])?></b><? if ($d !== null && abs($d) >= 1): ?><div class="c2_sub <?=$d > 0 ? 'c2_up' : 'c2_dn'?>"><?=$d > 0 ? '▲' : '▼'?> <?=abs(round($d))?>%</div><? endif ?></td>
@@ -272,7 +284,7 @@
 				<div class="c2_ch c2_ch3"><b>3</b> <?=t::w('c2 Dishes (grams)', 'Тағамдар (граммовка)')?> <span><?=count($dishes)?></span></div>
 				<? foreach ($dishes as $x): $pr = $x['price'] ? ($x['price'] - $x['sum']) / $x['price'] * 100 : 0; ?>
 					<div class="c2_card c2_blk c2_f<?=$x['rows'] ? '' : ' c2_blk_e'?>"<?=isset($cc['dish'][$x['id']]) ? ' data-miss="1"' : ''?> id="d<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
-						<div class="c2_bh"><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?></div>
+						<div class="c2_bh"><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><?=isset($aim['p'][$x['id']]) ? ' '.$AIT : ''?><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?></div>
 						<table class="c2_tbl">
 							<tbody>
 							<? foreach ($x['rows'] as $r): ?>
@@ -288,6 +300,7 @@
 
 			<div class="c2_col">
 				<div class="c2_ch c2_ch4"><b>4</b> <?=t::w('c2 Sets', 'Сеттер')?> <span><?=count($sets)?></span><button type="button" class="c2_ch_b c2_set_new" title="<?=$h(t::w('c2 Add set', 'Сет қосу'))?>"><i class="far fa-plus"></i></button></div>
+				<? if ($ai_ok && $n_aiset): ?><button type="button" class="c2_ai_all"><i class="fal fa-sparkles"></i> <span><?=t::w('c2 AI fill all missing', 'Барлық жоқтарын ЖИ-мен толтыру')?></span> <b><?=$n_aiset?></b></button><? endif ?>
 				<form class="c2_card c2_newp c2_news" hidden autocomplete="off">
 					<input class="c2_in" name="set" list="c2_sdl" placeholder="<?=$h(t::w('c2 Menu dish', 'Мәзірдегі тағам'))?>" required><datalist id="c2_sdl"></datalist>
 					<div class="c2_newp_r">
@@ -299,7 +312,7 @@
 				<? if (!$sets): ?><button type="button" class="c2_card c2_empty c2_set_new"><i class="far fa-plus"></i> <?=t::w('c2 Add set', 'Сет қосу')?></button><? endif ?>
 				<? foreach ($sets as $x): ?>
 					<div class="c2_card c2_blk c2_f" id="s<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
-						<div class="c2_bh"><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?></div>
+						<div class="c2_bh"><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?><? if ($ai_ok && $x['miss']): ?><button type="button" class="c2_ai_set" data-id="<?=$x['id']?>" title="<?=$h(t::w('c2 AI fill hint', 'Жоқ / граммовкасыз заттарды ЖИ толтырады'))?>"><i class="fal fa-sparkles"></i> <?=t::w('c2 AI fill', 'ЖИ толтыру')?></button><? endif ?></div>
 						<table class="c2_tbl">
 							<tbody>
 							<? foreach ($x['rows'] as $r): ?>
@@ -485,6 +498,39 @@
 				b.disabled = false;
 				if (t.trim() == 'yes') { mess(T.saved); reload(); } else mess(T.err, 'warn');
 			}).catch(function () { b.disabled = false; mess(T.net, 'err'); });
+		});
+
+		// ЖИ толтыру: сеттегі жоқ / граммовкасыз заттар (get.php?a=ai_set, бір сет — бір ЖИ сұрауы)
+		var aiBusy = false;
+		var aiT = { run: <?=json_encode(t::w('c2 AI filling', 'ЖИ толтыруда…'))?>, done: <?=json_encode(t::w('c2 AI filled', 'ЖИ толтырды'))?>, none: <?=json_encode(t::w('c2 AI nothing', 'Толтыратын зат жоқ'))?>, skip: <?=json_encode(t::w('c2 AI skipped', 'Толтырылмады'))?> };
+		function aiOne(id) {
+			var fd = new FormData(); fd.append('id', id);
+			return fetch('/products/cost2/get.php?a=ai_set', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.json(); }).catch(function () { return { error: T.net }; });
+		}
+		function aiRun(ids, btn) {
+			if (aiBusy || !ids.length) return; aiBusy = true;
+			var lab = btn.innerHTML, i = 0, n = 0, err = '', skip = [];
+			document.querySelectorAll('.c2_ai_set, .c2_ai_all').forEach(function (b) { b.disabled = true; });
+			var next = function () {
+				if (i >= ids.length) {
+					aiBusy = false; btn.innerHTML = lab;
+					if (err && !n) mess(err, 'warn');
+					else mess(n ? aiT.done + ': ' + n + (skip.length ? ' · ' + aiT.skip + ': ' + skip.join(', ') : '') : aiT.none, n ? 'ok' : 'warn');
+					reload(); return;
+				}
+				btn.innerHTML = '<i class="fal fa-spinner fa-spin"></i> ' + esc(aiT.run) + (ids.length > 1 ? ' ' + (i + 1) + '/' + ids.length : '');
+				aiOne(ids[i++]).then(function (r) {
+					if (r && r.ok) { n += r.n || 0; if (r.skip && r.skip.length) skip = skip.concat(r.skip); }
+					else err = (r && r.error && r.error != 'error') ? r.error : T.err;
+					next();
+				});
+			};
+			next();
+		}
+		$(document).on('click', '.c2_ai_set', function (e) { e.preventDefault(); aiRun([+this.dataset.id], this); });
+		$(document).on('click', '.c2_ai_all', function () {
+			var ids = []; document.querySelectorAll('.c2_ai_set').forEach(function (b) { ids.push(+b.dataset.id); });
+			aiRun(ids, this);
 		});
 
 		// жаңа сет: мәзірдегі тағам (әлі сет емес) + бірінші зат → si_add
