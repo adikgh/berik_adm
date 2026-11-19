@@ -116,7 +116,21 @@
 			group by op.product_id");
 		while ($q && $r = mysqli_fetch_assoc($q)) {
 			$nm = trim(strip_tags(html_entity_decode((string)($r['name_kz'] ?: $r['name_ru']))));
-			$items[(int)$r['product_id']] = ['id' => (int)$r['product_id'], 'name' => $nm !== '' ? $nm : '#'.$r['product_id'], 'qty' => (float)$r['qty'], 'rev' => (float)$r['rev'], 'cost' => null, 'mrg' => null];
+			$items[(int)$r['product_id']] = ['id' => (int)$r['product_id'], 'name' => $nm !== '' ? $nm : '#'.$r['product_id'], 'qty' => (float)$r['qty'], 'rev' => (float)$r['rev'], 'cost' => null, 'mrg' => null, 'zero' => false];
+		}
+	}
+	$sold_cnt = count($items);
+
+	// ---------- Мүлдем өтпейтін тағамдар (тек Ай / Жыл): архивте емес, кезеңде бірде-бір рет сатылмаған — бөлек «0» тобы ----------
+	$zero_cnt = 0;
+	if (!$is_future && $sold_cnt && in_array($mode, ['m', 'y'], true)) {
+		$q = db::query("select id, name_kz, name_ru from product where company_id = '$company' and arh = 0");
+		while ($q && $r = mysqli_fetch_assoc($q)) {
+			$id = (int)$r['id'];
+			if (isset($items[$id])) continue;
+			$nm = trim(strip_tags(html_entity_decode((string)($r['name_kz'] ?: $r['name_ru']))));
+			$items[$id] = ['id' => $id, 'name' => $nm !== '' ? $nm : '#'.$id, 'qty' => 0.0, 'rev' => 0.0, 'cost' => 0.0, 'mrg' => 0.0, 'zero' => true];
+			$zero_cnt++;
 		}
 	}
 
@@ -130,6 +144,7 @@
 			$dishes = cost::dishes($company, $comps);
 			$sets = cost::sets($company, $comps, $dishes);
 			foreach ($items as $id => $it) {
+				if ($it['zero']) continue;
 				$u = isset($sets[$id]) ? $sets[$id]['cost'] : (isset($dishes[$id]) ? $dishes[$id] : null);
 				if ($u === null || $u <= 0) { $no_cost++; continue; }
 				$items[$id]['cost'] = $u * $it['qty'];
@@ -152,6 +167,7 @@
 		$cum = 0;
 		foreach ($ids as $id) {
 			$v = $items[$id][$k];
+			if ($items[$id]['zero']) { $items[$id]['c_'.$k] = 'N'; $items[$id]['s_'.$k] = 0; $items[$id]['cum_'.$k] = min(100, $cum); continue; }
 			if ($v === null || $v <= 0 || !$tot[$k]) { $items[$id]['c_'.$k] = $v === null ? '' : 'C'; $items[$id]['s_'.$k] = 0; $items[$id]['cum_'.$k] = $cum; continue; }
 			$share = $v / $tot[$k] * 100;
 			// элемент A болады, егер өзіне дейінгі жиынтық 80%-дан аз болса (ең бірінші тағам әрқашан A)
@@ -164,17 +180,19 @@
 
 	// таңдалған критерий бойынша реттеу
 	$rows = array_values($items);
-	usort($rows, function ($a, $b) use ($by) { return [$b[$by] === null ? -INF : $b[$by], $a['name']] <=> [$a[$by] === null ? -INF : $a[$by], $b['name']]; });
+	usort($rows, function ($a, $b) use ($by) { return [$a['zero'], $b[$by] === null ? -INF : $b[$by], $a['name']] <=> [$b['zero'], $a[$by] === null ? -INF : $a[$by], $b['name']]; });
 
 	// топтар қорытындысы
 	$grp = [];
-	foreach (['A', 'B', 'C', ''] as $g) $grp[$g] = ['cnt' => 0, 'val' => 0];
+	foreach (['A', 'B', 'C', 'N', ''] as $g) $grp[$g] = ['cnt' => 0, 'val' => 0];
 	foreach ($rows as $r) { $g = $r['c_'.$by]; $grp[$g]['cnt']++; $grp[$g]['val'] += $r[$by] !== null && $r[$by] > 0 ? $r[$by] : 0; }
 	$grp_info = [
 		'A' => ['clr' => '#0EA768', 'txt' => abc_w('Main income. Always keep it in stock and keep the quality.')],
 		'B' => ['clr' => '#e9a100', 'txt' => abc_w('Average. Ads or combos can lift it to A.')],
 		'C' => ['clr' => '#e5484d', 'txt' => abc_w('Brings little. Consider removing it from the menu or revising the price.')],
 	];
+	if ($zero_cnt) $grp_info['N'] = ['clr' => '#6b7280', 'txt' => abc_w('Not sold at all in this period. Remove from the menu, change the recipe or promote it.')];
+	$g_lbl = function ($g) { return $g == 'N' ? '0' : $g; };
 	$pcs = abc_w('pcs');
 	$fmt = function ($v) use ($by, $pcs) { return $by == 'qty' ? abc_num($v).' '.$pcs : abc_money($v); };
 
@@ -219,7 +237,7 @@
 
 		<? if ($is_future): ?>
 			<div class="st_card st_empty"><?=abc_h('This period has not started yet.')?></div>
-		<? elseif (!$rows): ?>
+		<? elseif (!$sold_cnt): ?>
 			<div class="st_card st_empty"><?=abc_h('No sales in this period.')?></div>
 		<? elseif ($by == 'mrg' && !$cost_on): ?>
 			<div class="st_card st_empty"><?=abc_h('Margin needs the cost sheet. Fill in Dishes ▸ Cost sheet.')?></div>
@@ -229,8 +247,8 @@
 		<div class="st_kpis">
 			<div class="st_kpi">
 				<div class="st_kpi_h"><i class="fal fa-utensils"></i><?=abc_h('Dish types')?></div>
-				<div class="st_kpi_v"><?=abc_num(count($rows))?></div>
-				<div class="st_kpi_s"><?=abc_h('sold')?>: <?=abc_num($tot['qty'])?> <?=htmlspecialchars($pcs)?></div>
+				<div class="st_kpi_v"><?=abc_num($sold_cnt)?></div>
+				<div class="st_kpi_s"><?=abc_h('sold')?>: <?=abc_num($tot['qty'])?> <?=htmlspecialchars($pcs)?><?=$zero_cnt ? ' · '.abc_h('not sold: {n}', ['n' => abc_num($zero_cnt)]) : ''?></div>
 			</div>
 			<div class="st_kpi st_kpi_main">
 				<div class="st_kpi_h"><i class="fal fa-wallet"></i><?=abc_h('Revenue')?></div>
@@ -260,10 +278,10 @@
 					<? endforeach ?>
 				</div>
 			<? endif ?>
-			<div class="abc_grps">
+			<div class="abc_grps<?=$zero_cnt ? ' abc_grps_4' : ''?>">
 				<? foreach ($grp_info as $g => $gi): ?>
 					<div class="abc_grp" data-g="<?=$g?>">
-						<div class="abc_grp_h"><span class="abc_b abc_b_<?=$g?>"><?=$g?></span><b><?=abc_h('{n} dishes', ['n' => abc_num($grp[$g]['cnt'])])?></b><span class="abc_grp_p"><?=abc_h('{p}% of the list', ['p' => count($rows) ? round($grp[$g]['cnt'] / count($rows) * 100) : 0])?></span></div>
+						<div class="abc_grp_h"><span class="abc_b abc_b_<?=$g?>"><?=$g_lbl($g)?></span><? if ($g == 'N'): ?><b><?=abc_h('Not selling at all')?>: <?=abc_num($grp[$g]['cnt'])?></b><? else: ?><b><?=abc_h('{n} dishes', ['n' => abc_num($grp[$g]['cnt'])])?></b><? endif ?><span class="abc_grp_p"><?=abc_h('{p}% of the list', ['p' => count($rows) ? round($grp[$g]['cnt'] / count($rows) * 100) : 0])?></span></div>
 						<div class="abc_grp_v"><?=$fmt($grp[$g]['val'])?> <span><?=$g_sum ? round($grp[$g]['val'] / $g_sum * 100) : 0?>%</span></div>
 						<div class="abc_grp_t"><?=htmlspecialchars($gi['txt'])?></div>
 					</div>
@@ -280,6 +298,7 @@
 					<span class="abc_flt_i" data-g="A">A</span>
 					<span class="abc_flt_i" data-g="B">B</span>
 					<span class="abc_flt_i" data-g="C">C</span>
+					<? if ($zero_cnt): ?><span class="abc_flt_i" data-g="N" title="<?=abc_h('Not selling at all')?>">0</span><? endif ?>
 				</div>
 			</div>
 			<div class="abc_list">
@@ -294,16 +313,16 @@
 					<div class="abc_c" title="<?=abc_h('Class by revenue · quantity · margin')?>"><?=abc_h('Class')?></div>
 				</div>
 				<? foreach ($rows as $i => $r): $g = $r['c_'.$by]; ?>
-					<div class="abc_r" data-g="<?=$g?>">
+					<div class="abc_r<?=$r['zero'] ? ' abc_r_zero' : ''?>" data-g="<?=$g?>">
 						<div class="abc_i"><?=$i + 1?></div>
-						<div class="abc_nm"><span class="abc_b abc_b_<?=$g ?: 'x'?>"><?=$g ?: '?'?></span><span class="abc_nm_t"><?=htmlspecialchars($r['name'])?></span></div>
+						<div class="abc_nm"><span class="abc_b abc_b_<?=$g ?: 'x'?>"><?=$g ? $g_lbl($g) : '?'?></span><span class="abc_nm_t"><?=htmlspecialchars($r['name'])?></span></div>
 						<div class="abc_n" data-l="<?=abc_h('Quantity')?>"><?=abc_num($r['qty'])?> <?=htmlspecialchars($pcs)?></div>
 						<div class="abc_n" data-l="<?=abc_h('Revenue')?>"><?=abc_money($r['rev'])?></div>
 						<div class="abc_n <?=$r['mrg'] !== null && $r['mrg'] < 0 ? 'abc_neg' : ''?>" data-l="<?=abc_h('Margin')?>"><?=$r['mrg'] === null ? '<span class="abc_mt" title="'.abc_h('Cost is not filled in').'">'.abc_h('no cost').'</span>' : abc_money($r['mrg']).($r['rev'] ? ' <small>'.round($r['mrg'] / $r['rev'] * 100).'%</small>' : '')?></div>
 						<div class="abc_n" data-l="<?=abc_h('Share')?>"><?=abc_pct($r['s_'.$by])?></div>
 						<div class="abc_n" data-l="<?=abc_h('Cumulative')?>"><?=round($r['cum_'.$by])?>%</div>
 						<div class="abc_c" title="<?=abc_h('Class by revenue · quantity · margin')?>">
-							<? foreach (array_keys($by_list) as $k): ?><span class="abc_s abc_s_<?=$r['c_'.$k] ?: 'x'?> <?=$k==$by?'abc_s_on':''?>"><?=$r['c_'.$k] ?: '–'?></span><? endforeach ?>
+							<? foreach (array_keys($by_list) as $k): ?><span class="abc_s abc_s_<?=$r['c_'.$k] ?: 'x'?> <?=$k==$by?'abc_s_on':''?>"><?=$r['c_'.$k] ? $g_lbl($r['c_'.$k]) : '–'?></span><? endforeach ?>
 						</div>
 					</div>
 				<? endforeach ?>
