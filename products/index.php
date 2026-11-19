@@ -127,7 +127,7 @@
 							<? foreach ($catalogs as $cat): if (!$cat['items']) continue; ?>
 								<a class="k_br_i" href="#cat=<?=$cat['id']?>" data-cat="<?=$cat['id']?>"><span><?=htmlspecialchars($cat['name_'.$lang] ?: $cat['name_ru'])?></span><small class="pr_cat_cnt"><?=count($cat['items'])?></small></a>
 							<? endforeach ?>
-							<? if ($arh_items): ?><a class="k_br_i pr_arh_chip" href="#cat=arh" data-cat="arh"><i class="fal fa-archive"></i> <span>Архив</span><small class="pr_cat_cnt"><?=count($arh_items)?></small></a><? endif ?>
+							<a class="k_br_i pr_arh_chip" href="#cat=arh" data-cat="arh"><i class="fal fa-archive"></i> <span>Архив</span><small class="pr_cat_cnt"><?=count($arh_items)?></small></a>
 						</div>
 					</div>
 				</div>
@@ -167,6 +167,7 @@
 						<? endforeach ?>
 					</div>
 				<? endforeach ?>
+				<? if (!$arh_items): ?><div class="pr_row pr_row_arh pr_arh_empty" data-cat="arh" data-name="" style="display:none"><div class="ds_nr" style="width:100%"><i class="fal fa-archive"></i><p>Архив бос. Тағамның 🗄 кнопкасын басса, ол осында түседі.</p></div></div><? endif ?>
 				<? if ($arh_items): ?>
 					<div class="pr_grp pr_grp_arh" data-cat="arh">
 						<span class="pr_grp_clr" style="background:#9aa1ab"></span>
