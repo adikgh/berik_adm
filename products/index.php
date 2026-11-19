@@ -90,15 +90,13 @@
 							<input type="text" placeholder="<?=t::w('Search dish', 'Тағам атауымен іздеу')?>" class="form_txt pr_search">
 							<i class="fal fa-search form_icon"></i>
 						</div>
-						<? if ($kind_on): ?>
 						<div class="pr_ai_grp" title="ЖИ көмекші">
 							<span class="pr_ai_lbl"><i class="fal fa-magic"></i> ЖИ</span>
-							<? if ($pr_unk_n): ?><button type="button" class="pr_ai_b pr_ai_kind" title="Атауы, каталогы мен сипаттамасына қарап, түрі белгісіз тағамдарды Сет не Позиция деп белгілейді"><span>Түрін анықтау (<?=$pr_unk_n?>)</span></button><? endif ?>
-							<button type="button" class="pr_ai_b pr_ai_all" title="Құрамы жазылмаған сеттердің фотосы мен сипаттамасына қарап, ішіндегі позицияларды жазады"><span>Сет құрамын фотодан жазу</span></button>
+							<a class="pr_ai_b pr_imp_b" href="/products/import/" title="Мәзір фотосы, PDF, Instagram не сайт: жоқ тағамдарды қосып, сегмент бойынша граммовка мен сет құрамын толтырады"><span><?=t::w('imp Import menu', 'Мәзірді импорттау')?></span></a>
+							<? if ($kind_on && $pr_unk_n): ?><button type="button" class="pr_ai_b pr_ai_kind" title="Атауы, каталогы мен сипаттамасына қарап, түрі белгісіз тағамдарды Сет не Позиция деп белгілейді"><span>Түрін анықтау (<?=$pr_unk_n?>)</span></button><? endif ?>
+							<? if ($kind_on): ?><button type="button" class="pr_ai_b pr_ai_all" title="Құрамы жазылмаған сеттердің фотосы мен сипаттамасына қарап, ішіндегі позицияларды жазады"><span>Сет құрамын фотодан жазу</span></button><? endif ?>
 						</div>
-						<? endif ?>
 						<div class="btn btn_cl product_add_pop pr_add_b"><i class="fal fa-plus"></i><span><?=t::w('Add dish', 'Тағам қосу')?></span></div>
-						<a class="btn pr_add_b pr_imp_b" href="/products/import/" title="Мәзір фотосы, PDF не Instagram: ЖИ жоқ тағамдарды қосып, граммовкасын толтырады"><i class="fal fa-magic"></i><span><?=t::w('imp Import menu with AI', 'Мәзірді ЖИ арқылы қосу')?></span></a>
 					</div>
 					<!-- 2-қатар: сүзгілер (түрі | граммовка) -->
 					<div class="pr_tr pr_tr_flt">
@@ -320,6 +318,7 @@
 		.ctg_btns .pr_unarh i{ color: var(--bp-green, #0EA768); }
 		@media (max-width: 700px){ .ctg_btns .pr_unarh span{ display: none; } .ctg_btns .pr_unarh{ width: 40px; padding: 0; justify-content: center; } .pr_arh_note{ display: block; margin: 4px 0 0; } }
 		.pr_kt_busy{ opacity: .4 !important; pointer-events: none; }
+		a.pr_ai_b{ text-decoration: none; display: inline-flex; align-items: center; }
 		.pr_ai_grp{ display: inline-flex; align-items: center; gap: 4px; padding: 4px; height: 48px; border-radius: 12px; background: #f5f2ff; border: 1px solid #e4dcff; }
 		.pr_ai_lbl{ padding: 0 8px 0 6px; font-size: 13px; font-weight: 800; color: #6b4ce6; white-space: nowrap; }
 		.pr_ai_b{ height: 38px; padding: 0 12px; border: 0; border-radius: 9px; background: #fff; color: #4a32b8; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
