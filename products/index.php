@@ -18,7 +18,13 @@
 	// сет пе, жеке позиция ма: product_set_item-та құрамы бар тағам = сет
 	$pr_sets = [];
 	if (($tq = db::query("show tables like 'product_set_item'")) && mysqli_num_rows($tq)) { $sq = db::query("select distinct si.set_id from product_set_item si join product p on p.id = si.set_id where p.company_id = '$company' and p.arh = 0"); while ($x = mysqli_fetch_assoc($sq)) $pr_sets[$x['set_id']] = 1; }
+	// қолмен белгі (product.is_set): 1 = сет, 0 = позиция, NULL = құрамына қарап (product_set_item бар болса сет)
+	$kind_on = fun::has_col('product', 'is_set');
+	$pr_set_n = 0;
 	while ($pr_d = mysqli_fetch_assoc($product)) {
+		$pr_d['_set'] = ($kind_on && $pr_d['is_set'] !== null) ? (int)$pr_d['is_set'] === 1 : isset($pr_sets[$pr_d['id']]);
+		$pr_d['_has'] = isset($pr_sets[$pr_d['id']]);
+		if ($pr_d['_set']) $pr_set_n++;
 		if ($pr_d['catalog_id'] && isset($catalogs[$pr_d['catalog_id']])) $catalogs[$pr_d['catalog_id']]['items'][] = $pr_d;
 		else $no_catalog['items'][] = $pr_d;
 	}
@@ -76,9 +82,10 @@
 					<div class="pr_tr">
 						<div class="pr_seg pr_kind">
 							<button type="button" class="pr_kind_b pr_seg_b pr_seg_on" data-k="">Барлығы <small><?=$page_result?></small></button>
-							<button type="button" class="pr_kind_b pr_seg_b" data-k="set"><i class="fal fa-box-full"></i> Сеттер (жиынтық, комбо) <small><?=count($pr_sets)?></small></button>
-							<button type="button" class="pr_kind_b pr_seg_b" data-k="one"><i class="fal fa-hamburger"></i> Позициялар <small><?=max(0, $page_result - count($pr_sets))?></small></button>
+							<button type="button" class="pr_kind_b pr_seg_b" data-k="set"><i class="fal fa-box-full"></i> Сеттер (жиынтық, комбо) <small class="pr_kind_n1"><?=$pr_set_n?></small></button>
+							<button type="button" class="pr_kind_b pr_seg_b" data-k="one"><i class="fal fa-hamburger"></i> Позициялар <small class="pr_kind_n0"><?=max(0, $page_result - $pr_set_n)?></small></button>
 						</div>
+						<? if ($kind_on): ?><button type="button" class="pr_ai_all" title="Құрамы жазылмаған сеттердің фотосы мен сипаттамасына қарап, ЖИ құрамын жазады"><i class="fal fa-magic"></i><span>ЖИ: сеттердің құрамын фотодан жазу</span></button><? endif ?>
 						<? if ($nocomp): ?>
 							<div class="pr_seg" title="Граммовкасы толтырылмаған тағамдарды ғана көрсету">
 								<button type="button" class="pr_seg_b pr_seg_on" data-nc="">Барлық тағамдар <small><?=$page_result?></small></button>
@@ -124,7 +131,7 @@
 								data-name="<?=htmlspecialchars(mb_strtolower(fun::name_text($pr_d['name_kz']).' '.fun::name_text($pr_d['name_ru'])))?>"
 								data-name-kz="<?=htmlspecialchars(fun::name_save($pr_d['name_kz']))?>"
 								data-name-ru="<?=htmlspecialchars(fun::name_save($pr_d['name_ru']))?>"
-								data-catalog="<?=(int)$pr_d['catalog_id']?>"<?=(isset($pr_sets[$pr_d['id']]) ? ' data-set="1"' : '')?><?=(isset($nocomp[$pr_d['id']]) ? ' data-nocomp="1"' : '')?>
+								data-catalog="<?=(int)$pr_d['catalog_id']?>"<?=($pr_d['_set'] ? ' data-set="1"' : '')?><?=($pr_d['_has'] ? ' data-has="1"' : '')?><?=(!empty($pr_d['img']) || trim((string)@$pr_d['description']) !== '' ? ' data-pic="1"' : '')?><?=(isset($nocomp[$pr_d['id']]) ? ' data-nocomp="1"' : '')?>
 								data-price="<?=(int)$pr_d['price']?>"
 								data-desc="<?=htmlspecialchars((string)@$pr_d['description'])?>">
 								<div class="ctg_num"><?=$number?></div>
@@ -135,6 +142,7 @@
 								</a>
 								<div class="ctg_cnt pr_pr"><?=((int)$pr_d['price'] ? number_format((int)$pr_d['price'], 0, '', ' ').' тг' : '<m>'.t::w('No price', 'Бағасы жоқ').'</m>')?></div>
 								<div class="ctg_btns">
+									<? if ($kind_on): ?><div class="ctg_b pr_kt<?=($pr_d['_set'] ? ' pr_kt_set' : '')?><?=($pr_d['is_set'] === null ? ' pr_kt_auto' : '')?>" data-id="<?=$pr_d['id']?>" title="Басып ауыстыру: Сет (жиынтық) не Позиция (жеке тағам)"><i class="fal fa-<?=($pr_d['_set'] ? 'box-full' : 'hamburger')?>"></i><span><?=($pr_d['_set'] ? 'Сет' : 'Позиция')?></span></div><? endif ?>
 									<? if ($rec_on): ?><div class="ctg_b pr_rec pr_rec_p<?=(!empty($pr_d['recommend']) ? ' pr_rec_on' : '')?>" data-id="<?=$pr_d['id']?>" title="QR мәзірде көрсету (★)"><i class="fa<?=(!empty($pr_d['recommend']) ? 's' : 'l')?> fa-star"></i></div><? endif ?>
 									<a class="ctg_b cpp_open" href="item/?id=<?=$pr_d['id']?>" data-id="<?=$pr_d['id']?>" title="<?=t::w('Ingredients', 'Құрамы (граммовка)')?>"><i class="fal fa-layer-group"></i></a>
 									<div class="ctg_b product2_add_pop" data-id="<?=$pr_d['id']?>" title="<?=t::w('Make copy', 'Көшірме жасау')?>"><i class="fal fa-clone"></i></div>
@@ -243,6 +251,15 @@
 		.pr_rec_info{ flex-wrap: nowrap; align-items: flex-start; gap: 8px; font-size: 13px; color: #5d6470; line-height: 1.45; padding: 8px 12px; background: #fff8e1; border-radius: 10px; }
 		.pr_rec_info > i{ color: #f5a700; margin-top: 3px; }
 		.pr_rec{ cursor: pointer; }
+		.ctg_btns .pr_kt{ width: auto; min-width: 92px; padding: 0 10px; gap: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; cursor: pointer; color: #5d6470; background: #f1f3f5; }
+		.ctg_btns .pr_kt i{ color: #5d6470; }
+		.ctg_btns .pr_kt.pr_kt_set{ background: #e8f0ff; color: #2f5bd3; } .ctg_btns .pr_kt.pr_kt_set i{ color: #2f5bd3; }
+		.ctg_btns .pr_kt.pr_kt_auto{ opacity: .6; border: 1px dashed #c3c8d0; }
+		.ctg_btns .pr_kt:hover{ opacity: 1; filter: brightness(.96); }
+		.pr_kt_busy{ opacity: .4 !important; pointer-events: none; }
+		.pr_ai_all{ height: 48px; padding: 0 14px; border: 1px solid #d9d2f7; border-radius: 12px; background: #f5f2ff; color: #5b3fd6; font: inherit; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+		.pr_ai_all:hover{ background: #ece6ff; } .pr_ai_all[disabled]{ opacity: .6; cursor: wait; }
+		@media (max-width: 700px){ .ctg_btns .pr_kt{ min-width: 0; padding: 0; width: 40px; } .ctg_btns .pr_kt span{ display: none; } .pr_ai_all{ width: 100%; justify-content: center; } }
 		.pr_rec_p i, .pr_rec_k i{ color: #e0a100; }
 		.pr_rec_p.pr_rec_on{ background: #fff3c4; }
 		.pr_rec_p.pr_rec_on i, .pr_rec_k.pr_rec_on i{ color: #f5a700; }
@@ -361,6 +378,61 @@
 						recCnt();
 					})
 					.catch(function () { b.classList.remove('pr_rec_busy'); msg(T.err); });
+			});
+
+			// Сет / Позиция белгісі (products/get.php?kind): басқанда ауысады, бет жаңармайды
+			function kindCnt() {
+				var a = document.querySelectorAll('.pr_row').length, n = document.querySelectorAll('.pr_row[data-set]').length;
+				var x = document.querySelector('.pr_kind_n1'), y = document.querySelector('.pr_kind_n0');
+				if (x) x.textContent = n; if (y) y.textContent = a - n;
+			}
+			document.addEventListener('click', function (e) {
+				var b = e.target.closest('.pr_kt'); if (!b) return;
+				e.preventDefault(); e.stopPropagation();
+				var r = b.closest('.pr_row'), on = !r.dataset.set;
+				var fd = new FormData(); fd.append('id', b.dataset.id); fd.append('v', on ? 1 : 0);
+				b.classList.add('pr_kt_busy');
+				fetch('/products/get.php?kind', { method: 'POST', body: fd, credentials: 'same-origin' })
+					.then(function (x) { return x.text(); })
+					.then(function (t) {
+						b.classList.remove('pr_kt_busy');
+						if (t.trim() != 'yes') { msg(T.err); return; }
+						if (on) r.dataset.set = '1'; else delete r.dataset.set;
+						b.classList.toggle('pr_kt_set', on); b.classList.remove('pr_kt_auto');
+						b.innerHTML = '<i class="fal fa-' + (on ? 'box-full' : 'hamburger') + '"></i><span>' + (on ? 'Сет' : 'Позиция') + '</span>';
+						kindCnt(); if (kind) apply();
+					})
+					.catch(function () { b.classList.remove('pr_kt_busy'); msg(T.err); });
+			});
+
+			// ЖИ: құрамы жоқ сеттерді бірінен соң бірі толтыру (item/set_ai.php), фото не сипаттамасы барлары ғана
+			document.addEventListener('click', function (e) {
+				var b = e.target.closest('.pr_ai_all'); if (!b || b.disabled) return;
+				var rows = [].slice.call(document.querySelectorAll('.pr_row[data-set]:not([data-has])'));
+				var ok = rows.filter(function (r) { return r.dataset.pic; }), skip = rows.length - ok.length;
+				if (!rows.length) { msg('Құрамы жазылмаған сет жоқ. Алдымен тағамдарды «Сет» деп белгілеңіз.'); return; }
+				if (!ok.length) { msg('Құрамы жоқ ' + rows.length + ' сеттің бірінде де фото не сипаттама жоқ. Фото қосыңыз.'); return; }
+				if (!confirm('ЖИ ' + ok.length + ' сеттің фотосы мен сипаттамасына қарап құрамын жазады' + (skip ? ' (фотосы жоқ ' + skip + ' сет өткізіледі)' : '') + '. Әр сетке шамамен 10 теңге шығын. Бастау керек пе?')) return;
+				b.disabled = true;
+				var sp = b.querySelector('span'), t0 = sp.textContent, i = 0, done = 0, fail = 0, stop = false;
+				var next = function () {
+					if (i >= ok.length || stop) {
+						b.disabled = false; sp.textContent = t0;
+						msg('Дайын: ' + done + ' сеттің құрамы жазылды' + (fail ? ', ' + fail + ' сетте қате' : '') + '. Тексеру үшін сеттің «Құрамы» кнопкасын басыңыз.');
+						return;
+					}
+					var r = ok[i++]; sp.textContent = 'ЖИ жазып жатыр: ' + i + ' / ' + ok.length;
+					var fd = new FormData(); fd.append('id', r.dataset.id);
+					fetch('/products/item/set_ai.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+						.then(function (x) { return x.json(); })
+						.then(function (d) {
+							if (d.ok) { done++; r.dataset.has = '1'; }
+							else { fail++; if (d.stop) { stop = true; msg(d.error); } }
+						})
+						.catch(function () { fail++; })
+						.then(next);
+				};
+				next();
 			});
 
 			// каталог таңдағыш (чиптер, мәні жасырын input-та)

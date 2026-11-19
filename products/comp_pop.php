@@ -12,6 +12,7 @@
 				<button type="button" class="cpp_tab" data-t="dish">Тағам құрамы (граммовка)</button>
 				<button type="button" class="cpp_tab" data-t="set">Сет құрамы</button>
 			</div>
+			<div class="cpp_ai" hidden><button type="button" class="cpp_ai_b"><i class="fal fa-magic"></i><span>ЖИ: құрамын фотодан жазу</span></button><small class="cpp_ai_t">Сеттің фотосы мен сипаттамасына қарап, ішіндегі позицияларды өзі жазады</small></div>
 			<div class="cpp_list"></div>
 			<div class="cpp_add">
 				<div class="cpp_srch">
@@ -84,6 +85,11 @@
 	.cpp_hint{ margin-top: 12px; font-size: 13px; color: var(--bp-muted, #8a8f98); line-height: 1.45; }
 	.cpp_full{ display: inline-flex; gap: 6px; align-items: center; margin-top: 14px; font-size: 14px; color: var(--bp-blue, #1f75a8); }
 	.cpp_load{ opacity: .55; pointer-events: none; }
+	.cpp_ai{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; padding: 10px 12px; border-radius: 12px; background: #f5f2ff; }
+	.cpp_ai[hidden]{ display: none; }
+	.cpp_ai_b{ height: 40px; padding: 0 14px; border: 0; border-radius: 10px; background: #6b4ce6; color: #fff; font: inherit; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+	.cpp_ai_b:hover{ background: #5a3cd4; } .cpp_ai_b[disabled]{ opacity: .6; cursor: wait; }
+	.cpp_ai_t{ flex: 1; min-width: 180px; font-size: 12px; color: #6b5fa8; line-height: 1.4; }
 	@media (max-width: 500px) {
 		.cpp_r{ grid-template-columns: 1fr 104px 34px; }
 		.cpp_r .cpp_cs{ grid-column: 1 / 2; grid-row: 2; text-align: left; font-size: 13px; color: var(--bp-muted, #8a8f98); }
@@ -173,6 +179,7 @@
 				$('.cpp_hint').innerHTML = 'Сетке мәзір позициясын (ролл, кола), готовканы не тауарды тікелей қосуға болады. Позиция атауын бассаңыз, оның граммовкасы ашылады. «Позицияға байлау» басса, сеттегі зат мәзірдегі сол позицияның өзі болады, себесі бір жерден есептеледі.';
 			}
 			$('.cpp_list').innerHTML = h;
+			$('.cpp_ai').hidden = !(tab == 'set' && D.ai && D.ready);
 		};
 
 		// мөлшерді өзгерту
@@ -201,6 +208,24 @@
 			var tb = e.target.closest('.cpp_tab');
 			if (tb) { tab = tb.dataset.t; closePick(); render(); return; }
 			if (!e.target.closest('.cpp_srch')) $('.cpp_dd').classList.remove('cpp_dd_on');
+		});
+
+		// ЖИ: сет құрамын фотодан жазу (item/set_ai.php), бар құрам ауыстырылады
+		$('.cpp_ai_b').addEventListener('click', function () {
+			var b = this; if (b.disabled) return;
+			if (D.set.length && !confirm('Қазіргі сет құрамы өшіп, ЖИ жаңадан жазады. Жалғастыру керек пе?')) return;
+			b.disabled = true; var sp = b.querySelector('span'), t0 = sp.textContent; sp.textContent = 'ЖИ қарап жатыр...';
+			var fd = new FormData(); fd.append('id', PID);
+			fetch('/products/item/set_ai.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+				.then(function (r) { return r.json(); })
+				.then(function (d) {
+					b.disabled = false; sp.textContent = t0;
+					if (!d.ok) { msg(d.error || 'Қате, қайта көріңіз'); return; }
+					var row = document.querySelector('.pr_row[data-id="' + PID + '"]'); if (row) row.dataset.has = '1';
+					msg('ЖИ ' + d.n + ' зат жазды' + (d.sure == 'low' ? ' (сенімсіз, тексеріңіз)' : '') + (d.note ? ': ' + d.note : '') + (d.new && d.new.length ? ' Мәзірде жоқтары жаңа құрам болып қосылды: ' + d.new.join(', ') : ''));
+					return load();
+				})
+				.catch(function () { b.disabled = false; sp.textContent = t0; msg('Қате, қайта көріңіз'); });
 		});
 
 		// іздеп қосу
@@ -253,7 +278,7 @@
 			pop.classList.add('pop_bl_act');
 			load().then(function () {
 				if (!D) return;
-				tab = t || (D.set.length && !D.rows.length ? 'set' : 'dish');
+				tab = t || ((D.set.length || D.is_set) && !D.rows.length ? 'set' : 'dish');
 				render();
 			});
 		};

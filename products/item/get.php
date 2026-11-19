@@ -95,6 +95,8 @@
 				$menu = []; $menu_nm = []; $is_set = [];
 				$q = db::query("select distinct si.set_id from product_set_item si join product p on p.id = si.set_id where p.company_id = '$cmp'");
 				while ($x = mysqli_fetch_assoc($q)) $is_set[$x['set_id']] = 1;
+				// қолмен белгі (product.is_set) құрамнан басым
+				if (fun::has_col('product', 'is_set')) { $q = db::query("select id, is_set from product where company_id = '$cmp' and is_set is not null"); while ($x = mysqli_fetch_assoc($q)) { if ((int)$x['is_set']) $is_set[$x['id']] = 1; else unset($is_set[$x['id']]); } }
 				$q = db::query("select id, name_kz, name_ru from product where company_id = '$cmp' and arh = 0 and id <> '$pid'");
 				while ($x = mysqli_fetch_assoc($q)) { if (isset($is_set[$x['id']])) continue; $menu_nm[$x['id']] = strip_tags((string)($x['name_kz'] ?: $x['name_ru'])); foreach ([$x['name_kz'], $x['name_ru']] as $n) { $k = mb_strtolower(trim(strip_tags((string)$n))); if ($k !== '' && !isset($menu[$k])) $menu[$k] = (int)$x['id']; } }
 				$q = db::query("select si.*, d.name_ru d_ru, d.name_kz d_kz from product_set_item si left join product d on d.id = si.product_id where si.set_id = '$pid' order by si.id");
@@ -112,7 +114,7 @@
 				while ($r = mysqli_fetch_assoc($q)) $raws[] = ['v' => 'r'.$r['id'], 'nm' => (string)($r['name_ru'] ?: $r['name_kz']), 'cost' => (float)$r['price'], 'u' => fun::unit_norm($r['unit']) ?: 'шт'];
 			}
 			echo json_encode(['ok' => 1, 'ready' => $ready ? 1 : 0, 'id' => $pid, 'name' => strip_tags((string)($p['name_kz'] ?: $p['name_ru'])), 'price' => (int)$p['price'],
-				'rows' => $rows, 'comps' => array_values($comps), 'set' => $set, 'over' => $over, 'dishes' => $dishes, 'raws' => $raws], JSON_UNESCAPED_UNICODE);
+				'rows' => $rows, 'comps' => array_values($comps), 'set' => $set, 'is_set' => isset($is_set[$pid]) ? 1 : 0, 'ai' => is_file(__DIR__.'/set_ai.php') ? 1 : 0, 'over' => $over, 'dishes' => $dishes, 'raws' => $raws], JSON_UNESCAPED_UNICODE);
 		} catch (Throwable $e) { echo '{"ok":0}'; }
 		exit;
 	}

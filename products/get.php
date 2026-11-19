@@ -7,6 +7,14 @@
 		$q = db::query("update product set recommend = '$on' where id = '$id' and company_id = '$cmp'");
 		exit($q ? 'yes' : 'error');
 	}
+	// Сет / Позиция белгісі (product.is_set): v = 1 сет, 0 позиция, бос = құрамына қарап
+	if (isset($_GET['kind'])) {
+		if (!$user_id || !$company || !fun::has_col('product', 'is_set')) exit('error');
+		$id = (int)@$_POST['id']; $v = (string)@$_POST['v']; $cmp = (int)$company;
+		$val = $v === '' ? 'NULL' : "'".((int)$v ? 1 : 0)."'";
+		$q = db::query("update product set is_set = $val where id = '$id' and company_id = '$cmp'");
+		exit($q ? 'yes' : 'error');
+	}
 	// Құрам (product_comp) / шикізат (product_raw): қосу және өзгерту
 	$cr_act = null;
 	foreach (['comp_add', 'raw_add', 'comp_upd', 'raw_upd'] as $k) if (isset($_GET[$k])) $cr_act = $k;
