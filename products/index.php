@@ -495,8 +495,8 @@
 			document.addEventListener('click', function (e) {
 				var b = e.target.closest('.pr_ai_kind'); if (!b || b.disabled) return;
 				var n = document.querySelectorAll('.pr_row[data-unk]').length; if (!n) return;
-				if (!confirm('ЖИ ' + n + ' тағамның атауы, каталогы мен сипаттамасына қарап, Сет пе әлде Позиция ма, анықтайды. Кейін әр тағамда кнопкамен түзетуге болады. Бастау керек пе?')) return;
-				b.disabled = true; var sp = b.querySelector('span'), t0 = sp.textContent; sp.textContent = 'ЖИ анықтап жатыр...';
+				if (!b._ok) return ask('ЖИ ' + n + ' тағамның атауы, каталогы мен сипаттамасына қарап, Сет пе әлде Позиция ма, анықтайды. Кейін әр тағамда кнопкамен түзетуге болады. Бастау керек пе?', function () { b._ok = 1; b.click(); }, { ok: 'Бастау' });
+				b._ok = 0; b.disabled = true; var sp = b.querySelector('span'), t0 = sp.textContent; sp.textContent = 'ЖИ анықтап жатыр...';
 				fetch('/products/item/kind_ai.php', { method: 'POST', credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) {
 					b.disabled = false; sp.textContent = t0;
 					if (!d.ok) { msg(d.error || T.err); return; }
@@ -512,7 +512,8 @@
 				var ok = rows.filter(function (r) { return r.dataset.pic; }), skip = rows.length - ok.length;
 				if (!rows.length) { msg('Құрамы жазылмаған сет жоқ. Алдымен тағамдарды «Сет» деп белгілеңіз.'); return; }
 				if (!ok.length) { msg('Құрамы жоқ ' + rows.length + ' сеттің бірінде де фото не сипаттама жоқ. Фото қосыңыз.'); return; }
-				if (!confirm('ЖИ ' + ok.length + ' сеттің фотосы мен сипаттамасына қарап құрамын жазады' + (skip ? ' (фотосы жоқ ' + skip + ' сет өткізіледі)' : '') + '. Әр сетке шамамен 10 теңге шығын. Бастау керек пе?')) return;
+				if (!b._ok) return ask('ЖИ ' + ok.length + ' сеттің фотосы мен сипаттамасына қарап құрамын жазады' + (skip ? ' (фотосы жоқ ' + skip + ' сет өткізіледі)' : '') + '. Әр сетке шамамен 10 теңге шығын. Бастау керек пе?', function () { b._ok = 1; b.click(); }, { ok: 'Бастау' });
+				b._ok = 0;
 				b.disabled = true;
 				var sp = b.querySelector('span'), t0 = sp.textContent, i = 0, done = 0, fail = 0, stop = false;
 				var next = function () {

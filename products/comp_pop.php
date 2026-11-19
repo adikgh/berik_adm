@@ -216,8 +216,7 @@
 			var d = e.target.closest('.cpp_del');
 			if (d) {
 				var r = d.closest('.cpp_r'), nm = r.querySelector('.cpp_nm').childNodes[0].textContent;
-				if (!confirm('«' + nm + '» алып тастау керек пе?')) return;
-				send(d.dataset.k + '_del', { id: r.dataset.id }).then(load).catch(function () {});
+				ask('«' + nm + '» алып тастау керек пе?', function () { send(d.dataset.k + '_del', { id: r.dataset.id }).then(load).catch(function () {}); }, { ok: 'Алып тастау', danger: true });
 				return;
 			}
 			var l = e.target.closest('.cpp_link');
@@ -230,7 +229,8 @@
 				if (!D.kind_on) { tab = t2; closePick(); render(); return; }
 				if (kindOf() === k) return;
 				var other = k ? D.rows.length : D.set.length;
-				if (other && !confirm(k ? 'Бұл тағамның граммовкасы жазылған. Сет деп белгілейміз бе? (граммовка өшпейді, тек жасырылады)' : 'Бұл сеттің құрамы жазылған. Позиция деп белгілейміз бе? (сет құрамы өшпейді, тек жасырылады)')) return;
+				if (other && !tb._ok) return ask(k ? 'Бұл тағамның граммовкасы жазылған. Сет деп белгілейміз бе? (граммовка өшпейді, тек жасырылады)' : 'Бұл сеттің құрамы жазылған. Позиция деп белгілейміз бе? (сет құрамы өшпейді, тек жасырылады)', function () { tb._ok = 1; tb.click(); }, { ok: 'Иә' });
+				tb._ok = 0;
 				var fd = new FormData(); fd.append('id', PID); fd.append('v', k);
 				fetch('/products/get.php?kind', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {
 					if (t.trim() != 'yes') { msg('Қате, қайта көріңіз'); return; }
@@ -248,8 +248,8 @@
 		// ЖИ: сет құрамын фотодан жазу (item/set_ai.php), бар құрам ауыстырылады
 		$('.cpp_ai_b').addEventListener('click', function () {
 			var b = this; if (b.disabled) return;
-			if (D.set.length && !confirm('Қазіргі сет құрамы өшіп, ЖИ жаңадан жазады. Жалғастыру керек пе?')) return;
-			b.disabled = true; var sp = b.querySelector('span'), t0 = sp.textContent; sp.textContent = 'ЖИ қарап жатыр...';
+			if (D.set.length && !b._ok) return ask('Қазіргі сет құрамы өшіп, ЖИ жаңадан жазады. Жалғастыру керек пе?', function () { b._ok = 1; b.click(); }, { ok: 'Иә, жазсын' });
+			b._ok = 0; b.disabled = true; var sp = b.querySelector('span'), t0 = sp.textContent; sp.textContent = 'ЖИ қарап жатыр...';
 			var fd = new FormData(); fd.append('id', PID);
 			fetch('/products/item/set_ai.php', { method: 'POST', body: fd, credentials: 'same-origin' })
 				.then(function (r) { return r.json(); })

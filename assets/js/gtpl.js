@@ -13,6 +13,8 @@
 		if (el) el.textContent = w('pp Pricing', 'Жаңа заттардың бағасы анықталуда (база, ЖИ)…') + ' ' + ids.length;
 		post('prices', { ids: JSON.stringify(ids) }).then(function (r) { if (r.error) alert(r.error); done(); }).catch(done);
 	}
+	// браузердің confirm() орнына админнің ask() терезесі (fun.js)
+	var cf = function (q, yes, o) { if (window.ask) ask(q, yes, o || { ok: 'Иә, жалғастыру' }); else if (confirm(q)) yes(); };
 	var SET_ASK = w('tpl Set ask', 'Бұл сет (жинақ / комбо) сияқты: сеттің құрамы «Сет құрамында» тағамдармен толтырылады. Бәрібір шикізат граммовкасын жазамыз ба?');
 	function qty(it) { var q = +it.qty; q = Math.round(q * 1000) / 1000; return it.unit === 'кг' ? q + ' г' : it.unit === 'л' ? q + ' мл' : q + ' шт'; }
 
@@ -48,28 +50,32 @@
 		list.addEventListener('click', function (e) {
 			var b = e.target.closest('.gt_use'); if (!b) return;
 			var rep = box.dataset.has === '1';
-			if (rep && !confirm('Тағамның қазіргі құрамы өшіп, шаблонмен ауыстырылады. Жалғастырамыз ба?')) return;
+			var run = function () {
 			b.disabled = true;
 			(function go(setOk) {
 				post('apply', { pid: pid, tpl: b.dataset.tpl, variant: b.dataset.v, replace: rep ? 1 : 0, set_ok: setOk ? 1 : 0 }).then(function (r) {
-					if (r.result === 'set' && !setOk && confirm(SET_ASK)) return go(true);
+					if (r.result === 'set' && !setOk) { b.disabled = false; return cf(SET_ASK, function () { b.disabled = true; go(true); }, { ok: 'Иә, жазу' }); }
 					if (r.result === 'yes') prices(r.noprice, b, function () { location.reload(); });
-					else { b.disabled = false; if (r.result !== 'set') alert('Қолдану мүмкін болмады: ' + (r.result || r.error)); }
+					else { b.disabled = false; if (r.result !== 'set') (window.mess ? mess('Қолдану мүмкін болмады: ' + (r.result || r.error), 'err') : alert('Қолдану мүмкін болмады: ' + (r.result || r.error))); }
 				});
 			})(false);
+			};
+			if (rep) cf('Тағамның қазіргі құрамы өшіп, шаблонмен ауыстырылады. Жалғастырамыз ба?', run, { ok: 'Иә, ауыстыру' }); else run();
 		});
 		box.querySelector('.gt_ai').addEventListener('click', function () {
 			var b = this, sp = box.querySelector('.gt_ais'), rep = box.dataset.has === '1';
-			if (rep && !confirm('Тағамның қазіргі құрамы өшіп, ЖИ граммовкасымен ауыстырылады. Жалғастырамыз ба?')) return;
+			var run = function () {
 			b.disabled = true;
 			(function go(setOk) {
 				sp.textContent = w('tpl AI dish working', 'ЖИ граммовка құрастыруда (базадағы ұқсас рецептер + интернет), 30-90 сек…');
 				post('dish_ai', { pid: pid, variant: box.querySelector('.gt_av').value, replace: rep ? 1 : 0, set_ok: setOk ? 1 : 0 }).then(function (r) {
-					if (r.result === 'set' && !setOk && confirm(SET_ASK)) return go(true);
+					if (r.result === 'set' && !setOk) { b.disabled = false; sp.textContent = ''; return cf(SET_ASK, function () { b.disabled = true; go(true); }, { ok: 'Иә, жазу' }); }
 					if (r.result === 'yes') prices(r.noprice, sp, function () { location.reload(); });
 					else { b.disabled = false; sp.textContent = (r.result === 'set' ? w('tpl Is set', 'Бұл сет: құрамы «Сет құрамында» толтырылады') : (r.error || r.result || 'Қате') + ' · ' + w('pp Fill by hand', 'құрамын қолмен толтыруға болады')); }
 				}).catch(function () { b.disabled = false; sp.textContent = w('pp AI timeout', 'ЖИ жауап бермеді, қайталаңыз'); });
 			})(false);
+			};
+			if (rep) cf('Тағамның қазіргі құрамы өшіп, ЖИ граммовкасымен ауыстырылады. Жалғастырамыз ба?', run, { ok: 'Иә, ауыстыру' }); else run();
 		});
 		load('');
 	}
@@ -119,7 +125,7 @@
 
 	// Шаблоны жоқ тағамдарға ЖИ граммовкасы: бір-бірлеп, барысын көрсетіп; соңында бағасыз шикізатқа баға
 	function aiAll(list, variant, prev, ab, go) {
-		if (!confirm(w('tpl AI fill rest ask', 'ЖИ әр тағамға орташа граммовка құрады (бір тағамға ~15-60 сек, шығыны «ЖИ шығыны» бетінде). Бастаймыз ба?'))) return;
+		if (!aiAll.ok) return cf(w('tpl AI fill rest ask', 'ЖИ әр тағамға орташа граммовка құрады (бір тағамға ~15-60 сек, шығыны «ЖИ шығыны» бетінде). Бастаймыз ба?'), function () { aiAll.ok = 1; aiAll(list, variant, prev, ab, go); aiAll.ok = 0; }, { ok: 'Бастау' });
 		ab.disabled = true; go.disabled = true;
 		var i = 0, ok = 0, bad = [], ids = [], usd = 0;
 		(function next() {
