@@ -252,7 +252,16 @@
 			</div>
 
 			<div class="c2_col">
-				<div class="c2_ch c2_ch4"><b>4</b> <?=t::w('c2 Sets', 'Сеттер')?> <span><?=count($sets)?></span></div>
+				<div class="c2_ch c2_ch4"><b>4</b> <?=t::w('c2 Sets', 'Сеттер')?> <span><?=count($sets)?></span><button type="button" class="c2_ch_b c2_set_new" title="<?=$h(t::w('c2 Add set', 'Сет қосу'))?>"><i class="far fa-plus"></i></button></div>
+				<form class="c2_card c2_newp c2_news" hidden autocomplete="off">
+					<input class="c2_in" name="set" list="c2_sdl" placeholder="<?=$h(t::w('c2 Menu dish', 'Мәзірдегі тағам'))?>" required><datalist id="c2_sdl"></datalist>
+					<div class="c2_newp_r">
+						<input class="c2_in" name="item" list="c2_sil" placeholder="<?=$h(t::w('c2 First item', 'Бірінші зат'))?>" required><datalist id="c2_sil"></datalist>
+						<input class="c2_in c2_sq" name="q" inputmode="decimal" value="1" required>
+						<button class="c2_ok" type="submit"><i class="far fa-check"></i></button>
+					</div>
+				</form>
+				<? if (!$sets): ?><button type="button" class="c2_card c2_empty c2_set_new"><i class="far fa-plus"></i> <?=t::w('c2 Add set', 'Сет қосу')?></button><? endif ?>
 				<? foreach ($sets as $x): ?>
 					<div class="c2_card c2_blk c2_f" id="s<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
 						<div class="c2_bh"><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?></div>
@@ -277,7 +286,7 @@
 
 	<script>
 	// Себес-2: іздеу, блокқа өту, ұяшықты басып өзгерту, жол қосу/өшіру. Сақталғаннан кейін .c2_page AJAX-пен жаңарады (fun.js ajx)
-	(function () {
+	(function (f) { if (document.readyState == 'loading') document.addEventListener('DOMContentLoaded', f); else f(); })(function () {
 		if (window.c2Init) return; window.c2Init = 1;
 		var T = {
 			saved: <?=json_encode(t::w('c2 Saved', 'Сақталды'))?>, err: <?=json_encode(t::w('c2 Error, try again', 'Қате, қайта көріңіз'))?>,
@@ -386,11 +395,11 @@
 		// жаңа дайындама: Себес бетінің ортақ терезесі (шаблон, ЖИ) болса — сол, болмаса осы жердегі қысқа форма
 		$(document).on('click', '.c2_prep_new', function () {
 			if (typeof window.openPrep == 'function') { window.openPrep(null); return; }
-			var f = document.querySelector('.c2_newp'); f.hidden = !f.hidden; if (!f.hidden) f.querySelector('[name=name]').focus();
+			var f = document.querySelector('.c2_newp:not(.c2_news)'); f.hidden = !f.hidden; if (!f.hidden) f.querySelector('[name=name]').focus();
 		});
 		$(document).on('click', '.c2_pp', function () { if (typeof window.openPrep == 'function') window.openPrep(+this.dataset.id); });
 		document.addEventListener('prep:saved', function () { reload(); });
-		$(document).on('submit', '.c2_newp', function (e) {
+		$(document).on('submit', '.c2_newp:not(.c2_news)', function (e) {
 			e.preventDefault();
 			var f = this;
 			send('prep_add', { name: f.name.value, unit: f.unit.value, yield: f.yield.value }, function (t) {
@@ -398,7 +407,28 @@
 				$(document).one('ajx:done', function () { var b = document.getElementById('p' + id); if (b) { b.scrollIntoView({ block: 'center' }); var a = b.querySelector('.c2_add_b'); if (a) a.click(); } });
 			});
 		});
-	})();
+
+		// жаңа сет: мәзірдегі тағам (әлі сет емес) + бірінші зат → si_add
+		$(document).on('click', '.c2_set_new', function () {
+			var f = document.querySelector('.c2_news'); f.hidden = !f.hidden; if (f.hidden) return;
+			var O = JSON.parse(document.querySelector('.c2_opt').dataset.o);
+			f.querySelector('#c2_sdl').innerHTML = (O.d || []).map(function (x) { return '<option value="' + esc(x.n) + '">'; }).join('');
+			f.querySelector('#c2_sil').innerHTML = opts('drc').map(function (x) { return '<option value="' + esc(x.n) + '">'; }).join('');
+			f.querySelector('[name=set]').focus();
+		});
+		$(document).on('submit', '.c2_news', function (e) {
+			e.preventDefault();
+			var f = this, O = JSON.parse(document.querySelector('.c2_opt').dataset.o);
+			var find = function (list, v) { v = v.trim().toLowerCase(); for (var i = 0; i < list.length; i++) if (list[i].n.trim().toLowerCase() == v) return list[i]; return null; };
+			var d = find(O.d || [], f.set.value); if (!d) { mess(T.pick, 'warn'); f.set.focus(); return; }
+			var it = find(opts('drc'), f.item.value); if (!it) { mess(T.pick, 'warn'); f.item.focus(); return; }
+			var q = parseFloat(f.q.value.replace(',', '.')); if (!(q > 0)) { mess(T.qty, 'warn'); f.q.focus(); return; }
+			var sid = d.c.slice(1);
+			send('si_add', { to: sid, item: it.c, q: f.q.value }, function () {
+				$(document).one('ajx:done', function () { var b = document.getElementById('s' + sid); if (b) { b.scrollIntoView({ block: 'center' }); var a = b.querySelector('.c2_add_b'); if (a) a.click(); } });
+			});
+		});
+	});
 	</script>
 
 <? include "../../block/footer.php"; ?>

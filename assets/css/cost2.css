@@ -102,6 +102,11 @@ select.c2_ein{ width: auto; text-align: left; }
 .c2_in:focus{ border-color: var(--bp-blue, #1f75a8); outline: none; }
 .c2_empty{ width: 100%; border: 2px dashed #e3c47a; background: #fffaf0; color: #a87300; font: inherit; font-weight: 700; cursor: pointer; padding: 22px; box-shadow: none; }
 .c2_empty:hover{ background: #fff3d6; }
+.c2_ch4 .c2_ch_b{ color: #0b8a55; }
+.c2_empty.c2_set_new{ border-color: #8fd9b6; background: #f0fbf6; color: #0b8a55; }
+.c2_empty.c2_set_new:hover{ background: #e2f7ec; }
+.c2_news .c2_newp_r [name=item]{ flex: 1; min-width: 0; }
+.c2_news .c2_sq{ width: 70px; flex: none; }
 .c2_pp{ border: 0; background: transparent; color: var(--bp-muted, #8a8f98); cursor: pointer; padding: 0 2px; }
 .c2_pp:hover{ color: var(--bp-blue, #1f75a8); }
 .c2_bh b{ font-size: 14px; font-weight: 700; color: var(--bp-text, #222); }
