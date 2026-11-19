@@ -6,7 +6,7 @@
 	$wc = dwa_conf();
 	$conf_ok = is_writable(is_file(dwa_path()) ? dwa_path() : dirname(dwa_path()));
 	$plain = dwa_plain();
-	$sites = ['admin' => t::w('Admin', 'Админ'), 'delivery' => t::w('Courier (delivery)', 'Курьер (доставка)'), 'dist' => t::w('Dispatch', 'Раздача'), 'ktch' => t::w('Kitchen', 'Кухня')];
+	$sites = ['admin' => t::w('Admin', 'Админ'), 'delivery' => t::w('Courier (delivery)', 'Курьер (доставка)'), 'dist' => t::w('Dispatch', 'Раздача'), 'ktch' => t::w('Kitchen', 'Кухня'), 'my' => t::w('My (client cabinet)', 'My (клиент кабинеті)'), 'qr' => t::w('QR menu', 'QR меню')];
 	$keep = ' (' . t::w('leave empty to keep', 'өзгертпесеңіз бос қалдырыңыз') . ')';
 ?>
 <? include "../block/header.php"; ?>
