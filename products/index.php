@@ -72,6 +72,7 @@
 						<i class="fal fa-plus"></i>
 						<span><?=t::w('Add dish', 'Тағам қосу')?></span>
 					</div>
+					<a class="btn pr_imp_b" href="/products/import/"><i class="fal fa-magic"></i><span><?=t::w('imp Import menu with AI', 'Мәзірді ЖИ арқылы қосу')?></span></a>
 				</div>
 			</div>
 		</div>
@@ -97,6 +98,7 @@
 						</div>
 						<? endif ?>
 						<div class="btn btn_cl product_add_pop pr_add_b"><i class="fal fa-plus"></i><span><?=t::w('Add dish', 'Тағам қосу')?></span></div>
+						<a class="btn pr_add_b pr_imp_b" href="/products/import/" title="Мәзір фотосы, PDF не Instagram: ЖИ жоқ тағамдарды қосып, граммовкасын толтырады"><i class="fal fa-magic"></i><span><?=t::w('imp Import menu with AI', 'Мәзірді ЖИ арқылы қосу')?></span></a>
 					</div>
 					<!-- 2-қатар: сүзгілер (түрі | граммовка) -->
 					<div class="pr_tr pr_tr_flt">

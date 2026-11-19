@@ -1,0 +1,55 @@
+/* ЖИ мәзір импорты /products/import/ */
+.mi_page{ max-width: 980px; padding-bottom: 60px; }
+.mi_back{ display: inline-flex; gap: 8px; align-items: center; color: #6b7280; font-size: 14px; margin: 6px 0 10px; text-decoration: none; }
+.mi_h{ font-size: 24px; font-weight: 800; margin: 0 0 6px; display: flex; gap: 10px; align-items: center; }
+.mi_h i{ color: var(--bp-green, #0EA768); }
+.mi_sub{ color: #5d6470; margin: 0 0 16px; line-height: 1.5; }
+.mi_warn{ background: #fff1f0; color: #b42318; padding: 10px 14px; border-radius: 12px; margin-bottom: 14px; }
+.mi_card{ background: #fff; border: 1px solid #e7e9ee; border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+.mi_t{ font-weight: 800; font-size: 17px; margin-bottom: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.mi_t small{ font-weight: 400; color: #8a909c; font-size: 13px; }
+.mi_n{ width: 26px; height: 26px; border-radius: 50%; background: var(--bp-green, #0EA768); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
+.mi_seg{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.mi_seg_b{ border: 1px solid #dfe3ea; background: #f6f7f9; border-radius: 12px; padding: 10px 14px; cursor: pointer; font: inherit; font-weight: 700; color: #3d4350; display: inline-flex; gap: 8px; align-items: center; }
+.mi_var .mi_seg_b{ flex: 1; min-width: 140px; flex-direction: column; align-items: flex-start; gap: 2px; }
+.mi_var .mi_seg_b small{ font-weight: 400; color: #8a909c; font-size: 12px; }
+.mi_seg_b.mi_on{ background: #eefaf4; border-color: var(--bp-green, #0EA768); color: #08784b; }
+.mi_drop{ display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; border: 2px dashed #cfd5df; border-radius: 14px; padding: 26px 14px; cursor: pointer; color: #5d6470; }
+.mi_drop i{ font-size: 32px; color: var(--bp-green, #0EA768); }
+.mi_drop small{ color: #8a909c; }
+.mi_thumbs{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.mi_th{ position: relative; width: 86px; height: 86px; border-radius: 10px; overflow: hidden; border: 1px solid #e7e9ee; }
+.mi_th img{ width: 100%; height: 100%; object-fit: cover; }
+.mi_th_x{ position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; cursor: pointer; }
+.mi_hint{ display: block; color: #8a909c; margin-top: 6px; }
+.mi_ck{ display: flex; gap: 8px; align-items: flex-start; margin: 8px 0; cursor: pointer; color: #3d4350; }
+.mi_ck input{ margin-top: 3px; }
+.mi_act{ margin-top: 12px; }
+.mi_act .btn[disabled]{ opacity: .5; pointer-events: none; }
+.mi_note{ color: #6b7280; font-size: 13px; margin-bottom: 8px; }
+.mi_tbl_w{ overflow-x: auto; }
+.mi_tbl{ width: 100%; border-collapse: collapse; font-size: 14px; }
+.mi_tbl th{ text-align: left; color: #8a909c; font-weight: 600; padding: 6px; border-bottom: 1px solid #e7e9ee; }
+.mi_tbl td{ padding: 6px; border-bottom: 1px solid #f0f1f4; vertical-align: top; }
+.mi_tbl td small{ display: block; color: #8a909c; font-size: 12px; margin-top: 2px; max-width: 360px; }
+.mi_tbl tr.mi_ex{ opacity: .55; }
+.mi_in{ width: 100%; min-width: 90px; border: 1px solid #e1e5eb; border-radius: 8px; padding: 6px 8px; font: inherit; }
+.mi_pr{ width: 90px; min-width: 70px; }
+.mi_in:disabled{ background: transparent; border-color: transparent; }
+.mi_kind{ border: 0; border-radius: 8px; padding: 6px 10px; font: inherit; font-weight: 700; font-size: 13px; background: #f1f3f5; color: #5d6470; cursor: pointer; }
+.mi_kind.mi_kind_set{ background: #e8f0ff; color: #2f5bd3; }
+.mi_tag{ display: inline-block; background: #eefaf4; color: #08784b; border-radius: 8px; padding: 3px 8px; font-size: 12px; font-weight: 700; }
+.mi_tag_ex{ background: #f1f3f5; color: #5d6470; }
+.mi_bar{ height: 8px; border-radius: 6px; background: #f0f1f4; overflow: hidden; }
+.mi_bar_i{ height: 100%; width: 0; background: var(--bp-green, #0EA768); transition: width .3s; }
+.mi_stat{ margin: 10px 0; font-weight: 700; }
+.mi_log{ max-height: 380px; overflow-y: auto; font-size: 13px; }
+.mi_l{ padding: 5px 0; border-bottom: 1px solid #f3f4f6; }
+.mi_l_err{ color: #b42318; }
+.mi_fx{ background: #fff3d6; color: #8a6100; border-radius: 6px; padding: 1px 6px; font-size: 12px; }
+.mi_done{ display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+@media (max-width: 700px){
+	.mi_card{ padding: 14px; }
+	.mi_var .mi_seg_b{ min-width: 0; }
+	.mi_tbl th:nth-child(3), .mi_tbl td:nth-child(3){ display: none; }
+}
