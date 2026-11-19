@@ -102,6 +102,54 @@ class claude {
 		return $data;
 	}
 
+	// Интернетте іздеп (web search) мәтін жауап алу. Жауаптың соңғы ```json``` блогы массив болып қайтады, қате болса null (self::$err).
+	// $feature — company_ai_log-тағы аты, self::$usd — осы шақырудың жалпы бағасы ($)
+	public static $usd = 0;
+	public static function web($system, $user, $feature, $searches = 3, $model = null, $effort = 'medium', $max_tokens = 12000) {
+		self::$err = ''; self::$usd = 0; self::$feature = $feature;
+		if (!self::ready()) { self::$err = 'no_key'; return null; }
+		$model = $model ?: self::MID;
+		$messages = [['role' => 'user', 'content' => $user]]; $txt = '';
+		for ($turn = 0; $turn < 4; $turn++) {
+			$body = [
+				'model' => $model, 'max_tokens' => $max_tokens,
+				'system' => [['type' => 'text', 'text' => $system, 'cache_control' => ['type' => 'ephemeral']]],
+				'output_config' => ['effort' => $effort], 'messages' => $messages, 'fallbacks' => 'default',
+			];
+			if ($searches > 0) $body['tools'] = [['type' => 'web_search_20260209', 'name' => 'web_search', 'max_uses' => (int)$searches]];
+			$ch = curl_init(defined('CLAUDE_WEB_URL') ? CLAUDE_WEB_URL : 'https://api.anthropic.com/v1/messages'); // CLAUDE_WEB_URL тек тест үшін
+			curl_setopt_array($ch, [
+				CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 200, CURLOPT_CONNECTTIMEOUT => 20,
+				CURLOPT_HTTPHEADER => ['content-type: application/json', 'x-api-key: '.ANTHROPIC_API_KEY, 'anthropic-version: 2026-10-21', 'anthropic-beta: server-side-fallback-2026-07-01'],
+				CURLOPT_POSTFIELDS => json_encode($body, JSON_UNESCAPED_UNICODE),
+			]);
+			$res = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); $cerr = curl_error($ch); curl_close($ch);
+			if ($res === false) { self::$err = 'connect'; error_log('claude web: '.$cerr); return null; }
+			$j = json_decode($res, true);
+			if ($code != 200) {
+				error_log('claude web '.$feature.' '.$code.': '.($j['error']['message'] ?? substr($res, 0, 300)));
+				self::$err = [401 => 'key', 402 => 'balance', 429 => 'busy', 529 => 'busy'][$code] ?? 'http';
+				return null;
+			}
+			if (!empty($j['usage'])) { $m = $j['model'] ?? $model; self::log($m, $j['usage']); self::$usd += self::usd($m, $j['usage']); }
+			foreach ($j['content'] ?? [] as $b) {
+				if (($b['type'] ?? '') == 'text') $txt .= $b['text'];
+				if (($b['type'] ?? '') == 'web_search_tool_result' && isset($b['content']['error_code'])) error_log('claude web '.$feature.' search error: '.$b['content']['error_code']);
+			}
+			$stop = $j['stop_reason'] ?? '';
+			// іздеу ұзаққа созылса сервер кезекті үзеді: жауапты сол күйі қайта жібереміз, ол жалғастырады
+			if ($stop == 'pause_turn') { $messages[] = ['role' => 'assistant', 'content' => $j['content']]; continue; }
+			if ($stop == 'refusal') { self::$err = 'refusal'; return null; }
+			if ($stop == 'max_tokens') { self::$err = 'long'; return null; }
+			break;
+		}
+		$data = null;
+		if (preg_match_all('/```(?:json)?\s*(\{.*?\})\s*```/su', $txt, $m)) $data = json_decode(end($m[1]), true);
+		if (!is_array($data) && ($a = strpos($txt, '{')) !== false) $data = json_decode(substr($txt, $a, strrpos($txt, '}') - $a + 1), true);
+		if (!is_array($data)) { self::$err = 'json'; error_log('claude web '.$feature.' bad json: '.mb_substr($txt, -400)); return null; }
+		return $data;
+	}
+
 	// Сурет: ұзын жағы 1568px-тен үлкен болса кішірейтеміз (Claude үшін жеткілікті, арзанырақ)
 	public static function image_block($bytes, $mime) {
 		if (function_exists('imagecreatefromstring') && ($src = @imagecreatefromstring($bytes))) {

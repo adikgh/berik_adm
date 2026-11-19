@@ -15,6 +15,9 @@
 		exit($q ? 'yes' : 'error');
 	}
 
+	// «Дайындама» попапының тізімдері (prep_pop.js): JSON
+	if (isset($_GET['prep_data'])) { header('Content-Type: application/json; charset=utf-8'); exit(json_encode(cost::prep_data($cmp), JSON_UNESCAPED_UNICODE)); }
+
 	// Дайындаманың рецепті: атауы, өлшемі, шығымы және құрамы (шикізат немесе басқа дайындама)
 	if (isset($_GET['prep_save'])) {
 		$id = (int)@$_POST['id'];
@@ -40,13 +43,19 @@
 		$dup = db::query("select id from product_comp where company_id = '$cmp' and (name_ru = '$en' or name_kz = '$en') and id <> '$id' limit 1");
 		if ($dup && mysqli_num_rows($dup)) exit('exists');
 		mysqli_begin_transaction(db::$connect);
-		if ($id) $r1 = db::query("update product_comp set name_kz = if(name_kz is null or name_kz = '' or name_kz = name_ru, '$en', name_kz), name_ru = '$en', unit = '$unit', yield_qty = '$y', ubd_dt = NOW() where id = '$id' and company_id = '$cmp'");
+		if ($id) $r1 = db::query("update product_comp set name_kz = if(name_kz is null or name_kz = '' or name_kz = name_ru, '$en', name_kz), name_ru = '$en', unit = '$unit', yield_qty = '$y', kind = if(kind is null or kind = 'raw', 'semi', kind), ubd_dt = NOW() where id = '$id' and company_id = '$cmp'");
 		else { $r1 = db::query("insert into product_comp (company_id, name_kz, name_ru, unit, yield_qty, kind, price) values ('$cmp', '$en', '$en', '$unit', '$y', 'semi', 0)"); $id = (int)mysqli_insert_id(db::$connect); }
 		$r2 = $r1 && db::query("delete from product_comp_part where comp_id = '$id'");
 		foreach ($ok as $p) if ($r2) $r2 = db::query("insert into product_comp_part (comp_id, ".($p[0] == 'r' ? 'raw_id' : 'sub_comp_id').", quantity) values ('$id', '{$p[1]}', '{$p[2]}')");
 		if (!$r2 || !$id) { mysqli_rollback(db::$connect); exit('error'); }
 		mysqli_commit(db::$connect);
 		cost::recalc($cmp);
+		// ?prep_save&json — prep_pop.js: сақталған дайындаманың id, атауы, 1 бірлік себесі
+		if (isset($_GET['json'])) {
+			$c = cost::comps($cmp)[$id] ?? null;
+			header('Content-Type: application/json; charset=utf-8');
+			exit(json_encode(['result' => 'yes', 'id' => $id, 'name' => $name, 'unit' => $unit, 'cost' => $c ? round($c['cost'], 2) : 0], JSON_UNESCAPED_UNICODE));
+		}
 		exit('yes');
 	}
 

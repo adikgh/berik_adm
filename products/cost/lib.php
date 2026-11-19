@@ -68,6 +68,21 @@
 			return $n;
 		}
 
+		// «Дайындама» попапы үшін тізімдер: шикізат (закуп), құрамдар, рецепті бар дайындамалар (бағасымен)
+		public static function prep_data($cmp) {
+			$cmp = (int)$cmp; $P = ['raw' => [], 'comp' => [], 'prep' => new stdClass()];
+			$q = db::query("select id, name_ru, name_kz, unit, price from product_raw where company_id = '$cmp' order by name_ru");
+			while ($x = mysqli_fetch_assoc($q)) $P['raw'][] = ['id' => (int)$x['id'], 'n' => $x['name_ru'] ?: $x['name_kz'], 'u' => (string)$x['unit'], 'p' => (float)$x['price']];
+			$prep = [];
+			foreach (self::comps($cmp) as $x) {
+				$P['comp'][] = ['id' => (int)$x['id'], 'n' => $x['name_ru'] ?: $x['name_kz'], 'u' => (string)$x['unit'], 'p' => round($x['cost'], 2), 's' => $x['parts'] ? 1 : 0];
+				if ($x['parts']) $prep[$x['id']] = ['n' => $x['name_ru'] ?: $x['name_kz'], 'u' => (string)$x['unit'], 'y' => $x['yield_qty'] + 0,
+					'parts' => array_map(function ($p) { return ['t' => $p['raw_id'] ? 'r' : 'c', 'id' => (int)($p['raw_id'] ?: $p['sub_comp_id']), 'q' => $p['quantity'] + 0]; }, $x['parts'])];
+			}
+			if ($prep) $P['prep'] = $prep;
+			return $P;
+		}
+
 		// Мәзірдегі тағамдардың себесі: product_id => cost
 		public static function dishes($cmp, $comps) {
 			$res = [];

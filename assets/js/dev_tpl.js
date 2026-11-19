@@ -1,6 +1,6 @@
 // Граммовка шаблондары беті: кесте сүзгісі, өңдеу терезесі, ЖИ ұсыныстары
 (function () {
-	var G = window.GT || { tpl: {}, cats: [] }, W = window.bw || {}, pop = document.querySelector('.gt_pop'), cur = null;
+	var G = window.GT || { tpl: {}, cats: [], semis: [] }, W = window.bw || {}, pop = document.querySelector('.gt_pop'), cur = null;
 	function w(k, d) { return W[k] || d; }
 	var VN = [w('Economy', 'Эконом'), w('Standard', 'Стандарт'), w('Premium', 'Премиум')];
 	function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -24,7 +24,8 @@
 	$('#gt_cats').innerHTML = G.cats.map(function (c) { return '<option value="' + esc(c) + '">'; }).join('');
 	function itemRow(it) {
 		it = it || { name: '', unit: 'кг', q: ['', '', ''] };
-		return '<tr><td><input class="i_n" placeholder="' + w('Ingredient', 'Құрам') + '" value="' + esc(it.name) + '"></td><td><select class="i_u">' + ['кг', 'л', 'шт'].map(function (u) { return '<option' + (u === it.unit ? ' selected' : '') + '>' + u + '</option>'; }).join('') + '</select></td>' +
+		var sb = (G.semis || []).indexOf(String(it.name).toLowerCase().trim()) > -1 && (!cur || String(it.name).toLowerCase().trim() !== String(cur.name).toLowerCase().trim());
+		return '<tr><td><input class="i_n" placeholder="' + w('Ingredient', 'Құрам') + '" value="' + esc(it.name) + '">' + (sb ? '<span class="i_sb">● ' + w('tpl Semi', 'Дайындама') + ' (' + w('tpl own recipe', 'өз рецептімен') + ')</span>' : '') + '</td><td><select class="i_u">' + ['кг', 'л', 'шт'].map(function (u) { return '<option' + (u === it.unit ? ' selected' : '') + '>' + u + '</option>'; }).join('') + '</select></td>' +
 			[0, 1, 2].map(function (i) { return '<td><input class="i_q" inputmode="decimal" placeholder="' + VN[i] + '" value="' + esc(it.q[i] === 0 ? '' : it.q[i]) + '"></td>'; }).join('') + '<td><span class="gt_x" title="' + w('Delete', 'Өшіру') + '">&times;</span></td></tr>';
 	}
 	function sums() {
@@ -35,11 +36,15 @@
 				g += parseFloat(String(tr.querySelectorAll('.i_q')[v].value).replace(',', '.')) || 0;
 			});
 			$('.gt_s' + v, pop).textContent = g ? Math.round(g) + ' ' + w('g', 'г') : '—';
+			// дайындама: шикізат салмағы шығымға қатысты (судың есебінен шығым көбірек болуы мүмкін)
 		});
 	}
 	function open(t) {
-		cur = t || { id: 0, name: '', cat: '', keys: '', draft: 0, note: '', items: [] };
-		$('.gt_ph', pop).textContent = cur.id ? (cur.draft ? w('AI suggestion', 'ЖИ ұсынысы') : w('Template', 'Шаблон')) : w('New template', 'Жаңа шаблон');
+		cur = t || { id: 0, name: '', cat: '', keys: '', draft: 0, note: '', items: [], kind: 'dish', unit: 'кг', yield: 1 };
+		var sm = cur.kind === 'semi';
+		pop.classList.toggle('gt_semi', sm);
+		$('.t_u', pop).value = cur.unit || 'кг'; $('.t_y', pop).value = String(cur.yield || (sm ? 1 : '')).replace('.', ',');
+		$('.gt_ph', pop).textContent = (cur.id ? (cur.draft ? w('AI suggestion', 'ЖИ ұсынысы') : w('Template', 'Шаблон')) : w('New template', 'Жаңа шаблон')) + (sm ? ' · ' + w('tpl Semi', 'Дайындама') : '');
 		var nt = $('.gt_note', pop); nt.textContent = cur.note || ''; nt.classList.toggle('on', !!(cur.draft && cur.note));
 		$('.t_n', pop).value = cur.name; $('.t_c', pop).value = cur.cat; $('.t_k', pop).value = cur.keys;
 		var its = cur.items.length ? cur.items : [null, null, null];
@@ -54,7 +59,8 @@
 	document.addEventListener('click', function (e) {
 		var tr = e.target.closest('.gt_t tbody tr.lnk');
 		if (tr) return open(G.tpl[tr.dataset.id]);
-		if (e.target.closest('.gt_new')) return open(null);
+		var nb = e.target.closest('.gt_new');
+		if (nb) return open(nb.dataset.kind === 'semi' ? { id: 0, name: '', cat: '', keys: '', draft: 0, note: '', items: [], kind: 'semi', unit: 'кг', yield: 1 } : null);
 	});
 	pop.addEventListener('input', sums);
 	pop.addEventListener('change', sums);
@@ -72,7 +78,7 @@
 		return fetch('get.php?' + act, { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (x) { return x.json(); }).then(function (d) {
 			if (btn) btn.classList.remove('loading'), btn.disabled = false;
 			if (d.result !== 'yes') { toast(w('Error', 'Қате') + ': ' + (d.error || d.result), 1); return d; }
-			if (act !== 'ai_suggest') { toast(act === 'tpl_del' ? w('Deleted', 'Өшірілді') : w('Saved', 'Сақталды')); setTimeout(function () { location.reload(); }, 500); }
+			if (act !== 'ai_suggest' && act !== 'semi_suggest') { toast(act === 'tpl_del' ? w('Deleted', 'Өшірілді') : w('Saved', 'Сақталды')); setTimeout(function () { location.reload(); }, 500); }
 			return d;
 		}).catch(function () { if (btn) btn.classList.remove('loading'), btn.disabled = false; toast(w('Error', 'Қате'), 1); return {}; });
 	}
@@ -82,10 +88,37 @@
 		}).filter(function (i) { return i.name.trim(); });
 		if (!$('.t_n', pop).value.trim()) { $('.t_n', pop).focus(); return toast(w('Enter the title', 'Атауын жазыңыз'), 1); }
 		if (!items.length) return toast(w('Add ingredients', 'Құрам қосыңыз'), 1);
-		var d = { id: cur.id || '', name: $('.t_n', pop).value, cat: $('.t_c', pop).value, keys: $('.t_k', pop).value, items: JSON.stringify(items) };
+		var d = { id: cur.id || '', name: $('.t_n', pop).value, cat: $('.t_c', pop).value, keys: $('.t_k', pop).value, items: JSON.stringify(items), kind: cur.kind || 'dish', unit: $('.t_u', pop).value, yield: $('.t_y', pop).value };
 		if (approve) d.approve = 1;
 		post('tpl_save', d, $(approve ? '.gt_ok' : '.gt_sv', pop));
 	}
+
+	// --- ЖИ: шаблоны жоқ дайындамалар (2-ден бөліп жібереміз; ішкі дайындамаларын да жасайды)
+	var sall = $('.gt_sall'), sgo = $('.gt_ai_semi'), sprog = $('.gt_sprog');
+	if (sall) sall.onchange = function () { document.querySelectorAll('.gt_spick').forEach(function (c) { c.checked = sall.checked; }); };
+	if (sgo) sgo.onclick = function () {
+		var names = [].filter.call(document.querySelectorAll('.gt_spick'), function (c) { return c.checked; }).map(function (c) { return c.value; });
+		if (!names.length) return toast(w('tpl Pick semis', 'Дайындама таңдаңыз'), 1);
+		var parts = []; for (var i = 0; i < names.length; i += 2) parts.push(names.slice(i, i + 2));
+		devAsk(w('tpl AI semi ask', 'ЖИ дайындама рецептін іздейді:') + ' ' + names.length + '. ' + w('tpl AI semi time', 'Әр 2 дайындамаға шамамен 1-2 минут; шығыны «ЖИ шығыны» бетінде (semi_ai).'), function () {
+			var made = 0, usd = 0, done = 0;
+			sgo.disabled = true;
+			(function next() {
+				if (!parts.length) {
+					sgo.disabled = false; sprog.textContent = '';
+					toast(w('Suggestions ready', 'Ұсыныстар дайын') + ': ' + made + ' · $' + usd.toFixed(2));
+					return setTimeout(function () { location.reload(); }, 900);
+				}
+				var p = parts.shift();
+				sprog.textContent = w('Searching', 'Ізделуде') + ': ' + p.join(', ') + ' (' + (done + 1) + '/' + (done + 1 + parts.length) + ')';
+				post('semi_suggest', { names: JSON.stringify(p) }).then(function (d) {
+					done++; usd += d.usd || 0; made += d.n || 0;
+					if (d.result === 'yes') next();
+					else { sgo.disabled = false; sprog.textContent = ''; if (made) setTimeout(function () { location.reload(); }, 1500); }
+				});
+			})();
+		}, { ok: w('Start', 'Бастау') });
+	};
 
 	// --- ЖИ: белгіленген тағамдарды 3-тен бөліп жібереміз
 	var all = $('.gt_all'), go = $('.gt_ai_go'), prog = $('.gt_prog');

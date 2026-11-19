@@ -6,20 +6,30 @@
 		return fetch(URL + '?' + act, { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.json(); });
 	}
 	function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+	function w(k, d) { return (window.bw && window.bw[k]) || d; }
+	// бағасыз жаңа шикізатқа баға (база, табылмаса ЖИ), сосын бетті жаңарту
+	function prices(ids, el, done) {
+		if (!ids || !ids.length) return done();
+		if (el) el.textContent = w('pp Pricing', 'Жаңа заттардың бағасы анықталуда (база, ЖИ)…') + ' ' + ids.length;
+		post('prices', { ids: JSON.stringify(ids) }).then(function (r) { if (r.error) alert(r.error); done(); }).catch(done);
+	}
 	function qty(it) { var q = +it.qty; q = Math.round(q * 1000) / 1000; return it.unit === 'кг' ? q + ' г' : it.unit === 'л' ? q + ' мл' : q + ' шт'; }
 
 	// ---------- тағам картасы ----------
 	function itemBox(box) {
 		var pid = box.dataset.pid, open = box.dataset.has !== '1';
 		box.innerHTML = '<div class="gt_head"><b><i class="fal fa-magic"></i> Граммовка шаблоны</b>' +
-			'<input class="gt_q" placeholder="Басқа шаблон іздеу: цезарь, пицца…"></div><div class="gt_list"></div>';
+			'<input class="gt_q" placeholder="Басқа шаблон іздеу: цезарь, пицца…"></div><div class="gt_list"></div>' +
+			'<div class="gt_aib" hidden><select class="gt_av"><option value="1">' + w('Economy', 'Эконом') + '</option><option value="2" selected>' + w('Standard', 'Стандарт') + '</option><option value="3">' + w('Premium', 'Премиум') + '</option></select>' +
+			'<button type="button" class="btn gt_ai"><i class="fal fa-sparkles"></i> ' + w('tpl AI dish fill', 'ЖИ құрамын толтырсын') + '</button><span class="gt_ais">' + w('tpl AI dish hint', 'шаблон сай келмесе: ЖИ орташа граммовка құрады, керек дайындамаларды рецептімен ашады') + '</span></div>';
 		if (!open) { box.classList.add('gt_closed'); box.querySelector('.gt_head b').insertAdjacentHTML('beforeend', ' <span class="gt_tog">ашу</span>'); }
 		var list = box.querySelector('.gt_list'), qi = box.querySelector('.gt_q'), tm;
 		box.querySelector('.gt_head b').addEventListener('click', function () { box.classList.toggle('gt_closed'); });
 		function load(q) {
 			list.innerHTML = '<div class="gt_wait">Жүктелуде…</div>';
 			fetch(URL + '?match&pid=' + pid + '&q=' + encodeURIComponent(q || ''), { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) {
-				if (!d.tpls || !d.tpls.length) { list.innerHTML = '<div class="gt_wait">Сай шаблон табылмады. Жоғарыдан іздеп көріңіз.</div>'; return; }
+				box.querySelector('.gt_aib').hidden = !d.ai;
+				if (!d.tpls || !d.tpls.length) { list.innerHTML = '<div class="gt_wait">Сай шаблон табылмады. Жоғарыдан іздеп көріңіз' + (d.ai ? ' не «' + w('pp AI fill', 'ЖИ толтырсын') + '» басыңыз' : '') + '.</div>'; return; }
 				list.innerHTML = d.tpls.map(function (t) {
 					return '<div class="gt_tpl"><div class="gt_tn">' + esc(t.name) + ' <span>' + esc(t.cat || '') + '</span></div><div class="gt_vars">' +
 						[1, 2, 3].map(function (v) {
@@ -40,16 +50,24 @@
 			if (rep && !confirm('Тағамның қазіргі құрамы өшіп, шаблонмен ауыстырылады. Жалғастырамыз ба?')) return;
 			b.disabled = true;
 			post('apply', { pid: pid, tpl: b.dataset.tpl, variant: b.dataset.v, replace: rep ? 1 : 0 }).then(function (r) {
-				if (r.result === 'yes') location.reload();
+				if (r.result === 'yes') prices(r.noprice, b, function () { location.reload(); });
 				else { b.disabled = false; alert('Қолдану мүмкін болмады: ' + (r.result || r.error)); }
 			});
+		});
+		box.querySelector('.gt_ai').addEventListener('click', function () {
+			var b = this, sp = box.querySelector('.gt_ais'), rep = box.dataset.has === '1';
+			if (rep && !confirm('Тағамның қазіргі құрамы өшіп, ЖИ граммовкасымен ауыстырылады. Жалғастырамыз ба?')) return;
+			b.disabled = true; sp.textContent = w('tpl AI dish working', 'ЖИ граммовка құрастыруда (базадағы ұқсас рецептер + интернет), 30-90 сек…');
+			post('dish_ai', { pid: pid, variant: box.querySelector('.gt_av').value, replace: rep ? 1 : 0 }).then(function (r) {
+				if (r.result === 'yes') prices(r.noprice, sp, function () { location.reload(); });
+				else { b.disabled = false; sp.textContent = (r.error || r.result || 'Қате') + ' · ' + w('pp Fill by hand', 'құрамын қолмен толтыруға болады'); }
+			}).catch(function () { b.disabled = false; sp.textContent = w('pp AI timeout', 'ЖИ жауап бермеді, қайталаңыз'); });
 		});
 		load('');
 	}
 
 	// ---------- Себес: барлығын толтыру ----------
-	function allBtn(btn) {
-		btn.addEventListener('click', function () {
+	function allBtn() {
 			var m = document.createElement('div'); m.className = 'gt_modal';
 			m.innerHTML = '<div class="gt_mbox"><div class="gt_mx">&times;</div><h4>Шаблоннан толтыру</h4>' +
 				'<p>Граммовкасы бос тағамдардың бәріне шаблон қойылады. Қай нұсқаны аламыз?</p>' +
@@ -68,6 +86,13 @@
 						(r.ok.length ? '<details><summary>Тізім</summary><ul>' + r.ok.map(function (x) { return '<li>' + esc(x.name) + ' → ' + esc(x.tpl) + '</li>'; }).join('') + '</ul></details>' : '') +
 						(r.none.length ? '<details><summary>Шаблоны жоқтар</summary><ul>' + r.none.map(function (x) { return '<li><a href="/products/item/?id=' + x.id + '">' + esc(x.name) + '</a></li>'; }).join('') + '</ul></details>' : '');
 					go.disabled = !r.ok.length;
+					// шаблоны жоқтарды ЖИ бір-бірлеп толтырады (позициялар ғана, сеттер кірмейді)
+					if (r.none.length && r.ai) {
+						var ab = document.createElement('button'); ab.type = 'button'; ab.className = 'btn gt_ai gt_ai_all';
+						ab.innerHTML = '<i class="fal fa-sparkles"></i> ' + esc(w('tpl AI fill rest', 'Шаблоны жоқтарды ЖИ толтырсын')) + ': ' + r.none.length;
+						m.querySelector('.gt_mb').prepend(ab);
+						ab.onclick = function () { aiAll(r.none, v(), prev, ab, go); };
+					}
 				});
 			}
 			m.addEventListener('change', preview);
@@ -75,14 +100,71 @@
 			go.onclick = function () {
 				go.disabled = true; go.textContent = 'Толтырылуда…';
 				post('all', { variant: v() }).then(function (r) {
-					alert(r.ok.length + ' тағамға граммовка қойылды.' + (r.created ? ' Жаңа құрам: ' + r.created + ' (бағасын Себесте толтырыңыз).' : ''));
-					location.reload();
+					prices(r.ids, prev, function () {
+						alert(r.ok.length + ' тағамға граммовка қойылды.' + (r.created ? ' Жаңа құрам / дайындама: ' + r.created + '.' : ''));
+						location.reload();
+					});
 				});
 			};
 			preview();
-		});
+	}
+
+	// Шаблоны жоқ тағамдарға ЖИ граммовкасы: бір-бірлеп, барысын көрсетіп; соңында бағасыз шикізатқа баға
+	function aiAll(list, variant, prev, ab, go) {
+		if (!confirm(w('tpl AI fill rest ask', 'ЖИ әр тағамға орташа граммовка құрады (бір тағамға ~15-60 сек, шығыны «ЖИ шығыны» бетінде). Бастаймыз ба?'))) return;
+		ab.disabled = true; go.disabled = true;
+		var i = 0, ok = 0, bad = [], ids = [], usd = 0;
+		(function next() {
+			if (i >= list.length) {
+				prev.innerHTML = '<b>' + ok + '</b> ' + esc(w('tpl AI dishes done', 'тағамға ЖИ граммовка қойды')) + (bad.length ? '. ' + esc(w('tpl AI failed', 'Болмады')) + ': ' + bad.map(esc).join(', ') : '') + ' · $' + usd.toFixed(2);
+				return prices(ids, null, function () { setTimeout(function () { location.reload(); }, 1200); });
+			}
+			var d = list[i++];
+			prev.innerHTML = '<span class="gt_spin"></span> ' + i + ' / ' + list.length + ': <b>' + esc(d.name) + '</b>';
+			post('dish_ai', { pid: d.id, variant: variant }).then(function (r) {
+				if (r.result === 'yes') { ok++; ids = ids.concat(r.noprice || []); usd += r.usd || 0; } else bad.push(d.name + (r.error ? ' (' + r.error + ')' : ''));
+				next();
+			}).catch(function () { bad.push(d.name); next(); });
+		})();
+	}
+
+	// ---------- Себес: рецепті жоқ дайындамаларды шаблоннан толтыру ----------
+	function semiBtn() {
+		var m = document.createElement('div'); m.className = 'gt_modal';
+		m.innerHTML = '<div class="gt_mbox"><div class="gt_mx">&times;</div><h4>' + w('pp Semis from templates', 'Дайындамаларды шаблоннан толтыру') + '</h4>' +
+			'<p>' + w('tpl Semi all text', 'Рецепті жоқ дайындамаларға шаблоннан құрам жазылады: жоқ шикізат пен ішкі дайындамалар ашылады, бағасы базадан не ЖИ-ден толады.') + '</p>' +
+			'<div class="gt_pick"><label><input type="radio" name="gsv" value="1"> <b>' + w('Economy', 'Эконом') + '</b></label>' +
+			'<label><input type="radio" name="gsv" value="2" checked> <b>' + w('Standard', 'Стандарт') + '</b></label>' +
+			'<label><input type="radio" name="gsv" value="3"> <b>' + w('Premium', 'Премиум') + '</b></label></div>' +
+			'<div class="gt_prev"></div><div class="gt_mb"><button type="button" class="btn gt_go" disabled>' + w('tpl Fill', 'Толтыру') + '</button></div></div>';
+		document.body.appendChild(m);
+		var prev = m.querySelector('.gt_prev'), go = m.querySelector('.gt_go');
+		function v() { return m.querySelector('input[name=gsv]:checked').value; }
+		function preview() {
+			prev.textContent = '…'; go.disabled = true;
+			post('semi_all', { variant: v(), dry: 1 }).then(function (r) {
+				if (r.error) { prev.textContent = r.error; return; }
+				prev.innerHTML = r.ok.length ? '<div><b>' + r.ok.length + '</b> ' + w('tpl semis found', 'дайындамаға шаблон табылды') + '</div><details open><summary>' + w('tpl List', 'Тізім') + '</summary><ul>' +
+					r.ok.map(function (x) { return '<li>' + esc(x.name) + ' → ' + esc(x.tpl) + '</li>'; }).join('') + '</ul></details>'
+					: w('tpl No empty semis', 'Рецепті жоқ, шаблоны бар дайындама жоқ. Жаңасын «Дайындама қосу» арқылы шаблоннан не ЖИ-мен қосыңыз.');
+				go.disabled = !r.ok.length;
+			});
+		}
+		m.addEventListener('change', preview);
+		m.querySelector('.gt_mx').onclick = function () { m.remove(); };
+		go.onclick = function () {
+			go.disabled = true; go.textContent = '…';
+			post('semi_all', { variant: v() }).then(function (r) {
+				prices(r.ids, prev, function () { location.hash = 'prep'; location.reload(); });
+			});
+		};
+		preview();
 	}
 
 	document.querySelectorAll('.gt_box').forEach(itemBox);
-	document.querySelectorAll('.gt_all_btn').forEach(allBtn);
+	// Себес блогы AJAX-пен жаңарады: батырмалар document арқылы
+	document.addEventListener('click', function (e) {
+		if (e.target.closest('.gt_all_btn')) allBtn();
+		else if (e.target.closest('.gt_semi_btn')) semiBtn();
+	});
 })();

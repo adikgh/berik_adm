@@ -27,3 +27,13 @@
 .gt_prev{ font-size:14px; min-height:40px; }
 .gt_prev ul{ margin:6px 0; padding-left:18px; max-height:200px; overflow:auto; }
 .gt_mb{ margin-top:14px; text-align:right; }
+.gt_aib{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:12px; padding-top:12px; border-top:1px dashed #dde2e7; }
+.gt_aib[hidden]{ display:none; }
+.gt_closed .gt_aib{ display:none; }
+.gt_av{ height:38px; border:1px solid #dde2e7; border-radius:10px; padding:0 10px; font:inherit; background:#fff; }
+.gt_ai{ background:#efe8fb !important; color:#6d3fc0 !important; font-weight:700; }
+.gt_ai[disabled]{ opacity:.55; pointer-events:none; }
+.gt_ais{ font-size:13px; color:#889; flex:1; min-width:200px; }
+.gt_mb{ display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
+.gt_spin{ display:inline-block; width:12px; height:12px; border:2px solid #6d3fc0; border-right-color:transparent; border-radius:50%; animation:gt_spin .8s linear infinite; vertical-align:-1px; }
+@keyframes gt_spin{ to{ transform:rotate(360deg); } }

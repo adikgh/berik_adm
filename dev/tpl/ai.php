@@ -40,6 +40,32 @@ class tpl_ai {
 		return array_values($res);
 	}
 
+	// Шаблоны жоқ дайындамалар: компаниялардағы рецепті бар құрамдар және шаблондардағы дайындамаға ұқсас құрамдар (соус, тесто, бульон…)
+	public static function missing_semis() {
+		$res = [];
+		$arh = (int)@mysqli_fetch_row(db::query("select count(*) from information_schema.columns where table_schema = database() and table_name = 'company_sub' and column_name = 'arh'"))[0];
+		$q = db::query("select c.name_ru, co.name cname from product_comp c join company co on co.id = c.company_id" . ($arh ? " left join company_sub s on s.company_id = co.id" : "") . "
+			where (c.kind = 'semi' or exists (select 1 from product_comp_part p where p.comp_id = c.id)) and (c.kind is null or c.kind <> 'dish')" . ($arh ? " and coalesce(s.arh, 0) = 0" : "") . " order by co.id, c.name_ru");
+		while ($r = mysqli_fetch_assoc($q)) {
+			$k = gtpl::norm($r['name_ru']);
+			if ($k === '' || gtpl::semi_find($r['name_ru'])) continue;
+			if (!isset($res[$k])) $res[$k] = ['name' => trim($r['name_ru']), 'src' => []];
+			$res[$k]['src'][$r['cname']] = 1;
+		}
+		$q = db::query("select i.name_ru, t.name_ru tn from grammovka_tpl_item i join grammovka_tpl t on t.id = i.tpl_id and t.arh in (0, 2) where (i.semi_id is null or i.semi_id = 0) group by i.name_ru, t.name_ru");
+		while ($r = mysqli_fetch_assoc($q)) {
+			$k = gtpl::norm($r['name_ru']);
+			if (!preg_match('/(^|\s)(соус|тесто|бульон|кляр|маринад|заправка|начинка|крем)(\s|$)|готов|отварн|жарен|маринован|сырная смесь|фарш для/u', $k) || gtpl::semi_find($r['name_ru'])) continue;
+			if (preg_match('/^(соус|паста) (соевый|рыбный|чили|табаско|шрирача|вустер)|кетчуп|майонез|соевый соус/u', $k)) continue; // покупные соусы
+			if (!isset($res[$k])) $res[$k] = ['name' => trim($r['name_ru']), 'src' => []];
+			$res[$k]['src'][t::w('tpl Template', 'Шаблон') . ': ' . $r['tn']] = 1;
+		}
+		foreach ($res as &$r) { $r['n'] = count($r['src']); $r['src'] = implode(', ', array_slice(array_keys($r['src']), 0, 6)) . ($r['n'] > 6 ? ' …' : ''); }
+		unset($r);
+		uasort($res, function ($a, $b) { return $b['n'] - $a['n'] ?: strcmp($a['name'], $b['name']); });
+		return array_values($res);
+	}
+
 	// Бар шаблондағы құрам аттары: ЖИ солармен атаса, компанияның шикізатымен оңай сәйкеседі
 	public static function known_items() {
 		$a = [];

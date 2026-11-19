@@ -15,10 +15,18 @@
 						<div class="form_span"><?=t::w('Title', 'Атауы')?>:</div>
 						<input type="text" class="form_txt t_n" maxlength="250" placeholder="Филадельфия">
 					</div>
-					<div class="form_im">
+					<div class="form_im gt_fc">
 						<div class="form_span"><?=t::w('Category', 'Санаты')?>:</div>
 						<input type="text" class="form_txt t_c" maxlength="100" list="gt_cats" placeholder="Роллы">
 						<datalist id="gt_cats"></datalist>
+					</div>
+					<div class="form_im gt_fs">
+						<div class="form_span"><?=t::w('tpl Unit', 'Өлшемі')?>:</div>
+						<select class="form_txt t_u"><option>кг</option><option>л</option><option>шт</option></select>
+					</div>
+					<div class="form_im gt_fs">
+						<div class="form_span"><?=t::w('tpl Yield (in unit)', 'Шығымы (өлшемімен)')?>:</div>
+						<input type="text" class="form_txt t_y" inputmode="decimal" placeholder="1">
 					</div>
 					<div class="form_im gt_fk">
 						<div class="form_span"><?=t::w('Search words (separated by |)', 'Іздеу сөздері (| арқылы)')?>:</div>
@@ -62,6 +70,10 @@
 		.gt_it tfoot td{ font-size: 13px; font-weight: 700; text-align: right; padding-top: 8px; }
 		.gt_it tfoot td.mut{ text-align: left; font-weight: 500; }
 		.gt_x{ cursor: pointer; color: #c44; font-size: 18px; }
+		.gt_pop .gt_fs{ display: none; }
+		.gt_pop.gt_semi .gt_fs{ display: block; }
+		.gt_pop.gt_semi .gt_fc{ display: none; }
+		.gt_it .i_sb{ display: block; font-size: 11px; color: #0c8f59; font-weight: 600; margin: 2px 0 0 4px; }
 		.gt_add{ margin-top: 8px; border: 0; background: none; color: var(--bp-green, #16a34a); font: inherit; font-weight: 600; cursor: pointer; padding: 6px 0; }
 		.gt_btns{ display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
 		.gt_btns .btn{ border: 0; font: inherit; cursor: pointer; }

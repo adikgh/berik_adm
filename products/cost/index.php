@@ -134,7 +134,10 @@
 			<div class="cs_card cs_pane" data-pane="prep" hidden>
 				<div class="cs_hrow">
 					<div class="cs_h">Дайындамалар <span>1 кг немесе 1 шт бағасы</span></div>
-					<button type="button" class="btn cs_prep_new"><i class="far fa-plus"></i><span>Дайындама қосу</span></button>
+					<div style="display:flex;gap:8px;flex-wrap:wrap">
+						<? if (class_exists('gtpl') && gtpl::semi_ready()): ?><button type="button" class="btn gt_semi_btn"><i class="fal fa-magic"></i> <span><?=t::w('pp Semis from templates', 'Дайындамаларды шаблоннан толтыру')?></span></button><? endif ?>
+						<button type="button" class="btn cs_prep_new"><i class="far fa-plus"></i><span>Дайындама қосу</span></button>
+					</div>
 				</div>
 				<div class="cs_scroll"><table class="cs_tbl">
 					<thead><tr><th>Атауы</th><th>Құрамы</th><th>Шығымы</th><th>Бағасы</th><th></th></tr></thead>
@@ -144,13 +147,8 @@
 						$isw = function ($u) { return in_array(mb_strtolower(trim((string)$u)), ['кг', 'л']); };
 						// 0.2 кг → 200 г, 4 шт → 4 шт
 						$qf = function ($qty, $u) use ($isw) { $u = trim((string)$u); return $isw($u) ? round($qty * 1000, 1).' '.(mb_strtolower($u) == 'л' ? 'мл' : 'г') : ($qty + 0).' '.($u ?: 'шт'); };
-						$P = ['raw' => [], 'comp' => [], 'prep' => []];
-						foreach ($rawn as $x) $P['raw'][] = ['id' => (int)$x['id'], 'n' => $x['name_ru'] ?: $x['name_kz'], 'u' => (string)$x['unit']];
-						foreach ($comps as $x) $P['comp'][] = ['id' => (int)$x['id'], 'n' => $x['name_ru'] ?: $x['name_kz'], 'u' => (string)$x['unit']];
 					?>
-					<? foreach ($comps as $c): if (!$c['parts']) continue;
-						$P['prep'][$c['id']] = ['n' => $c['name_ru'] ?: $c['name_kz'], 'u' => (string)$c['unit'], 'y' => $c['yield_qty'] + 0,
-							'parts' => array_map(function ($p) { return ['t' => $p['raw_id'] ? 'r' : 'c', 'id' => (int)($p['raw_id'] ?: $p['sub_comp_id']), 'q' => $p['quantity'] + 0]; }, $c['parts'])]; ?>
+					<? foreach ($comps as $c): if (!$c['parts']) continue; ?>
 						<tr><td class="cs_nm"><?=htmlspecialchars($c['name_ru'])?><?=$c['kind'] == 'dish' ? ' <span class="cs_tag">мәзірде жоқ</span>' : ''?></td>
 							<td><div class="cs_chips"><? foreach ($c['parts'] as $p): $pu = $p['raw_id'] ? ($rawn[$p['raw_id']]['unit'] ?? '') : ($comps[$p['sub_comp_id']]['unit'] ?? ''); ?><span><?=htmlspecialchars($p['raw_id'] ? ($rawn[$p['raw_id']]['name_ru'] ?? '?') : ($comps[$p['sub_comp_id']]['name_ru'] ?? '?'))?> <b><?=$qf($p['quantity'], $pu)?></b></span><? endforeach ?></div></td>
 							<td class="cs_nw"><?=$c['yield_qty'] + 0?> <?=htmlspecialchars((string)($c['unit'] ?: 'шт'))?></td>
@@ -182,25 +180,11 @@
 			</div>
 			<? endif ?>
 
-			<div class="cs_pop" hidden>
-				<div class="cs_pop_bg"></div>
-				<form class="cs_pop_c" autocomplete="off">
-					<div class="cs_pop_h"><b class="cs_pop_t">Дайындама</b><button type="button" class="cs_pop_x"><i class="fal fa-times"></i></button></div>
-					<div class="cs_pop_g">
-						<label class="cs_f cs_f_w"><span>Атауы</span><input class="cs_in pp_name" maxlength="255" required></label>
-						<label class="cs_f"><span>Өлшемі</span><select class="cs_in pp_unit"><option>кг</option><option>шт</option><option>л</option></select></label>
-						<label class="cs_f"><span>Шығымы (неше <i class="pp_yu">кг</i> шығады)</span><input class="cs_in pp_yield" inputmode="decimal"></label>
-					</div>
-					<div class="cs_pop_s">Құрамы <small>кг/л заттар граммен (мл) жазылады</small></div>
-					<div class="pp_rows"></div>
-					<button type="button" class="pp_add"><i class="far fa-plus"></i> Зат қосу</button>
-					<div class="pp_ft"><button type="submit" class="btn cs_save"><i class="far fa-check"></i><span>Сақтау</span></button></div>
-				</form>
-			</div>
-			<div class="cs_pdata" hidden data-p="<?=htmlspecialchars(json_encode($P, JSON_UNESCAPED_UNICODE))?>"></div>
+
 
 		<? endif ?>
 	</div>
+	<? if ($ready) include __DIR__.'/prep_pop.php'; ?>
 
 	<script>
 	// Себес беті. Сақтағанда бет жаңармайды: .cs_page блогы AJAX-пен қайта алынады (fun.js ajx), сосын csInit() қайта іске қосылады
@@ -232,62 +216,16 @@
 			}).catch(function () { mess('Байланыс қатесі', 'err'); });
 		});
 
-		var pd = document.querySelector('.cs_pdata'); if (!pd) return;
-		var P = JSON.parse(pd.dataset.p || 'null'); if (!P) return;
-		var pop = document.querySelector('.cs_pop'), form = pop.querySelector('form'), rows = pop.querySelector('.pp_rows'), cur = 0;
-		var W = function (u) { u = (u || '').toLowerCase().trim(); return u == 'кг' || u == 'л'; };
-		var uLab = function (u) { u = (u || '').toLowerCase().trim(); return u == 'кг' ? 'г' : (u == 'л' ? 'мл' : (u || 'шт')); };
-		var esc = function (t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; };
-		var opts = '<option value="">Таңдаңыз</option><optgroup label="Шикізат">' + P.raw.map(function (x) { return '<option value="r' + x.id + '" data-u="' + esc(x.u) + '">' + esc(x.n) + '</option>'; }).join('') +
-			'</optgroup><optgroup label="Дайындама / құрам">' + P.comp.map(function (x) { return '<option value="c' + x.id + '" data-u="' + esc(x.u) + '">' + esc(x.n) + '</option>'; }).join('') + '</optgroup>';
-		function addRow(v, q) {
-			var r = document.createElement('div'); r.className = 'pp_row';
-			r.innerHTML = '<select class="cs_in pp_it">' + opts + '</select><input class="cs_in pp_q" inputmode="decimal"><span class="pp_u"></span><button type="button" class="pp_del" title="Алып тастау"><i class="fal fa-times"></i></button>';
-			var sel = r.querySelector('.pp_it'); sel.value = v || '';
-			var unit = function () { var o = sel.selectedOptions[0]; return o ? (o.dataset.u || '') : ''; };
-			var upd = function () { r.querySelector('.pp_u').textContent = sel.value ? uLab(unit()) : ''; };
-			if (q !== undefined) r.querySelector('.pp_q').value = String(W(unit()) ? Math.round(q * 1000 * 10) / 10 : q).replace('.', ',');
-			sel.addEventListener('change', upd); upd();
-			r.querySelector('.pp_del').addEventListener('click', function () { r.remove(); });
-			rows.appendChild(r);
+		// «Дайындама» попапы: products/cost/prep_pop.php + assets/js/prep_pop.js (openPrep)
+		var op = function (id) { if (window.openPrep) openPrep(id); };
+		document.querySelectorAll('.cs_prep_ed').forEach(function (b) { b.addEventListener('click', function () { op(+b.dataset.id); }); });
+		var nb = document.querySelector('.cs_prep_new'); if (nb) nb.addEventListener('click', function () { op(0); });
+		if (!csInit.done) {
+			var m = location.search.match(/[?&]prep=(\d+)/);
+			if (m) window.addEventListener('load', function () { op(+m[1]); });
+			document.addEventListener('prep:saved', function () { csTab = 'prep'; history.replaceState(history.state, '', location.pathname + location.search + '#prep'); ajx('.cs_page', csInit); });
 		}
-		function open(id) {
-			cur = id; var d = id ? P.prep[id] : { n: '', u: 'кг', y: '', parts: [] };
-			pop.querySelector('.pp_name').value = d.n; pop.querySelector('.pp_unit').value = d.u || 'шт';
-			pop.querySelector('.pp_yield').value = String(d.y || '').replace('.', ',');
-			pop.querySelector('.pp_yu').textContent = pop.querySelector('.pp_unit').value;
-			pop.querySelector('.cs_pop_t').textContent = id ? d.n : 'Жаңа дайындама';
-			rows.innerHTML = ''; d.parts.forEach(function (p) { addRow(p.t + p.id, p.q); }); if (!d.parts.length) addRow();
-			pop.hidden = false;
-		}
-		pop.querySelector('.pp_unit').addEventListener('change', function () { pop.querySelector('.pp_yu').textContent = this.value; });
-		document.querySelectorAll('.cs_prep_ed').forEach(function (b) { b.addEventListener('click', function () { open(+b.dataset.id); }); });
-		var nb = document.querySelector('.cs_prep_new'); if (nb) nb.addEventListener('click', function () { open(0); });
-		pop.querySelectorAll('.cs_pop_bg, .cs_pop_x').forEach(function (b) { b.addEventListener('click', function () { pop.hidden = true; }); });
-		pop.querySelector('.pp_add').addEventListener('click', function () { addRow(); });
-		if (!csInit.done) { var m = location.search.match(/[?&]prep=(\d+)/); if (m && P.prep[m[1]]) open(+m[1]); }
 		csInit.done = 1;
-		form.addEventListener('submit', function (e) {
-			e.preventDefault();
-			var parts = [], bad = false;
-			rows.querySelectorAll('.pp_row').forEach(function (r) {
-				var sel = r.querySelector('.pp_it'), q = parseFloat(r.querySelector('.pp_q').value.replace(',', '.'));
-				if (!sel.value) return;
-				if (!(q > 0)) { bad = true; return; }
-				var u = sel.selectedOptions[0].dataset.u;
-				parts.push({ t: sel.value[0], id: +sel.value.slice(1), q: W(u) ? q / 1000 : q });
-			});
-			if (bad) { mess('Мөлшерін жазыңыз', 'warn'); return; }
-			var fd = new FormData();
-			fd.append('id', cur); fd.append('name', pop.querySelector('.pp_name').value);
-			fd.append('unit', pop.querySelector('.pp_unit').value); fd.append('yield', pop.querySelector('.pp_yield').value);
-			fd.append('parts', JSON.stringify(parts));
-			fetch('/products/cost/get.php?prep_save', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {
-				t = t.trim();
-				if (t == 'yes') { pop.hidden = true; mess('Сақталды'); csTab = 'prep'; history.replaceState(history.state, '', location.pathname + location.search + '#prep'); ajx('.cs_page', csInit); }
-				else mess({ name: 'Атауын жазыңыз', exists: 'Мұндай атау бар', yield: 'Шығымын жазыңыз', parts: 'Кем дегенде бір зат қосыңыз', self: 'Дайындама өз құрамына кіре алмайды' }[t] || 'Қате, қайта көріңіз', 'warn');
-			}).catch(function () { mess('Байланыс қатесі', 'err'); });
-		});
 	}
 	csInit();
 	</script>

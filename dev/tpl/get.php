@@ -5,6 +5,8 @@
 	if (!$user_id || !dev::can('tpl')) $out(['error' => 'right']);
 	if (!dev_post_ok()) $out(['error' => t::w('Refresh the page', 'Бетті жаңартыңыз')]);
 
+	require_once DEV_ADM . '/products/tpl/ai.php'; // gtpl_ai::store: тағам және дайындама шаблоны (kind, unit, yield_qty)
+
 	// Шаблонды сақтау. $arh: null = өзгертпеу (жаңасы 0), 0 = бекітілген, 2 = ЖИ ұсынысы (компанияларға әлі көрінбейді)
 	function tpl_store($id, $name, $cat, $keys, array $items, $arh = null, $note = null) {
 		$e = function ($s) { return mysqli_real_escape_string(db::$connect, trim(strip_tags((string)$s))); };
@@ -47,7 +49,11 @@
 		if (trim((string)@$_POST['name']) === '') $out(['error' => t::w('Enter the title', 'Атауын жазыңыз')]);
 		if (!is_array($items)) $out(['error' => 'items']);
 		// ұсынысты бекіту: approve=1 → arh 0 (компанияларға көрінеді)
-		$id = tpl_store(@$_POST['id'], @$_POST['name'], @$_POST['cat'], @$_POST['keys'], $items, isset($_POST['approve']) ? 0 : null);
+		$kind = @$_POST['kind'] === 'semi' ? 'semi' : 'dish';
+		if ($kind == 'semi' && (float)str_replace(',', '.', (string)@$_POST['yield']) <= 0) $out(['error' => t::w('tpl Enter the yield', 'Шығымын жазыңыз')]);
+		$id = gtpl::semi_ready() ? gtpl_ai::store(@$_POST['id'], @$_POST['name'], $kind == 'semi' ? 'Дайындама' : @$_POST['cat'], @$_POST['keys'], $items, isset($_POST['approve']) ? 0 : null, null, $kind, @$_POST['unit'], @$_POST['yield'])
+			: tpl_store(@$_POST['id'], @$_POST['name'], @$_POST['cat'], @$_POST['keys'], $items, isset($_POST['approve']) ? 0 : null);
+		if ($id && isset($_POST['approve'])) gtpl_ai::link(); // бекітілген дайындама шаблоны тағам шаблондарына байланады
 		$out($id ? ['result' => 'yes', 'id' => $id] : ['error' => 'error']);
 	}
 	if (isset($_GET['ai_suggest'])) {
@@ -71,6 +77,20 @@
 			if ($id) $saved[] = $id;
 		}
 		$out(['result' => 'yes', 'n' => count($saved), 'usd' => round(tpl_ai::$usd, 3)]);
+	}
+	// ЖИ: шаблоны жоқ дайындамалардың рецепті (ішкі дайындамаларымен), arh = 2 болып сақталады
+	if (isset($_GET['semi_suggest'])) {
+		@set_time_limit(320);
+		$names = json_decode((string)@$_POST['names'], true);
+		if (!is_array($names) || !$names) $out(['error' => t::w('tpl Pick semis', 'Дайындама таңдаңыз')]);
+		$n = 0; $usd = 0;
+		foreach (array_slice($names, 0, 2) as $nm) {
+			$r = gtpl_ai::recipe((string)$nm, 'semi');
+			$usd += claude::$usd;
+			if (!$r) $out(['error' => gtpl_ai::err(), 'n' => $n, 'usd' => round($usd, 3)]);
+			$n += $r['new'];
+		}
+		$out(['result' => 'yes', 'n' => $n, 'usd' => round($usd, 3)]);
 	}
 	if (isset($_GET['tpl_del'])) {
 		$id = (int)@$_POST['id'];
