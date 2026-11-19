@@ -15,6 +15,7 @@
 
       public function __construct() {
          new db; new t; new fun; new product;
+         @mysqli_set_charset(db::$connect, 'utf8mb4'); // эмодзи (4 байт) сақталуы үшін, мысалы каталог иконкасы (2026-11-19)
          $time = 3600 * 24 * 365;
          // ini_set('session.gc_maxlifetime', $time);
          // ini_set('session.cookie_lifetime', $time);

@@ -8,7 +8,10 @@
 	// Мәзірдегі санат суреті: product_catalog.img (фото файлы) және icon (эмодзи). Бағандар жоқ болса, өзі қосылады (тек қосу, ештеңе өшпейді).
 	function ctg_cols() {
 		if (!fun::has_col('product_catalog', 'img')) db::query("ALTER TABLE `product_catalog` ADD `img` varchar(255) NULL DEFAULT NULL");
-		if (!fun::has_col('product_catalog', 'icon')) db::query("ALTER TABLE `product_catalog` ADD `icon` varchar(16) NULL DEFAULT NULL");
+		if (!fun::has_col('product_catalog', 'icon')) db::query("ALTER TABLE `product_catalog` ADD `icon` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL");
+		// иконка эмодзи (4 байт): баған utf8mb4 болмаса, ауыстырамыз (тек осы баған, деректер өшпейді)
+		$cs = @mysqli_fetch_row(db::query("select character_set_name from information_schema.columns where table_schema = database() and table_name = 'product_catalog' and column_name = 'icon'"))[0];
+		if ($cs && $cs != 'utf8mb4') db::query("ALTER TABLE `product_catalog` MODIFY `icon` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL");
 	}
 	// бір эмодзи ғана (әріп, сан, тег емес), 16 байтқа дейін
 	function ctg_icon($v) {

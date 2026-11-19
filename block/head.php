@@ -60,5 +60,5 @@
 <? if (@$site_set['plyr'] == true): ?> <script src="/assets/pl/plyr.polyfilled.js"></script> <? endif ?>
 <? if (@$site_set['aos'] == true): ?> <script src="/assets/pl/aos.js"></script> <? endif ?>
 <? if (@$site_set['autosize'] == true): ?> <script src="/assets/pl/autosize.min.js"></script> <? endif ?>
-<script src="/assets/js/fun.js?v=<?=$ver?>"></script>
+<script src="/assets/js/fun.js?v=<?=$ver?>.<?=@filemtime($_SERVER['DOCUMENT_ROOT'].'/assets/js/fun.js')?>"></script>
 
