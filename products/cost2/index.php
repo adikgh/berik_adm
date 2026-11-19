@@ -117,6 +117,18 @@
 		}
 		unset($x);
 		$used_raw = $raw;
+
+		// ескі Себес беттегідей: статистика, граммовкасы жоқтар, шаблон батырмалары
+		$n_bad = 0; $n_low = 0; $sum_p = 0;
+		foreach ($sets as $x) { if ($x['profit'] < 0) $n_bad++; elseif ($x['pct'] < 5) $n_low++; $sum_p += $x['pct']; }
+		$avg = $sets ? round($sum_p / count($sets)) : 0;
+		$n_dish = 0; foreach ($dishes as $x) if ($x['rows']) $n_dish++;
+		if (!class_exists('wb')) @include_once __DIR__.'/../../waybill/lib.php';
+		$cc = class_exists('wb') ? wb::comp_check($cmp) : ['dish' => [], 'comp' => []];
+		$n_miss = count($cc['dish']) + count($cc['comp']);
+		@include_once __DIR__.'/../tpl/lib.php';
+		$gt_all = class_exists('gtpl') && gtpl::ready();
+		$gt_semi = $gt_all && gtpl::semi_ready();
 	}
 
 	$menu_name = 'products';
@@ -126,6 +138,7 @@
 	$page_key = 'Cost table';
 	$css = ['cost2'];
 	$js = [];
+	if (!empty($gt_all)) { $css[] = 'gtpl'; $js[] = 'gtpl'; }
 	if (!empty($has_pp)) $js[] = 'prep_pop';
 ?>
 <? include "../../block/header.php"; ?>
@@ -135,38 +148,41 @@
 		<div class="c2_card c2_note"><?=t::w('c2 Cost tables are not created yet', 'Себес кестелері әлі жасалмаған')?></div>
 	<? else: ?>
 
-		<!-- жоғарғы жолақ: баптаулар + іздеу -->
+		<!-- шаблон + қойындылар (бөлімге өту) + іздеу -->
 		<div class="c2_top">
-			<div class="c2_set">
-				<span><?=t::w('c2 Salary', 'Айлық')?> <b><?=$f($st['salary'])?></b></span>
-				<span><?=t::w('c2 Rent', 'Аренда')?> <b><?=$f($st['rent'])?></b></span>
-				<span><?=t::w('c2 Utilities', 'К.у.')?> <b><?=$f($st['utility'])?></b></span>
-				<span><?=t::w('c2 Delivery', 'Доставка')?> <b><?=$f($st['delivery'])?></b></span>
-				<span><?=t::w('c2 Advertising', 'Реклама')?> <b><?=$f($st['ads'])?></b></span>
-				<span><?=t::w('c2 Markup', 'Наценка')?> <b><?=$st['markup'] + 0?>%</b></span>
-				<span class="c2_set_t"><?=t::w('c2 Per order', 'Бір заказға')?> <b><?=$f($over)?> ₸</b></span>
-				<button type="button" class="c2_set_ed"><i class="fal fa-pen"></i> <?=t::w('c2 Change', 'Өзгерту')?></button>
+			<? if ($gt_all): ?><button type="button" class="btn gt_all_btn c2_gt"><i class="fal fa-magic"></i> <span><?=t::w('c2 Fill from templates', 'Шаблоннан толтыру')?></span></button><? endif ?>
+			<div class="c2_tabs">
+				<button type="button" class="c2_tab" data-go="c2_sec_sets"><?=t::w('c2 Sets', 'Сеттер')?> <span><?=count($sets)?></span></button>
+				<button type="button" class="c2_tab" data-go="c2_col_d"><?=t::w('c2 Dishes', 'Тағамдар')?> <span><?=$n_dish?></span></button>
+				<button type="button" class="c2_tab" data-go="c2_col_p"><?=t::w('c2 Semi-finished', 'Дайындамалар')?> <span><?=count($preps)?></span></button>
+				<? if ($n_miss): ?><button type="button" class="c2_tab c2_tab_miss" data-go="c2_col_d" data-miss="1"><?=t::w('c2 No grammovka', 'Граммовкасы жоқ')?> <span><?=$n_miss?></span></button><? endif ?>
 			</div>
 			<label class="c2_srch"><i class="fal fa-search"></i><input type="search" class="c2_q" placeholder="<?=$h(t::w('c2 Search', 'Іздеу'))?>"></label>
 		</div>
 
-		<!-- шығындар поп-апы: /products/cost/get.php?setting -->
-		<div class="c2_mod" hidden>
-			<div class="c2_mod_bg"></div>
-			<form class="c2_mod_c" autocomplete="off">
-				<div class="c2_mod_h"><b><?=t::w('c2 Costs', 'Шығындар')?></b><button type="button" class="c2_mod_x" aria-label="×"><i class="fal fa-times"></i></button></div>
-				<div class="c2_mod_g">
-				<? foreach (['orders_day' => t::w('c2 Orders per day', 'Заказ / күн'), 'salary' => t::w('c2 Salary', 'Айлық'), 'rent' => t::w('c2 Rent', 'Аренда'), 'utility' => t::w('c2 Utilities', 'К.у.'), 'delivery' => t::w('c2 Delivery', 'Доставка'), 'ads' => t::w('c2 Advertising', 'Реклама'), 'markup' => t::w('c2 Markup', 'Наценка').', %'] as $k => $l): ?>
-					<label><span><?=$h($l)?></span><input class="c2_in" name="<?=$k?>" inputmode="decimal" value="<?=$h($st[$k] + 0)?>"></label>
-				<? endforeach ?>
-				</div>
-				<p class="c2_mod_n"><?=t::w('c2 Costs hint', 'Сеттің толық себесі = тағамдар себесі + осы шығындар; ұсынылатын баға = толық себес + наценка')?></p>
-				<button type="submit" class="c2_mod_ok"><?=t::w('c2 Save', 'Сақтау')?></button>
+		<!-- статистика (ескі Себес беттегідей) -->
+		<div class="c2_stats">
+			<div class="c2_stat"><span><?=t::w('c2 Sets', 'Сеттер')?></span><b><?=count($sets)?></b></div>
+			<div class="c2_stat c2_stat_neg"><span><?=t::w('c2 Sold at a loss', 'Шығынмен сатылады')?></span><b><?=$n_bad?></b></div>
+			<div class="c2_stat c2_stat_warn"><span><?=t::w('c2 Profit under 5%', 'Пайдасы 5%-дан аз')?></span><b><?=$n_low?></b></div>
+			<div class="c2_stat"><span><?=t::w('c2 Average profit', 'Орташа пайда')?></span><b><?=$avg?>%</b></div>
+			<div class="c2_stat"><span><?=t::w('c2 Cost per order', 'Бір заказға шығын')?></span><b><?=$f($over)?> ₸</b></div>
+		</div>
+
+		<!-- баға стандарттары: /products/cost/get.php?setting -->
+		<div class="c2_card c2_std">
+			<div class="c2_h"><?=t::w('c2 Price standards', 'Баға стандарттары')?> <small><?=t::w('c2 per order, tg', 'бір заказға, тг')?></small></div>
+			<form class="c2_stf" autocomplete="off">
+			<? foreach (['orders_day' => t::w('c2 Orders per day', 'Заказ / күн'), 'salary' => t::w('c2 Salary', 'Айлық'), 'rent' => t::w('c2 Rent', 'Аренда'), 'utility' => t::w('c2 Utilities', 'К.у.'), 'delivery' => t::w('c2 Delivery', 'Доставка'), 'ads' => t::w('c2 Advertising', 'Реклама'), 'markup' => t::w('c2 Markup', 'Наценка').', %'] as $k => $l): ?>
+				<label><span><?=$h($l)?></span><input class="c2_in" name="<?=$k?>" inputmode="decimal" value="<?=$h($st[$k] + 0)?>"></label>
+			<? endforeach ?>
+				<button type="submit" class="c2_std_ok"><i class="far fa-check"></i> <?=t::w('c2 Save', 'Сақтау')?></button>
 			</form>
+			<div class="c2_std_n"><i class="fal fa-info-circle"></i> <?=$h(str_replace(['{over}', '{mk}'], [$f($over), $st['markup'] + 0], t::w('c2 Standards hint', 'Сеттің толық себесі = тағамдар себесі + {over} тг (айлық, аренда, к.у., доставка, реклама). Ұсынылатын баға = толық себес + {mk}%, сосын 490 / 990-ға дейін дөңгелектенеді.')))?></div>
 		</div>
 
 		<!-- 1. Қорытынды кесте (Google кестесінің оң жағы) -->
-		<div class="c2_card">
+		<div class="c2_card" id="c2_sec_sets">
 			<div class="c2_h"><?=t::w('c2 Sets: final cost', 'Сеттер: қорытынды себес')?> <span><?=count($sets)?></span></div>
 			<div class="c2_wrap"><table class="c2_tbl c2_sum">
 				<thead><tr>
@@ -221,8 +237,12 @@
 				</div>
 			</div>
 
-			<div class="c2_col">
+			<div class="c2_col" id="c2_col_p">
 				<div class="c2_ch c2_ch2"><b>2</b> <?=t::w('c2 Semi-finished', 'Дайындамалар')?> <span><?=count($preps)?></span><button type="button" class="c2_ch_b c2_prep_new" title="<?=$h(t::w('c2 Add semi-finished', 'Дайындама қосу'))?>"><i class="far fa-plus"></i></button></div>
+				<div class="c2_pbtn">
+					<? if ($gt_semi): ?><button type="button" class="btn gt_semi_btn c2_gt"><i class="fal fa-magic"></i> <span><?=t::w('pp Semis from templates', 'Дайындамаларды шаблоннан толтыру')?></span></button><? endif ?>
+					<button type="button" class="c2_pnew c2_prep_new"><i class="far fa-plus"></i> <span><?=t::w('c2 Add semi-finished', 'Дайындама қосу')?></span></button>
+				</div>
 				<form class="c2_card c2_newp" hidden autocomplete="off">
 					<input class="c2_in" name="name" placeholder="<?=$h(t::w('c2 Name', 'Атауы'))?>" required>
 					<div class="c2_newp_r">
@@ -248,10 +268,10 @@
 				<? endforeach ?>
 			</div>
 
-			<div class="c2_col">
+			<div class="c2_col" id="c2_col_d">
 				<div class="c2_ch c2_ch3"><b>3</b> <?=t::w('c2 Dishes (grams)', 'Тағамдар (граммовка)')?> <span><?=count($dishes)?></span></div>
 				<? foreach ($dishes as $x): $pr = $x['price'] ? ($x['price'] - $x['sum']) / $x['price'] * 100 : 0; ?>
-					<div class="c2_card c2_blk c2_f<?=$x['rows'] ? '' : ' c2_blk_e'?>" id="d<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
+					<div class="c2_card c2_blk c2_f<?=$x['rows'] ? '' : ' c2_blk_e'?>"<?=isset($cc['dish'][$x['id']]) ? ' data-miss="1"' : ''?> id="d<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
 						<div class="c2_bh"><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?></div>
 						<table class="c2_tbl">
 							<tbody>
@@ -445,23 +465,25 @@
 			});
 		});
 
-		// шығындар поп-апы
-		// .c2_page ішіндегі z-index шапкадан төмен қалмауы үшін ашқанда body-ге көшеді (reload-тан кейін жаңа мәндермен қайта алынады)
-		var modClose = function () { document.querySelectorAll('.c2_mod').forEach(function (m) { m.hidden = true; }); };
-		$(document).on('click', '.c2_set_ed', function () {
-			var fresh = document.querySelector('.c2_page .c2_mod'), old = document.querySelector('body > .c2_mod');
-			if (fresh) { if (old) old.remove(); document.body.appendChild(fresh); }
-			var m = document.querySelector('body > .c2_mod'); if (!m) return;
-			m.querySelector('form').reset(); m.hidden = false; m.querySelector('[name=salary]').focus();
+		// қойындылар: бөлімге өту + жарықтандыру; «Граммовкасы жоқ» тек сондай тағамдарды қалдырады (қайта басса — бәрі)
+		$(document).on('click', '.c2_tab', function () {
+			var g = document.querySelector('.c2_grid'), miss = this.dataset.miss == '1';
+			var on = miss && !(g && g.classList.contains('c2_only_miss'));
+			if (g) g.classList.toggle('c2_only_miss', on);
+			document.querySelectorAll('.c2_tab').forEach(function (t) { t.classList.remove('c2_tab_act'); });
+			if (on) this.classList.add('c2_tab_act');
+			var t = document.getElementById(this.dataset.go); if (!t) return;
+			t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			t.classList.remove('c2_flash'); void t.offsetWidth; t.classList.add('c2_flash');
 		});
-		$(document).on('click', '.c2_mod_bg, .c2_mod_x', modClose);
-		document.addEventListener('keydown', function (e) { if (e.key == 'Escape') modClose(); });
-		$(document).on('submit', '.c2_mod_c', function (e) {
+
+		// баға стандарттары: сақтау, сосын .c2_page AJAX-пен жаңарады
+		$(document).on('submit', '.c2_stf', function (e) {
 			e.preventDefault();
-			var b = this.querySelector('.c2_mod_ok'); b.disabled = true;
+			var b = this.querySelector('.c2_std_ok'); b.disabled = true;
 			fetch('/products/cost/get.php?setting', { method: 'POST', body: new FormData(this), credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {
 				b.disabled = false;
-				if (t.trim() == 'yes') { modClose(); mess(T.saved); reload(); } else mess(T.err, 'warn');
+				if (t.trim() == 'yes') { mess(T.saved); reload(); } else mess(T.err, 'warn');
 			}).catch(function () { b.disabled = false; mess(T.net, 'err'); });
 		});
 

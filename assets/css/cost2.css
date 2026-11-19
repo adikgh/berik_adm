@@ -7,12 +7,6 @@
 
 /* жоғарғы жолақ */
 .c2_top{ display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: -4px 0 14px; }
-.c2_set{ flex: 1 1 auto; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: #fff; border-radius: 12px; box-shadow: var(--bp-shadow, 0 6px 20px rgba(0,0,0,.07)); padding: 8px 10px; }
-.c2_set span{ font-size: 13px; color: var(--bp-muted, #8a8f98); background: var(--bp-pill, #f5f5f5); border-radius: 8px; padding: 6px 10px; white-space: nowrap; }
-.c2_set span b{ color: var(--bp-text, #222); margin-left: 3px; }
-.c2_set .c2_set_t{ background: #e3f5ec; color: #0b8a55; }
-.c2_set .c2_set_t b{ color: #0b8a55; }
-.c2_set_ed{ border: 0; background: none; font-family: inherit; cursor: pointer; margin-left: auto; font-size: 13px; font-weight: 600; color: var(--bp-blue, #1f75a8); padding: 6px 8px; white-space: nowrap; }
 .c2_srch{ flex: 0 1 260px; display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 14px; background: #fff; border-radius: 12px; box-shadow: var(--bp-shadow, 0 6px 20px rgba(0,0,0,.07)); color: var(--bp-muted, #8a8f98); }
 .c2_srch input{ border: 0; outline: 0; font: inherit; font-size: 15px; width: 100%; background: transparent; color: var(--bp-text, #222); }
 
@@ -70,7 +64,6 @@
 @media (max-width: 760px){
 	.c2_grid{ grid-template-columns: 1fr; }
 	.c2_srch{ flex: 1 1 100%; }
-	.c2_set_ed{ margin-left: 0; }
 	.c2_ch{ top: 0; }
 }
 
@@ -114,19 +107,6 @@ select.c2_ein{ width: auto; text-align: left; }
 .c2_sub_a{ display: block; }
 .c2_sub_a:hover{ color: var(--bp-blue, #1f75a8); }
 
-/* шығындар поп-апы */
-.c2_mod{ position: fixed; inset: 0; z-index: 7000; display: flex; align-items: center; justify-content: center; padding: 16px; }
-.c2_mod[hidden]{ display: none; }
-.c2_mod_bg{ position: absolute; inset: 0; background: rgba(15,20,30,.55); }
-.c2_mod_c{ position: relative; background: #fff; border-radius: 16px; width: 100%; max-width: 560px; max-height: calc(100vh - 32px); overflow: auto; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.2); }
-.c2_mod_h{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; font-size: 17px; }
-.c2_mod_x{ width: 36px; height: 36px; border: 0; border-radius: 10px; background: #f3f4f6; cursor: pointer; font-size: 16px; }
-.c2_mod_g{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
-.c2_mod_g label{ display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #6b7280; }
-.c2_mod_n{ margin: 14px 0; font-size: 12px; color: #6b7280; line-height: 1.4; }
-.c2_mod_ok{ width: 100%; height: 44px; border: 0; border-radius: 10px; background: #0EA768; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
-.c2_mod_ok:disabled{ opacity: .6; }
-@media (max-width: 560px){ .c2_mod_g{ grid-template-columns: 1fr; } }
 
 /* қорытынды кестені сұрыптау */
 .c2_sum th.c2_srt{ cursor: pointer; user-select: none; white-space: nowrap; }
@@ -134,3 +114,35 @@ select.c2_ein{ width: auto; text-align: left; }
 .c2_sum th.c2_srt_a::after{ content: ' ▲'; font-size: 9px; }
 .c2_sum th.c2_srt_d::after{ content: ' ▼'; font-size: 9px; }
 .c2_sum th.c2_srt_a, .c2_sum th.c2_srt_d{ color: var(--bp-blue, #1f75a8); }
+
+/* ескі Себес блоктары: шаблон, қойындылар, статистика, баға стандарттары */
+.c2_gt{ height: 44px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.c2_tabs{ display: inline-flex; gap: 4px; padding: 5px; background: #fff; border-radius: 14px; box-shadow: var(--bp-shadow, 0 6px 20px rgba(0,0,0,.07)); max-width: 100%; overflow-x: auto; }
+.c2_tab{ height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: var(--bp-text, #222); cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+.c2_tab span{ font-size: 12px; color: var(--bp-muted, #8a8f98); background: var(--bp-pill, #f5f5f5); border-radius: 6px; padding: 2px 7px; }
+.c2_tab:hover{ background: var(--bp-pill, #f5f5f5); }
+.c2_tab_miss{ color: #c0392b; }
+.c2_tab_miss span{ background: #e74c3c; color: #fff; }
+.c2_tab_act, .c2_tab_act:hover{ background: #fdecec; }
+.c2_only_miss #c2_col_d .c2_blk:not([data-miss]){ display: none; }
+.c2_stats{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 14px; }
+.c2_stat{ background: #fff; border-radius: 14px; box-shadow: var(--bp-shadow, 0 6px 20px rgba(0,0,0,.07)); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.c2_stat span{ font-size: 13px; color: var(--bp-muted, #8a8f98); }
+.c2_stat b{ font-size: 22px; font-weight: 700; color: var(--bp-text, #222); }
+.c2_stat_neg b{ color: #d64545; }
+.c2_stat_warn b{ color: #c98a00; }
+.c2_std{ padding: 16px; margin-bottom: 14px; }
+.c2_std .c2_h small{ font-size: 13px; font-weight: 400; color: var(--bp-muted, #8a8f98); margin-left: 6px; }
+.c2_stf{ display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)) auto; gap: 10px; align-items: end; }
+.c2_stf label{ display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.c2_stf label span{ font-size: 13px; color: var(--bp-muted, #8a8f98); white-space: nowrap; }
+.c2_std_ok{ height: 40px; padding: 0 18px; border: 0; border-radius: 8px; background: #0EA768; color: #fff; font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.c2_std_ok:hover{ background: #0c8f59; }
+.c2_std_ok:disabled{ opacity: .6; }
+.c2_std_n{ margin-top: 12px; font-size: 13px; color: var(--bp-muted, #8a8f98); line-height: 1.5; }
+.c2_pbtn{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.c2_pbtn .c2_gt{ height: 38px; font-size: 13px; }
+.c2_pnew{ height: 38px; padding: 0 14px; border: 0; border-radius: 10px; background: #0EA768; color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.c2_pnew:hover{ background: #0c8f59; }
+@media (max-width: 1100px){ .c2_stf{ grid-template-columns: repeat(4, minmax(0, 1fr)); } .c2_stats{ grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px){ .c2_stats{ grid-template-columns: 1fr 1fr; } .c2_stf{ grid-template-columns: 1fr 1fr; } .c2_std_ok{ grid-column: 1 / -1; } .c2_tabs{ flex: 1 1 100%; } }
