@@ -447,7 +447,7 @@ $(document).ready(function() {
 					if (data == 'yes') {
 						mess('Успешно')
 						setTimeout(function() { location.reload(); }, 500);
-					} else mess('Ошибка!'); console.log(data);
+					} else mess('Ошибка'); console.log(data);
 				},
 				beforeSend: function(){ mess('Отправка..') },
 				error: function(data){ }

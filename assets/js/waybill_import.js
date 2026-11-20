@@ -488,7 +488,7 @@
 						? '<span style="color:#1a9b4b"><i class="fas fa-circle" style="font-size:8px"></i> Claude қосулы</span>' +
 						  '<span class="wbi_ai_test" style="cursor:pointer;text-decoration:underline;color:#555">Тексеру</span>' +
 						  '<span class="wbi_ai_res"></span>'
-						: '<span style="color:#c0392b"><i class="fas fa-circle" style="font-size:8px"></i> Claude қосылмаған (config/ai.php ішінде API кілті жоқ)</span>') +
+						: '<span style="color:#dc2626"><i class="fas fa-circle" style="font-size:8px"></i> Claude қосылмаған (config/ai.php ішінде API кілті жоқ)</span>') +
 				'</div>' +
 				'<label class="wbi_drop">' +
 					'<input type="file" class="wbi_file" multiple accept=".xlsx,.xls,.xlsm,.csv,.pdf,application/pdf,image/jpeg,image/png,image/webp">' +

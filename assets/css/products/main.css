@@ -42,14 +42,14 @@
 	position: relative;
 	width: auto;
 	display: inline-block;
-	padding: 5px;
+	padding: 4px;
 	margin: 0 10px;
 	font-size: 12px;
 	line-height: 16px;
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 	cursor: pointer;
 }
-.atops_bk{padding-top:7px}
+.atops_bk{padding-top:8px}
 .atops_i:first-child{padding-left:0;margin-left:0}
 .atops_i:last-child{
 	padding-right: 0;
@@ -176,7 +176,7 @@
    font-size: 14px;
 	background: var(--tr);
 	border: 1px solid var(--gr2);
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
    display: inline-flex;
 	justify-content: flex-start;
 	align-items: center;
@@ -184,16 +184,16 @@
 }
 .ucours_tmi:hover{}
 .ucours_tm:last-child, .ucours_tmb{margin-right:0}
-.ucours_tmb{margin-left:5px}
+.ucours_tmb{margin-left:4px}
 .ucours_tm_act{}
 
 .ucours_tmic{
 	font-size: 12px;
-	margin: 0 10px 0 -5px;
+	margin: 0 10px 0 -4px;
 }
 .ucours_tmis{
 	font-size: 12px;
-	margin: 3px -5px 0 12px;
+	margin: 3px -4px 0 12px;
 }
 .ucours_tmi span{}
 
@@ -246,14 +246,14 @@
 	height: 34px;
 	border-radius: 8px;
 	border: 1px solid var(--gr2);
-	margin-right: 5px;
+	margin-right: 4px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	font-size: 14px;
 	padding-right: 2px;
 	background: var(--tr);
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 	cursor: pointer;
 }
 .ucours_trnci:last-child{
@@ -275,8 +275,8 @@
 	width: 100%;
 	border-radius: 20px;
 	border: 1px solid var(--gr2);
-	transition: .3s;
-	margin-top: 30px;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
+	margin-top: 32px;
 }
 .uc_upop{
 	border: 0;
@@ -307,7 +307,7 @@
 	min-height: 54px;
 	font-size: 16px;
 	border: 0;
-	padding: 0 30px 0 83px;
+	padding: 0 32px 0 83px;
 	background: var(--tr);
 }
 .uc_usn input:hover, .uc_usn input:focus{background:var(--tr)}
@@ -352,7 +352,7 @@
 	justify-content: space-between;
 	align-items: center;
 	border-bottom: 1px solid var(--gr2);
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 	font-size: 12px;
 }
 
@@ -364,8 +364,8 @@
 	display: flex;
 	justify-content: flex-start;
 	align-items: center;
-	transition: .3s;
-	padding: 0 20px 0 30px;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
+	padding: 0 20px 0 32px;
 	position: sticky;
 	top: 0;
 	z-index: 88;
@@ -424,7 +424,7 @@
 .uc_ub{
 	position: relative;
 	width: 100%;
-	padding: 20px 30px 30px 30px;
+	padding: 20px 32px 32px 32px;
 }
 .uc_upop .uc_ub{
 	padding: 10px 15px 10px 20px;
@@ -443,7 +443,7 @@
 	position: relative;
 	width: 100%;
 	min-height: 74px;
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 	padding: 10px 25px 10px 35px;
 	border-bottom: 1px solid var(--gr1);
 	display: flex;
@@ -606,7 +606,7 @@ a.uc_ui{cursor:pointer}
 	-webkit-line-clamp: 1;
 	-webkit-box-orient: vertical;
 	white-space: break-spaces;
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 	overflow: hidden;
 }
 .uc_ui_name:last-child{
@@ -633,7 +633,7 @@ a.uc_ui{cursor:pointer}
 	position: relative;
 	width: 100%;
 	height: 16px;
-	margin-top: 5px;
+	margin-top: 4px;
 	display: flex;
 	justify-content: flex-start;
 	align-items: center;
@@ -694,10 +694,10 @@ a.uc_ui{cursor:pointer}
 .disp_full{cursor:pointer}
 .disp_full i{
 	display: inline-block;
-	margin-left: 5px;
+	margin-left: 4px;
 	font-size: 14px;
 	opacity: 0;
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 	cursor: pointer;
 }
 .uc_ui:hover .disp_full i{opacity:1}
@@ -895,12 +895,12 @@ input.uc_uin_calc_q{
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 	border-radius: 50%;
 	cursor: pointer;
 }
 .uc_uin_cn:hover{background:var(--cl1)}
-.uc_uin_cn:nth-last-child(2){margin-right:5px}
+.uc_uin_cn:nth-last-child(2){margin-right:4px}
 td .uc_uin_cn{
 	margin-right: 15px;
 }
@@ -914,7 +914,7 @@ thead td .uc_uin_cn{
 	position: relative;
 	width: 44px;
 	height: 44px;
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 }
 .uc_uibo{
 	position: relative;
@@ -924,7 +924,7 @@ thead td .uc_uin_cn{
 	justify-content: center;
 	align-items: center;
 	border-radius: 50%;
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 	cursor: pointer;
 	font-size: 20px;
 }
@@ -975,7 +975,7 @@ thead td .uc_uin_cn{
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 	border: 1px solid var(--gr2);
 	font-size: 14px;
 	overflow: hidden;
@@ -1087,7 +1087,7 @@ thead td .uc_uin_cn{
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
-	padding: 20px 30px 30px 30px;
+	padding: 20px 32px 32px 32px;
 }
 
 
@@ -1223,7 +1223,7 @@ tr.uc_ui td .uc_uin_other{
 	min-height: 54px;
 	padding: 0 25px 0 35px;
 	border-bottom: 1px solid var(--gr2);
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 	font-size: 12px;
 }
 .thead td{
@@ -1278,7 +1278,7 @@ tr.uc_ui td .uc_uin_other{
 }
 .tc_code2{
 	color: var(--gr);
-	margin-top: 5px;
+	margin-top: 4px;
 }
 .tc_code2:first-child{
 	margin-top: 0;
@@ -1383,7 +1383,7 @@ tr.uc_ui td .uc_uin_other{
 	width: 100%;
 	height: 0;
 	padding-top: 0;
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
    visibility: hidden;
 	opacity: 0;
    overflow: hidden;
@@ -1449,7 +1449,7 @@ tr.uc_ui td .uc_uin_other{
 	justify-content: center;
 	align-items: center;
 	cursor: pointer;
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 	opacity: 0;
 }
 .upl_logo_img_del:hover::after{

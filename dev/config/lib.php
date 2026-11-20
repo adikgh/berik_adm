@@ -12,7 +12,7 @@ class dev {
 	public static $methods = ['kaspi' => 'Kaspi', 'cash' => 'Қолма-қол', 'bank' => 'Шот', 'bonus' => 'Бонустан'];
 	// Тегін сынақ: әр компанияға бір рет, төлемдер тарихына method = 'trial', сомасы 0 болып жазылады
 	public static $trial_days = 14;
-	public static function method_name($k) { return $k == 'trial' ? t::w('Free trial', 'Тегін сынақ') : (self::$methods[$k] ?? $k); }
+	public static function method_name($k) { return $k == 'trial' ? t::w('Plan free', 'Free') : (self::$methods[$k] ?? $k); }
 
 	// Тіл: рөл мен төлем түрінің атаулары таңдалған тілге ауысады (config/core.php шақырады)
 	public static function i18n() {
@@ -234,7 +234,7 @@ class dev {
 	public static function status($paid_until, $trial = false) {
 		if (!$paid_until) return ['none', t::w('No subscription', 'Жазылым жоқ'), null];
 		$days = (int)floor((strtotime($paid_until) - strtotime(date('Y-m-d'))) / 86400);
-		if ($trial) return $days < 0 ? ['debt', t::w('Trial ended', 'Сынақ бітті'), $days] : ['trial', t::w('Free trial', 'Тегін сынақ'), $days];
+		if ($trial) return $days < 0 ? ['debt', t::w('Trial ended', 'Сынақ бітті'), $days] : ['trial', t::w('Plan free', 'Free'), $days];
 		if ($days < 0) return ['debt', t::w('Expired', 'Мерзімі өтті'), $days];
 		if ($days <= 5) return ['soon', t::w('Ends soon', 'Жақында бітеді'), $days];
 		return ['paid', t::w('Paid', 'Төленген'), $days];

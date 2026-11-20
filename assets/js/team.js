@@ -118,7 +118,7 @@ $(document).ready(function() {
 			beforeSend: function(){ mess('Сақталуда..') },
 			success: function(data){
 				if (data == 'yes') { mess('Сақталды'); tmClose(); ajx('.tm_c') }
-				else { mess(errs[data] || 'Қате!'); console.log(data) }
+				else { mess(errs[data] || 'Қате'); console.log(data) }
 			},
 		});
 	});
@@ -131,7 +131,7 @@ $(document).ready(function() {
 			success: function(data){
 				if (data == 'yes') { mess('Тізімнен шығарылды', 'ok'); ajx('.tm_c') }
 				else if (data == 'self') mess('Өзіңізді шығара алмайсыз')
-				else { mess('Қате!'); console.log(data) }
+				else { mess('Қате'); console.log(data) }
 			},
 		}) }, { ok: 'Шығару', danger: true });
 	});

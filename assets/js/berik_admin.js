@@ -225,7 +225,7 @@ $(document).ready(function() {
 			url: '/orders/get.php?courier_pay', type: 'POST', dataType: 'json',
 			data: { id: box.attr('data-id'), method: m, cash: cash },
 			success: function(d) {
-				if (!d || !d.ok) { mess(d && d.err == 'sql' ? w('SQL needed', 'Алдымен базаға SQL қосу керек') : w('Error', 'Қате!')); return; }
+				if (!d || !d.ok) { mess(d && d.err == 'sql' ? w('SQL needed', 'Алдымен базаға SQL қосу керек') : w('Error', 'Қате')); return; }
 				box.find('.cpay_i').removeClass('cpay_act');
 				if (d.method) box.find('.cpay_i[data-m="' + d.method + '"]').addClass('cpay_act');
 				box.toggleClass('cpay_done', !!d.method);
@@ -233,7 +233,7 @@ $(document).ready(function() {
 				mess(w('Saved', 'Сақталды'));
 				if ($('.k_cr_det').length) box.closest('.k_cr_det').addClass('k_cr_changed');
 			},
-			error: function() { mess(w('Error', 'Қате!')) },
+			error: function() { mess(w('Error', 'Қате')) },
 		});
 	});
 

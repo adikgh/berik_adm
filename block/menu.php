@@ -2,17 +2,25 @@
 	<div class="aheader">
 		<div class="bl_c">
 			<div class="aheader_c">
-				<? if (!empty($page_back)): // «← Артқа» батырмасы: бетте $page_back = ['/url/', 'Атауы'] берілсе, мәзір қатарының сол жағында ?>
-					<style>
-						.aheader_bk{ margin-right: auto; height: 66px; display: inline-flex; align-items: center; gap: 12px; padding: 0 24px 0 20px; background: #fff; border-radius: 14px; box-shadow: var(--bp-shadow, 0 2px 12px rgba(0,0,0,.06)); font-size: 15px; font-weight: 700; color: var(--bp-text, #222); white-space: nowrap; transition: .15s; }
-						.aheader_bk i{ font-size: 15px; transition: .15s; }
-						.aheader_bk:hover{ background: var(--bp-pill, #f5f5f5); }
-						.aheader_bk:hover i{ transform: translateX(-3px); }
-						.head_c .head_back_m{ display: none; }
-						@media (max-width: 768px) { .aheader_bk{ display: none; } .head_c .head_back_m{ display: inline-flex; } }
-					</style>
-					<a class="aheader_bk" href="<?=$page_back[0]?>"><i class="far fa-arrow-left"></i><span><?=$page_back[1]?></span></a>
-				<? endif ?>
+				<? // Бөлім ішіндегі бет болса «← Ата бөлім» батырмасы. Бет өзі $page_back бермесе, адрес бойынша (2026-11-20)
+					if (empty($page_back)) {
+						$pb_self = strtok((string)@$_SERVER['SCRIPT_NAME'], '?');
+						$pb_map = [
+							'/products/item/index.php' => ['/products/', t::w('Menu: sets and items', 'Мәзір')],
+							'/products/import/index.php' => ['/products/', t::w('Menu: sets and items', 'Мәзір')],
+							'/products/tpl/index.php' => ['/products/', t::w('Menu: sets and items', 'Мәзір')],
+							'/products/archive/index.php' => ['/products/', t::w('Menu: sets and items', 'Мәзір')],
+							'/products/add/index.php' => ['/products/', t::w('Menu: sets and items', 'Мәзір')],
+							'/waybill/item.php' => ['/waybill/', t::w('Purchases', 'Закуп')],
+						];
+						if (isset($pb_map[$pb_self])) $page_back = $pb_map[$pb_self];
+					}
+					$ah_title = isset($page_key) ? t::w($page_key, $page_name) : @$page_name; ?>
+				<!-- Бет атауы мәзір қатарында, мәзірмен бір биіктікте (2026-11-20, user) -->
+				<div class="aheader_tl">
+					<? if (!empty($page_back)): ?><a class="aheader_bk" href="<?=$page_back[0]?>"><i class="far fa-arrow-left"></i><span><?=$page_back[1]?></span></a><? endif ?>
+					<? if ($ah_title !== ''): ?><div class="aheader_h"><?=$ah_title?></div><? endif ?>
+				</div>
 				<!-- <div class="aheader_l">
 					<div class="alogo" href="/">
 						<div class="alogo_i lazy_logo" data-src="/assets/img/logo/logo.png"></div>
@@ -63,20 +71,22 @@
 								</div>
 								<style>
 									.mp_dd{ position: relative; display: flex; }
-									.mp_dd_t{ display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 18px; border-radius: 10px; font-size: 16px; font-weight: 600; color: var(--bp-text, #222); cursor: pointer; user-select: none; transition: .15s; }
-									.mp_dd_t i{ font-size: 18px; line-height: 1; }
-									.mp_dd_t .mp_dd_ar{ font-size: 14px; margin-left: -2px; transition: .15s; }
-									.mp_dd:hover .mp_dd_t, .mp_dd:focus-within .mp_dd_t{ background: var(--bp-pill, #f5f5f5); }
-									.mp_dd_act .mp_dd_t, .mp_dd_act:hover .mp_dd_t{ background: #e3f5ec; color: var(--bp-green, #0EA768); font-weight: 700; }
+									.mp_dd_t{ display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: 10px; font-size: 15px; font-weight: 500; color: var(--bp-text2, #545a56); cursor: pointer; user-select: none; transition: .15s; }
+									.mp_dd_t i{ font-size: 18px; line-height: 1; color: var(--bp-muted, #767c78); }
+									.mp_dd_t .mp_dd_ar{ font-size: 14px; margin-left: -2px; transition: transform .15s; }
+									.mp_dd:hover .mp_dd_t, .mp_dd:focus-within .mp_dd_t{ background: var(--bp-pill, #f1f3f0); }
+									.mp_dd_act .mp_dd_t, .mp_dd_act:hover .mp_dd_t{ background: #e3f5ec; color: var(--bp-green-ink, #08794b); font-weight: 600; }
+									.mp_dd_act .mp_dd_t i{ color: var(--bp-green, #0EA768); }
 									.mp_dd:hover .mp_dd_ar, .mp_dd:focus-within .mp_dd_ar{ transform: rotate(180deg); }
-									.mp_dd_c{ display: none; position: absolute; top: 100%; left: 0; z-index: 50; min-width: 100%; padding: 6px; background: #fff; border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.06); flex-direction: column; gap: 2px; margin-top: 10px; }
-									.mp_dd_c::before{ content: ''; position: absolute; left: 0; right: 0; top: -10px; height: 10px; }
+									.mp_dd_c{ display: none; position: absolute; top: 100%; left: 0; z-index: 50; min-width: 100%; padding: 4px; background: #fff; border-radius: 14px; box-shadow: var(--bp-pop, 0 8px 24px rgba(0,0,0,.08)); flex-direction: column; gap: 2px; margin-top: 8px; }
+									.mp_dd_c::before{ content: ''; position: absolute; left: 0; right: 0; top: -8px; height: 8px; }
 									.mp_dd:hover .mp_dd_c, .mp_dd:focus-within .mp_dd_c{ display: flex; }
-									.mp_dd_i{ display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: 10px; font-size: 15px; font-weight: 600; color: var(--bp-text, #222); white-space: nowrap; transition: .15s; }
-									.mp_dd_i i{ width: 18px; text-align: center; font-size: 17px; }
-									.mp_dd_i:hover{ background: var(--bp-pill, #f5f5f5); }
-									.mp_dd_i_act, .mp_dd_i_act:hover{ background: #e3f5ec; color: var(--bp-green, #0EA768); font-weight: 700; }
-									.mp_dd_sep{ height: 1px; margin: 4px 8px; background: var(--bp-line, #e7e7e7); }
+									.mp_dd_i{ display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px; border-radius: 10px; font-size: 15px; font-weight: 500; color: var(--bp-text, #1c1f1d); white-space: nowrap; transition: background-color .15s, color .15s; }
+									.mp_dd_i i{ width: 18px; text-align: center; font-size: 17px; color: var(--bp-muted, #767c78); }
+									.mp_dd_i:hover{ background: var(--bp-pill, #f1f3f0); }
+									.mp_dd_i_act, .mp_dd_i_act:hover{ background: #e3f5ec; color: var(--bp-green-ink, #08794b); font-weight: 600; }
+									.mp_dd_i_act i{ color: var(--bp-green, #0EA768); }
+									.mp_dd_sep{ height: 1px; margin: 4px 8px; background: var(--bp-line, #e6e8e4); }
 									.mp_dd_m{ display: none !important; }
 									@media (min-width: 769px){ .an_tabs_m{ display: none; } }
 									@media (max-width: 1500px){ .mp_dd_t{ padding: 0 12px; gap: 8px; font-size: 15px; } }
@@ -101,7 +111,7 @@
 									// қызыл санауыштар: граммовкасы жоқ сатылған тағам, минустағы шикізат
 									if (!class_exists('wb')) @include_once $_SERVER['DOCUMENT_ROOT'].'/waybill/lib.php';
 									$wbm = class_exists('wb') ? wb::menu_counts(@$company, @$branch) : ['dish' => 0, 'neg' => 0];
-									$wbm_b = function ($n, $t) { return $n ? '<b class="mp_cnt" title="'.$t.'" style="min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#e74c3c;color:#fff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;line-height:1">'.$n.'</b>' : ''; }; ?>
+									$wbm_b = function ($n, $t) { return $n ? '<b class="mp_cnt" title="'.$t.'" style="min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#dc2626;color:#fff;font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;line-height:1">'.$n.'</b>' : ''; }; ?>
 								<div class="mp_dd <?=($menu_name=='products'?'mp_dd_act':'')?>">
 									<a class="mp_dd_t" href="javascript:;" tabindex="0"><i class="fal fa-utensils"></i><span><?=t::w('Dishes', 'Тағамдар')?></span><?=$wbm_b($wbm['dish'], 'Граммовкасы жоқ сатылған тағам')?><i class="far fa-angle-down mp_dd_ar"></i></a>
 									<div class="mp_dd_c">

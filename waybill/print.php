@@ -23,7 +23,7 @@
 		th, td{ border: 1px solid #999; padding: 6px 8px; text-align: left; }
 		th{ background: #f0f0f0; }
 		td.r, th.r{ text-align: right; }
-		.tot td{ font-weight: bold; }
+		.tot td{ font-weight:600; }
 		.sign{ display: flex; justify-content: space-between; margin-top: 40px; }
 		.sign div{ width: 45%; border-top: 1px solid #333; padding-top: 4px; color: #555; }
 		.np{ margin-bottom: 16px; }

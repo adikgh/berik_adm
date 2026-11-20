@@ -1,9 +1,11 @@
-/* Касса: есеп қайдан алынды (сақталған / тірі) */
-.ks_info { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 4px 0 14px; font-size: 13px; }
+/* Касса: есеп қайдан алынды (сақталған / тірі). Unslop 2026-11-20: сүзгіден бөлек, бір биіктіктегі жұмсақ белгілер */
+.ks_info { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0 20px; font-size: 14px; line-height: 20px; }
 .ks_info:empty { display: none; }
-.ks_saved { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 8px; background: rgba(30, 158, 90, .08); color: #1e9e5a; font-weight: 600; }
-.ks_live { display: inline-flex; align-items: center; gap: 6px; color: #8a8f98; }
-.ks_live .fa-circle { color: #1e9e5a; font-size: 9px; }
-.ks_chg { display: inline-flex; align-items: center; gap: 6px; color: #e08a00; }
-.ks_resave { display: inline-flex; align-items: center; gap: 6px; color: #3a6df0; cursor: pointer; user-select: none; }
-.ks_resave:hover { text-decoration: underline; }
+.ks_saved, .ks_live, .ks_chg, .ks_resave { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 8px; background: #fff; border: 1px solid var(--bp-line, #e6e8e4); color: var(--bp-text2, #545a56); font-weight: 500; }
+.ks_saved { background: var(--bp-green-bg, #e3f5ec); border-color: transparent; color: var(--bp-green-ink, #08794b); }
+/* тірі есеп: жасыл нүкте (жыпылықтамайды) */
+.ks_live .fa-circle { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--bp-green, #0EA768); font-size: 0; }
+.ks_live .fa-database { color: var(--bp-muted, #767c78); }
+.ks_chg { background: #fff8e6; border-color: transparent; color: #8a5a00; }
+.ks_resave { color: var(--bp-green-ink, #08794b); cursor: pointer; user-select: none; transition: background-color .15s, border-color .15s; }
+.ks_resave:hover { background: var(--bp-pill, #f1f3f0); }

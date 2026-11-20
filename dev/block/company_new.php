@@ -51,7 +51,7 @@ $cn_def = key($cn_tar);
 					<div class="form_im">
 						<div class="form_span"><?=t::w('Tariff', 'Тариф')?>:</div>
 						<select name="tariff_id" class="form_txt cn_tar">
-							<option value="trial" selected><?=t::w('Free trial', 'Тегін сынақ')?> · <?=sprintf(t::w('%d days', '%d күн'), dev::$trial_days)?> · 0 ₸</option>
+							<option value="trial" selected><?=t::w('Plan free', 'Free')?> · <?=sprintf(t::w('Plan free days', '%d күн тегін'), dev::$trial_days)?> · 0 ₸</option>
 							<? foreach ($cn_tar as $t): ?><option value="<?=$t['id']?>"><?=dev::h($t['name'])?> · <?=dev::money($t['price'])?>/<?=t::w('mo.', 'ай')?></option><? endforeach ?>
 							<option value="">— <?=t::w('without tariff', 'тарифсіз')?> —</option>
 						</select>

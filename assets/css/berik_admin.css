@@ -1,65 +1,78 @@
 /* Berik admin: POS кассадағыдай стиль. Тек сыртқы түр, орналасу өзгермейді. */
 :root{
-	--bp-bg: #f6f6f6;
-	--bp-line: #e7e7e7;
-	--bp-pill: #f5f5f5;
-	--bp-text: #222;
-	--bp-muted: #8a8f98;
+	/* Unslop 2026-11-20: аздап жасылға тартқан жылы сұр шкала + бір жасыл акцент. --bp-blue енді негізгі батырманың жасыл түсі (көк жоқ) */
+	--bp-bg: #f6f7f5;
+	--bp-card: #fff;
+	--bp-line: #e6e8e4;
+	--bp-hair: rgba(14,167,104,.16);
+	--bp-pill: #f1f3f0;
+	--bp-text: #1c1f1d;
+	--bp-text2: #545a56;
+	--bp-muted: #767c78;
 	--bp-green: #0EA768;
 	--bp-green-h: #0c8f59;
-	--bp-blue: #1f75a8;
-	--bp-blue-h: #18618b;
-	--bp-shadow: 0 6px 20px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+	--bp-green-ink: #08794b;
+	--bp-green-bg: #e3f5ec;
+	--bp-red: #dc2626;
+	--bp-blue: #0c8f59;
+	--bp-blue-h: #08794b;
+	--bp-ease: cubic-bezier(.22,1,.36,1);
+	--bp-shadow: 0 0 0 1px rgba(28,31,29,.06), 0 1px 2px rgba(0,0,0,.04);
+	--bp-pop: 0 8px 24px rgba(0,0,0,.08), 0 0 0 1px rgba(28,31,29,.06);
 }
+body{ font-variant-numeric: tabular-nums; }
 body{ background: var(--bp-bg); }
 
 /* ---------- Жоғарғы мәзір ---------- */
 .aheader_r{ gap: 12px; flex-wrap: wrap; row-gap: 10px; }
 .mp_top, .ub1_lx{ display: flex; align-items: center; padding: 0; background: transparent; box-shadow: none; border-radius: 0; }
 .mp_topc{
-	height: 66px; padding: 5px; gap: 4px;
+	height: 56px; padding: 4px; gap: 4px;
 	background: #fff; border-radius: 14px; box-shadow: var(--bp-shadow);
 }
 .mp_topi{
 	display: flex; align-items: center; gap: 10px;
-	height: 56px; padding: 0 18px; margin: 0;
+	height: 48px; padding: 0 16px; margin: 0;
 	background: transparent; border-radius: 10px;
-	font-size: 16px; font-weight: 600; color: var(--bp-text);
-	touch-action: manipulation; user-select: none; transition: .15s;
+	font-size: 15px; font-weight: 500; color: var(--bp-text2);
+	touch-action: manipulation; user-select: none; transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s;
 }
-.mp_topi i{ font-size: 18px; line-height: 1; }
+.mp_topi i{ font-size: 18px; color: var(--bp-muted); line-height: 1; }
 .mp_topi:hover{ background: var(--bp-pill); }
 .mp_topi:active{ transform: scale(.97); }
-.mp_topi_act, .mp_topi_act:hover{ background: #e3f5ec; color: var(--bp-green); font-weight: 700; }
+.mp_topi_act, .mp_topi_act:hover{ background: var(--bp-green-bg); color: var(--bp-green-ink); font-weight: 600; }
+.mp_topi_act i{ color: var(--bp-green); }
 
 .ub1_lt{
-	height: 66px; padding: 0 5px 0 22px;
+	height: 56px; padding: 0 4px 0 20px;
 	background: #fff; border-radius: 14px; box-shadow: var(--bp-shadow);
 }
 .ub1_ltf div{ font-size: 15px; font-weight: 600; color: var(--bp-text); }
-.ub1_lti{ width: 56px; height: 56px; min-height: 56px; border-radius: 10px; background-color: var(--bp-pill); color: var(--bp-muted); }
+.ub1_lti{ width: 48px; height: 48px; min-height: 48px; border-radius: 10px; background-color: var(--bp-pill); color: var(--bp-muted); }
 
 /* компания таңдау */
 .head_rk select{
-	height: 66px; min-width: 200px; padding: 0 18px;
+	height: 56px; min-width: 200px; padding: 0 16px;
 	background: #fff; border: 0; border-radius: 14px; box-shadow: var(--bp-shadow);
 	font-size: 16px; font-weight: 600; color: var(--bp-text); cursor: pointer;
 }
 
 /* ---------- Ішкі мәзір (Основной, Каталог, ...) ---------- */
-.tg1_topc{ display: inline-flex; gap: 4px; padding: 5px; background: #fff; border-radius: 14px; box-shadow: var(--bp-shadow); }
-.tg1_topi{ height: 54px; display: flex; align-items: center; padding: 0 22px; border-radius: 10px; font-size: 15px; font-weight: 600; color: var(--bp-text); background: transparent; }
+.tg1_topc{ display: inline-flex; gap: 4px; padding: 4px; background: #fff; border-radius: 14px; box-shadow: var(--bp-shadow); }
+.tg1_topi{ height: 44px; display: flex; align-items: center; padding: 0 24px; border-radius: 10px; font-size: 15px; font-weight: 500; color: var(--bp-text2); background: transparent; }
 .tg1_topi:hover{ background: var(--bp-pill); }
-.tg1_topi_act, .tg1_topi_act:hover{ background: #e3f5ec; color: var(--bp-green); font-weight: 700; }
+.tg1_topi_act, .tg1_topi_act:hover{ background: var(--bp-green-bg); color: var(--bp-green-ink); font-weight: 600; }
 
 /* ---------- Батырмалар: негізгісі көк, сақтау жасыл ---------- */
-.btn{ min-height: 54px; border-radius: 10px; font-weight: 700; }
+.btn{ min-height: 48px; border-radius: 10px; font-weight: 600; transition: background-color .15s var(--bp-ease), border-color .15s var(--bp-ease), color .15s var(--bp-ease), transform .12s var(--bp-ease); }
+.btn:active{ transform: scale(.98); }
+.btn:focus-visible{ outline: 2px solid var(--bp-green); outline-offset: 2px; }
 /* ✕ (btn_dd) батырмасы дөңгелек қалады: 44×44 (2026-11-10) */
 .btn.btn_dd:not(.btn_dd_54){ height: 44px; min-height: 44px; border-radius: 50%; }
 .btn:not([class*="btn_"]){ background: var(--bp-blue); color: #fff; }
 .btn:not([class*="btn_"]):hover{ background: var(--bp-blue-h); }
-.btn.btn_cl{ background: #fff; color: var(--bp-blue); border: 1px solid var(--bp-line); box-shadow: var(--bp-shadow); }
-.btn.btn_cl:hover{ border-color: var(--bp-blue); }
+.btn.btn_cl{ background: #fff; color: var(--bp-text); border: 1px solid var(--bp-line); box-shadow: none; }
+.btn.btn_cl:hover{ border-color: #d5d9d5; background: var(--bp-pill); }
 .ctg_save, .product_add, .pr_upd{ background: var(--bp-green) !important; }
 .ctg_save:hover, .product_add:hover, .pr_upd:hover{ background: var(--bp-green-h) !important; }
 
@@ -70,61 +83,61 @@ body{ background: var(--bp-bg); }
 .uc_ui69{ flex-wrap: wrap; gap: 10px; padding-top: 8px; }
 .uc_ui69 > div{ margin-right: 0 !important; }
 .uc_ui69 select, .uc_ui69 input.form_dt{
-	height: 56px; min-height: 56px; min-width: 180px; padding: 0 16px;
+	height: 48px; min-height: 48px; min-width: 180px; padding: 0 16px;
 	background: #fff; border: 1px solid var(--bp-line); border-radius: 10px;
-	font-size: 15px; font-weight: 600; color: var(--bp-text); box-shadow: 0 1px 3px rgba(0,0,0,.05); cursor: pointer;
+	font-size: 15px; font-weight: 600; color: var(--bp-text); box-shadow: none; cursor: pointer;
 }
-.uc_ui69 select:hover, .uc_ui69 input:hover{ border-color: #d6d6d6; }
+.uc_ui69 select:hover, .uc_ui69 input:hover{ border-color: #d5d9d5; }
 .uc_ui69 select:focus, .uc_ui69 input:focus{ border-color: var(--bp-blue); outline: none; }
 
 /* ---------- Кестелер мен блоктар ---------- */
 .uc_u2q, .uc_u .uc_uc, .table4{ border-radius: 14px; }
-.uc_uh, .uc_uh div{ font-size: 12px; text-transform: uppercase; color: var(--bp-muted); font-weight: 600; letter-spacing: .3px; }
-.uc_us .uc_usn input, .product_search{ height: 56px; border-radius: 10px; }
+.uc_uh, .uc_uh div{ font-size: 13px;  color: var(--bp-muted); font-weight: 600;  }
+.uc_us .uc_usn input, .product_search{ height: 48px; border-radius: 10px; }
 
 @media (max-width: 1500px){ .mp_topi{ padding: 0 12px; gap: 8px; font-size: 15px; } }
 
 /* ---------- Аккаунт мәзірі (POS-тағыдай) ---------- */
 .ub1_lx .menu_c, .menu_act .ub1_lx .menu_c{ top: 76px; }
 .ub1_lx .menu_c{ top: 60px; }
-.menu_c.acc_menu{ width: 320px; padding: 8px; border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.14); border: 1px solid var(--bp-line); z-index: 30; }
-.acc_hd{ display: flex; align-items: center; gap: 12px; padding: 10px 10px 14px; border-bottom: 1px solid var(--bp-line); }
+.menu_c.acc_menu{ width: 320px; padding: 8px; border-radius: 16px; box-shadow: var(--bp-pop); border: 1px solid var(--bp-line); z-index: 30; }
+.acc_hd{ display: flex; align-items: center; gap: 12px; padding: 10px 10px 16px; border-bottom: 1px solid var(--bp-line); }
 .acc_hd_av{ width: 48px; height: 48px; border-radius: 12px; background: var(--bp-pill) center/cover no-repeat; display: flex; align-items: center; justify-content: center; color: var(--bp-muted); flex-shrink: 0; }
-.acc_hd_t div{ font-weight: 700; font-size: 15px; }
+.acc_hd_t div{ font-weight: 600; font-size: 15px; }
 .acc_hd_t span{ font-size: 13px; color: var(--bp-muted); }
 .acc_lang{ padding: 12px 10px; border-bottom: 1px solid var(--bp-line); }
 .acc_lang_h{ font-size: 13px; color: var(--bp-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
 .acc_lang_c{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-.acc_lang_i{ height: 40px; border-radius: 10px; background: var(--bp-pill); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--bp-text); transition: .15s; }
-.acc_lang_i:hover{ background: #eef3f8; color: var(--bp-blue); }
+.acc_lang_i{ height: 40px; border-radius: 10px; background: var(--bp-pill); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--bp-text); transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s; }
+.acc_lang_i:hover{ background: #f1f3f0; color: var(--bp-blue); }
 .acc_lang_act, .acc_lang_act:hover{ background: #e3f5ec; color: var(--bp-green); }
 .acc_list{ padding-top: 6px; }
 .acc_menu .menu_ci, .acc_menu .menu_ci:first-child, .acc_menu .menu_ci:last-child{ height: 52px; min-height: 52px; padding: 0 10px; border: 0; border-radius: 10px; }
 .acc_menu .menu_ci:hover{ background: var(--bp-pill); }
-.acc_menu .acc_exit{ color: #c92a2a; }
+.acc_menu .acc_exit{ color: #dc2626; }
 
 /* ---------- Ортақ шағын батырмалар ---------- */
-.ctg_b{ width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: #eef3f8; color: var(--bp-blue); cursor: pointer; user-select: none; transition: transform .1s; }
+.ctg_b{ width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--bp-green-bg); color: var(--bp-green-ink); cursor: pointer; user-select: none; transition: transform .1s; }
 .ctg_b:active{ transform: scale(.94); }
-.ctg_b_red{ background: #fdecec; color: #c92a2a; }
+.ctg_b_red{ background: #fdecec; color: #dc2626; }
 
 /* ---------- Формалар: input және ашылмалы (попаптар) ---------- */
 .form_im .form_txt, .form_im .form_im_txt{
 	width: 100%; min-height: 56px; padding: 0 16px 0 54px;
-	background: #fff; border: 1px solid #dfe3ea; border-radius: 10px;
+	background: #fff; border: 1px solid #e6e8e4; border-radius: 10px;
 	font-size: 16px; color: var(--bp-text); transition: border-color .15s, box-shadow .15s;
 }
 .form_im div.form_txt, .form_im div.form_im_txt{ display: flex; align-items: center; cursor: pointer; padding-right: 54px; }
-.form_im .form_txt:hover, .form_im .form_im_txt:hover{ border-color: #c9ced8; background: #fff; }
-.form_im .form_txt:focus, .form_im .form_im_txt:focus, .form_im .form_sel_act{ border-color: var(--bp-blue); box-shadow: 0 0 0 3px rgba(31,117,168,.12); outline: none; background: #fff; }
-.form_span{ font-size: 13px; font-weight: 600; color: #5d6470; }
+.form_im .form_txt:hover, .form_im .form_im_txt:hover{ border-color: #d5d9d5; background: #fff; }
+.form_im .form_txt:focus, .form_im .form_im_txt:focus, .form_im .form_sel_act{ border-color: var(--bp-blue); box-shadow: 0 0 0 3px rgba(14,167,104,.16); outline: none; background: #fff; }
+.form_span{ font-size: 13px; font-weight: 600; color: #545a56; }
 .form_icon{ color: var(--bp-muted); }
 .form_icon_sel{ pointer-events: none; }
 .form_sel_act ~ .form_icon_sel{ transform: rotate(180deg); }
 .form_im_sel{ top: calc(100% + 6px); max-width: none; padding: 6px; border: 1px solid var(--bp-line); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.12); }
 .form_im_sel::before{ display: none; }
-.form_im_seli, .form_im_seli:first-child, .form_im_seli:last-child{ height: auto; min-height: 46px; padding: 0 14px; border-radius: 8px; font-size: 15px; }
-.form_im_seli:hover{ background: #eef3f8; color: var(--bp-blue); }
+.form_im_seli, .form_im_seli:first-child, .form_im_seli:last-child{ height: auto; min-height: 46px; padding: 0 16px; border-radius: 8px; font-size: 15px; }
+.form_im_seli:hover{ background: #f1f3f0; color: var(--bp-blue); }
 .pop_bl_cl .form_c{ border-bottom-color: var(--bp-line); }
 /* попап ішінде тізім төмен ашылады (кесіліп қалмайды) */
 .pop_bl .form_im_sel{ position: relative; top: 0; right: auto; width: 100%; max-height: 280px; margin-top: 6px; display: none; opacity: 1; visibility: visible; box-shadow: 0 6px 18px rgba(0,0,0,.08); }
@@ -132,39 +145,39 @@ body{ background: var(--bp-bg); }
 .pop_bl .form_sel .form_icon, .pop_bl .form_sel .form_icon_sel{ bottom: auto; top: 32px; }
 
 /* ---------- Әдемі дата ---------- */
-.bdt{ display: inline-flex; align-items: center; gap: 6px; height: 56px; padding: 4px; background: #fff; border: 1px solid var(--bp-line); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
-.bdt_arr{ width: 46px; height: 46px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--bp-text); cursor: pointer; user-select: none; transition: .15s; }
+.bdt{ display: inline-flex; align-items: center; gap: 4px; height: 48px; padding: 4px; background: #fff; border: 1px solid var(--bp-line); border-radius: 12px; box-shadow: none; }
+.bdt_arr{ width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--bp-text); cursor: pointer; user-select: none; transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s; }
 .bdt_arr:hover{ background: var(--bp-pill); }
 .bdt_arr:active{ transform: scale(.94); }
-.bdt_main{ position: relative; height: 46px; padding: 0 14px; border-radius: 9px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 15px; font-weight: 700; color: var(--bp-text); white-space: nowrap; transition: .15s; }
+.bdt_main{ position: relative; height: 40px; padding: 0 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--bp-text); white-space: nowrap; transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s; }
 .bdt_main:hover{ background: var(--bp-pill); }
-.bdt_main i{ color: var(--bp-blue); font-size: 17px; }
+.bdt_main i{ color: var(--bp-green); font-size: 17px; }
 .bdt_main input.on_sort_time, .uc_ui69 .bdt_main input.form_dt{ position: absolute; inset: 0; width: 100%; height: 100%; min-width: 0; min-height: 0; padding: 0; opacity: 0; pointer-events: none; border: 0; }
 .bdt_is_today .bdt_main{ color: var(--bp-green); }
 .bdt_is_today .bdt_main i{ color: var(--bp-green); }
-.bdt_today{ height: 46px; padding: 0 14px; border-radius: 9px; display: flex; align-items: center; background: #e3f5ec; color: var(--bp-green); font-weight: 700; font-size: 14px; cursor: pointer; user-select: none; }
+.bdt_today{ height: 40px; padding: 0 16px; border-radius: 8px; display: flex; align-items: center; background: #e3f5ec; color: var(--bp-green); font-weight: 600; font-size: 14px; cursor: pointer; user-select: none; }
 .bdt_today:hover{ background: #d3efe1; }
 
 /* ---------- Ашылмалы тізім (select орнына) ---------- */
 .bsel{ position: relative; display: inline-block; }
 .bsel > select{ display: none !important; }
-.bsel_btn{ height: 56px; min-width: 190px; padding: 0 14px 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
-	background: #fff; border: 1px solid var(--bp-line); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.05);
-	font-size: 15px; font-weight: 600; color: var(--bp-text); cursor: pointer; user-select: none; transition: .15s; white-space: nowrap; }
-.bsel_btn:hover{ border-color: #d0d5dd; }
+.bsel_btn{ height: 48px; min-width: 190px; padding: 0 16px 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+	background: #fff; border: 1px solid var(--bp-line); border-radius: 10px; box-shadow: none;
+	font-size: 15px; font-weight: 600; color: var(--bp-text); cursor: pointer; user-select: none; transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s; white-space: nowrap; }
+.bsel_btn:hover{ border-color: #d5d9d5; }
 .bsel_btn i{ color: var(--bp-muted); transition: transform .2s; }
-.bsel_on .bsel_btn{ background: #eef6fb; border-color: #bcd8ea; color: var(--bp-blue); }
-.bsel_open .bsel_btn{ border-color: var(--bp-blue); box-shadow: 0 0 0 3px rgba(31,117,168,.12); }
+.bsel_on .bsel_btn{ background: #eef6f1; border-color: #bfe6d2; color: var(--bp-green-ink); }
+.bsel_open .bsel_btn{ border-color: var(--bp-blue); box-shadow: 0 0 0 3px rgba(14,167,104,.16); }
 .bsel_open .bsel_btn i{ transform: rotate(180deg); }
 .bsel_list{ position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; min-width: 100%; max-height: 360px; overflow-y: auto; padding: 6px;
-	background: #fff; border: 1px solid var(--bp-line); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.12);
-	opacity: 0; visibility: hidden; transform: translateY(-4px); transition: .15s; }
+	background: #fff; border: 1px solid var(--bp-line); border-radius: 12px; box-shadow: var(--bp-pop);
+	opacity: 0; visibility: hidden; transform: translateY(-4px); transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s; }
 .bsel_open .bsel_list{ opacity: 1; visibility: visible; transform: none; }
-.bsel_i{ min-height: 46px; padding: 0 14px; border-radius: 8px; display: flex; align-items: center; font-size: 15px; cursor: pointer; white-space: nowrap; }
+.bsel_i{ min-height: 40px; padding: 0 16px; border-radius: 8px; display: flex; align-items: center; font-size: 15px; cursor: pointer; white-space: nowrap; }
 .bsel_i:hover{ background: var(--bp-pill); }
-.bsel_act, .bsel_act:hover{ background: #e3f5ec; color: var(--bp-green); font-weight: 700; }
-.bsel_company .bsel_btn{ height: 66px; min-width: 200px; border: 0; border-radius: 14px; box-shadow: var(--bp-shadow); font-size: 16px; }
-.bsel_company .bsel_btn::before{ content: "\f1ad"; font-family: "Font Awesome 5 Pro"; font-weight: 300; color: var(--bp-blue); font-size: 18px; }
+.bsel_act, .bsel_act:hover{ background: #e3f5ec; color: var(--bp-green); font-weight: 600; }
+.bsel_company .bsel_btn{ height: 56px; min-width: 200px; border: 0; border-radius: 14px; box-shadow: var(--bp-shadow); font-size: 16px; }
+.bsel_company .bsel_btn::before{ content: "\f1ad"; font-family: "Font Awesome 5 Pro"; font-weight: 300; color: var(--bp-green); font-size: 18px; }
 .bsel_company .bsel_txt{ flex: 1; }
 .bsel_company.bsel_on .bsel_btn{ background: #fff; color: var(--bp-text); }
 .bsel_company .bsel_list{ left: auto; right: 0; top: calc(100% + 12px); min-width: 260px; max-height: 420px; padding: 8px; border-radius: 14px; display: flex; flex-direction: column; gap: 6px; }
@@ -174,7 +187,7 @@ body{ background: var(--bp-bg); }
 .bsel_i2 small{ font-size: 12px; font-weight: 500; color: var(--bp-muted); }
 .bsel_i2.bsel_act::after{ content: "\f00c"; font-family: "Font Awesome 5 Pro"; font-weight: 400; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--bp-green); }
 /* сүзгі жолағындағы кіші тізім (Клиенттер, Накладной, QR): көршілес инпуттың биіктігімен бірдей */
-.cl_range .bsel_btn, .wb_range .bsel_btn, .qr_tb .bsel_btn{ height: 56px; min-width: 180px; border-radius: 10px; box-shadow: none; font-size: 14px; }
+.cl_range .bsel_btn, .wb_range .bsel_btn, .qr_tb .bsel_btn{ height: 48px; min-width: 180px; border-radius: 10px; box-shadow: none; font-size: 14px; }
 .cl_range .bsel_on .bsel_btn, .wb_range .bsel_on .bsel_btn, .qr_tb .bsel_on .bsel_btn{ background: #fff; border-color: var(--bp-line); color: var(--bp-text); }
 .cl_range .bsel_open .bsel_btn, .wb_range .bsel_open .bsel_btn, .qr_tb .bsel_open .bsel_btn{ border-color: var(--bp-blue); }
 .cl_range .bsel_list, .qr_tb .bsel_list{ left: auto; right: 0; }
@@ -182,76 +195,76 @@ body{ background: var(--bp-bg); }
 @media (max-width: 760px){ .cl_range .bsel, .wb_range .bsel{ flex: 1; } .cl_range .bsel_btn, .wb_range .bsel_btn{ min-width: 0; width: 100%; } }
 /* тізім батырмасындағы иконка (data-icon): сұрыптау / сүзгі */
 .bsel_btn .bsel_ico{ display: flex; align-items: center; }
-.bsel_btn .bsel_ico i{ color: var(--bp-blue); font-size: 16px; transform: none !important; }
+.bsel_btn .bsel_ico i{ color: var(--bp-green); font-size: 16px; transform: none !important; }
 .bsel_has_ico .bsel_btn{ justify-content: flex-start; gap: 10px; }
 .bsel_has_ico .bsel_txt{ flex: 1; }
 
 /* ---------- Касса: точка батырмалары, жолдар ---------- */
 .k_br{ display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; background: #fff; border: 1px solid var(--bp-line); border-radius: 12px; }
-.k_br_i{ height: 46px; padding: 0 16px; border-radius: 9px; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--bp-text); transition: .15s; }
+.k_br_i{ height: 40px; padding: 0 16px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--bp-text); transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s; }
 .k_br_i:hover{ background: var(--bp-pill); }
-.k_br_act, .k_br_act:hover{ background: #e3f5ec; color: var(--bp-green); font-weight: 700; }
+.k_br_act, .k_br_act:hover{ background: #e3f5ec; color: var(--bp-green); font-weight: 600; }
 .table4{ max-width: 100%; overflow-x: auto; }
-.table4 td{ min-width: 96px; padding: 0 14px; }
+.table4 td{ min-width: 96px; padding: 0 16px; }
 .table4 td.fr_price, .table4 td .fr_price{ white-space: nowrap; }
-.table4 tr.k_row_all td{ font-weight: 700; }
-.table4 tr.k_row_zero td{ color: #b3b8c2; }
-.table4 tr.k_row_otk td:first-child{ color: #e5484d; }
-.k_cr_tg{ display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; color: var(--bp-blue); }
+.table4 tr.k_row_all td{ font-weight: 600; }
+.table4 tr.k_row_zero td{ color: #a5aba7; }
+.table4 tr.k_row_otk td:first-child{ color: #dc2626; }
+.k_cr_tg{ display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; color: var(--bp-green-ink); }
 .k_cr_tg i{ transition: transform .2s; }
 .k_cr_tg_open i{ transform: rotate(180deg); }
 .k_cr_sub{ display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-.k_cr_sub span{ font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; white-space: nowrap; }
+.k_cr_sub span{ font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
 .k_cr_c{ background: #e3f5ec; color: var(--bp-green); }
-.k_cr_k{ background: #fdecec; color: #c92a2a; }
+.k_cr_k{ background: #fdecec; color: #dc2626; }
 .k_cr_n{ background: #fff4e0; color: #b8650f; }
 tr.k_cr_det{ display: none; }
 tr.k_cr_det.k_cr_open{ display: table-row; }
-tr.k_cr_det > td{ height: auto; padding: 10px 20px 16px; background: #fafbfc; }
+tr.k_cr_det > td{ height: auto; padding: 10px 20px 16px; background: #f6f7f5; }
 .k_cr_list{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
 .k_cr_o{ background: #fff; border: 1px solid var(--bp-line); border-radius: 12px; padding: 10px; }
-.k_cr_on{ font-weight: 700; margin-bottom: 6px; }
+.k_cr_on{ font-weight: 600; margin-bottom: 6px; }
 .k_cr_on span{ color: var(--bp-muted); font-weight: 400; font-size: 13px; margin-left: 6px; }
 
 /* ---------- Курьер ақшаны қалай алды ---------- */
 .cpay{ margin-top: 10px; padding: 10px; border-radius: 12px; background: #fff8ec; border: 1px dashed #f0c27a; }
 .cpay_done{ background: #f2faf6; border: 1px solid #bfe6d2; }
-.cpay_h{ display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+.cpay_h{ display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
 .cpay_b{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.cpay_i{ height: 44px; border-radius: 10px; background: #fff; border: 1px solid var(--bp-line); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 700; cursor: pointer; user-select: none; transition: .15s; }
+.cpay_i{ height: 44px; border-radius: 10px; background: #fff; border: 1px solid var(--bp-line); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 600; cursor: pointer; user-select: none; transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s; }
 .cpay_i:hover{ border-color: var(--bp-blue); color: var(--bp-blue); }
 .cpay_act, .cpay_act:hover{ background: var(--bp-green); border-color: var(--bp-green); color: #fff; }
 .cpay_r{ margin-top: 6px; font-size: 12px; color: var(--bp-muted); }
 
 /* ---------- Заказдар: ұрылмаған заказ ---------- */
 .or_draft{ border-style: dashed !important; }
-.or_draft .or_draft_nmb{ background: #fff !important; color: var(--bp-muted); border: 2px dashed #c9ced8; font-size: 18px; }
-.or_draft .or_draft_st{ background: #eef0f3 !important; color: #5d6470 !important; }
+.or_draft .or_draft_nmb{ background: #fff !important; color: var(--bp-muted); border: 2px dashed #d5d9d5; font-size: 18px; }
+.or_draft .or_draft_st{ background: #f1f3f0 !important; color: #545a56 !important; }
 
 /* ---------- Тағамдар: каталог топтары ---------- */
-.pr_grp{ display: flex; align-items: center; gap: 10px; padding: 18px 16px 8px; font-weight: 800; font-size: 15px; color: var(--bp-text); }
+.pr_grp{ display: flex; align-items: center; gap: 10px; padding: 20px 16px 8px; font-weight: 600; font-size: 15px; color: var(--bp-text); }
 .pr_grp:first-child{ padding-top: 8px; }
 .pr_grp_clr{ width: 12px; height: 12px; border-radius: 4px; }
-.pr_grp_cnt{ font-size: 12px; font-weight: 700; color: var(--bp-muted); background: var(--bp-pill); border-radius: 20px; padding: 2px 9px; }
+.pr_grp_cnt{ font-size: 12px; font-weight: 400; color: var(--bp-muted); }
 
 /* ---------- Тағам беті ---------- */
 .pit_head{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 16px 0 20px; }
 .pit_info{ display: flex; flex-wrap: wrap; gap: 8px; }
-.pit_tag{ height: 36px; padding: 0 12px; border-radius: 9px; background: #fff; border: 1px solid var(--bp-line); display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; }
+.pit_tag{ height: 32px; padding: 0 12px; border-radius: 8px; background: #fff; border: 1px solid var(--bp-line); display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; }
 .pit_price{ color: var(--bp-green); }
-.pit_arh{ background: #fdecec; color: #c92a2a; border-color: #f6caca; }
+.pit_arh{ background: #fdecec; color: #dc2626; border-color: #f6caca; }
 .pit_btns{ display: flex; gap: 8px; }
 .pit_btns .btn{ padding: 0 20px; gap: 8px; }
-.pit_btns .pit_del{ color: #c92a2a !important; }
-.pit_btns .pit_del:hover{ border-color: #c92a2a !important; }
-.item_is{ font-size: 15px; font-weight: 700; color: var(--bp-text); margin-bottom: 10px; }
+.pit_btns .pit_del{ color: #dc2626 !important; }
+.pit_btns .pit_del:hover{ border-color: #dc2626 !important; }
+.item_is{ font-size: 15px; font-weight: 600; color: var(--bp-text); margin-bottom: 10px; }
 .pitem .uc_u{ background: #fff; border: 1px solid var(--bp-line); border-radius: 14px; box-shadow: none; }
 .uc_ub{ padding: 12px; }
-.pit_add{ height: 56px; border: 2px dashed #bfe6d2; border-radius: 12px; background: #f2faf6; color: var(--bp-green); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 700; font-size: 15px; cursor: pointer; user-select: none; transition: .15s; }
+.pit_add{ height: 56px; border: 2px dashed #bfe6d2; border-radius: 12px; background: #f2faf6; color: var(--bp-green); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 15px; cursor: pointer; user-select: none; transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s; }
 .pit_add:hover{ background: #e3f5ec; border-color: var(--bp-green); }
 .pit_add_i{ width: 30px; height: 30px; border-radius: 8px; background: var(--bp-green); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; }
 .pitem_add_block .ec_c{ display: flex; flex-wrap: wrap; gap: 8px; max-height: 45vh; overflow-y: auto; padding: 4px 0 16px; }
-.pitem_add_block .ec_ci{ height: 46px; padding: 0 14px; margin: 0; border-radius: 10px; border: 1px solid var(--bp-line); background: #fff; display: flex; align-items: center; font-size: 14px; font-weight: 600; cursor: pointer; transition: .15s; }
+.pitem_add_block .ec_ci{ height: 46px; padding: 0 16px; margin: 0; border-radius: 10px; border: 1px solid var(--bp-line); background: #fff; display: flex; align-items: center; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s; }
 .pitem_add_block .ec_ci:hover{ border-color: var(--bp-blue); }
 .pitem_add_block .ec_ci_act{ background: #e3f5ec !important; border-color: var(--bp-green) !important; color: var(--bp-green) !important; }
 .pit_hint{ margin-top: 4px; }
@@ -271,7 +284,7 @@ tr.k_cr_det > td{ height: auto; padding: 10px 20px 16px; background: #fafbfc; }
 	.mp_topi i{ font-size: 15px; }
 	.ub1_lti{ width: 42px; height: 42px; min-height: 42px; }
 	.head_rk select{ min-width: 0; }
-	.tg1_topi{ height: 44px; padding: 0 14px; font-size: 13px; }
+	.tg1_topi{ height: 44px; padding: 0 16px; font-size: 13px; }
 }
 
 /* тағам атауындағы белгілеу */
@@ -282,31 +295,31 @@ tr.k_cr_det > td{ height: auto; padding: 10px 20px 16px; background: #fafbfc; }
 /* тағам атауының редакторы */
 .nm_ed{position:relative}
 .nm_tb{display:flex;gap:6px;margin-bottom:6px}
-.nm_tb button{height:30px;padding:0 10px;border:1px solid var(--bp-line,#e6e9ef);border-radius:8px;background:#fff;font:inherit;font-size:13px;cursor:pointer}
-.nm_tb .nm_red{color:#B90000;font-weight:800}
-.nm_tb button:hover{border-color:#cfd6e0}
-.nm_ce{min-height:46px;display:flex;align-items:center;flex-wrap:wrap;white-space:pre-wrap;outline:none;cursor:text;border:1px solid var(--bp-line,#e6e9ef);border-radius:10px;padding:10px 12px;background:#fff;font-size:15px;line-height:1.4}
-.nm_ce:focus{border-color:#1f75a8;box-shadow:0 0 0 3px rgba(31,117,168,.12)}
-.nm_ce:empty:before{content:attr(data-ph);color:#a3abb9}
+.nm_tb button{height:30px;padding:0 10px;border:1px solid var(--bp-line,#e6e8e4);border-radius:8px;background:#fff;font:inherit;font-size:13px;cursor:pointer}
+.nm_tb .nm_red{color:#B90000;font-weight: 600}
+.nm_tb button:hover{border-color:#d5d9d5}
+.nm_ce{min-height:46px;display:flex;align-items:center;flex-wrap:wrap;white-space:pre-wrap;outline:none;cursor:text;border:1px solid var(--bp-line,#e6e8e4);border-radius:10px;padding:10px 12px;background:#fff;font-size:15px;line-height:1.4}
+.nm_ce:focus{border-color:#1c1f1d;box-shadow:0 0 0 3px rgba(14,167,104,.16)}
+.nm_ce:empty:before{content:attr(data-ph);color:#a5aba7}
 
 /* ---------- Өз күнтізбеміз (браузердікі емес), кассадағыдай ---------- */
 .bdt_open .bdt_main{ background: var(--bp-pill); }
-.bcal{ position: fixed; z-index: 100000; width: 320px; padding: 14px; background: #fff; border: 1px solid var(--bp-line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.12); opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .15s, transform .15s, visibility .15s; box-sizing: border-box; }
+.bcal{ position: fixed; z-index: 100000; width: 320px; padding: 16px; background: #fff; border: 1px solid var(--bp-line); border-radius: 16px; box-shadow: var(--bp-pop); opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .15s, transform .15s, visibility .15s; box-sizing: border-box; }
 .bcal.pop_on{ opacity: 1; visibility: visible; transform: none; }
 .bcal_head{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.bcal_head b{ font-size: 16px; font-weight: 800; color: var(--bp-text); }
+.bcal_head b{ font-size: 16px; font-weight: 600; color: var(--bp-text); }
 .bcal_nav{ width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--bp-text); font-size: 17px; }
 .bcal_nav:hover{ background: var(--bp-pill); }
 .bcal_grid{ display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.bcal_wd{ height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #8a8f98; text-transform: uppercase; }
-.bcal_we{ color: #e5484d; opacity: .8; }
-.bcal_d{ height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--bp-text); cursor: pointer; user-select: none; transition: background .12s; }
+.bcal_wd{ height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #767c78;  }
+.bcal_we{ color: #dc2626; opacity: .8; }
+.bcal_d{ height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: var(--bp-text); cursor: pointer; user-select: none; transition: background .12s; }
 .bcal_d:hover{ background: var(--bp-pill); }
-.bcal_out{ color: #c3c8cf; font-weight: 600; }
+.bcal_out{ color: #a5aba7; font-weight: 600; }
 .bcal_tod{ box-shadow: inset 0 0 0 2px var(--bp-green); color: var(--bp-green); }
-.bcal_sel, .bcal_sel:hover{ background: var(--bp-blue); color: #fff; box-shadow: none; }
+.bcal_sel, .bcal_sel:hover{ background: var(--bp-green); color: #fff; box-shadow: none; }
 .bcal_foot{ display: flex; justify-content: flex-end; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--bp-line); }
-.bcal_today{ height: 36px; padding: 0 16px; border-radius: 8px; display: flex; align-items: center; background: #e3f5ec; color: var(--bp-green); font-weight: 700; font-size: 14px; cursor: pointer; }
+.bcal_today{ height: 36px; padding: 0 16px; border-radius: 8px; display: flex; align-items: center; background: #e3f5ec; color: var(--bp-green); font-weight: 600; font-size: 14px; cursor: pointer; }
 .bcal_today:hover{ background: #d3efe1; }
 .bcal_grid3{ grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .bcal_grid3 .bcal_d{ height: 46px; font-size: 14px; }
@@ -314,19 +327,19 @@ tr.k_cr_det > td{ height: auto; padding: 10px 20px 16px; background: #fafbfc; }
 
 /* тағам карточкасы: сипаттама өрісі */
 .pcard_ta{height:auto;min-height:84px;padding:10px 12px;line-height:1.45;resize:vertical}
-.form_im textarea.pre_desc{ height: auto; min-height: 120px; padding: 14px 16px; line-height: 1.45; resize: vertical; font: inherit; width: 100%; box-sizing: border-box; }
+.form_im textarea.pre_desc{ height: auto; min-height: 120px; padding: 16px 16px; line-height: 1.45; resize: vertical; font: inherit; width: 100%; box-sizing: border-box; }
 
 /* Хабарлама (toast): кассадағыдай, оң жақ астынан шығады (2026-11-03) */
 .bl_mess{ display: none !important; }
 .tst_box{ position: fixed; top: 16px; right: 16px; z-index: 200000; display: flex; flex-direction: column; gap: 10px; width: 360px; max-width: calc(100vw - 32px); pointer-events: none; }
-.tst{ --c: #e9a23b; position: relative; display: flex; align-items: center; gap: 12px; padding: 14px 12px 16px 16px; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(16,24,40,.14), 0 2px 6px rgba(16,24,40,.06); border-left: 4px solid var(--c); overflow: hidden; pointer-events: auto; opacity: 0; transform: translateX(40px) scale(.96); transition: opacity .25s ease, transform .3s cubic-bezier(.2,.9,.3,1.2); }
+.tst{ --c: #e9a23b; position: relative; display: flex; align-items: center; gap: 12px; padding: 16px 12px 16px 16px; background: #fff; border-radius: 12px; box-shadow: var(--bp-pop); border-left: 4px solid var(--c); overflow: hidden; pointer-events: auto; opacity: 0; transform: translateX(40px) scale(.96); transition: opacity .25s ease, transform .3s cubic-bezier(.22,1,.36,1); }
 .tst.tst_in{ opacity: 1; transform: none; }
 .tst.tst_out{ opacity: 0; transform: translateX(40px); transition: opacity .2s ease, transform .2s ease; }
-.tst_ok{ --c: #0EA768; } .tst_err{ --c: #e5484d; } .tst_warn{ --c: #e9a23b; }
+.tst_ok{ --c: #0EA768; } .tst_err{ --c: #dc2626; } .tst_warn{ --c: #e9a23b; }
 .tst_i{ flex: 0 0 auto; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 16px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, #fff); }
-.tst_t{ flex: 1; min-width: 0; font-size: 14px; font-weight: 700; line-height: 19px; color: #1d2433; }
-.tst_x{ flex: 0 0 auto; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #8a94a3; cursor: pointer; transition: .15s; }
-.tst_x:hover{ background: #f0f2f5; color: #1d2433; }
+.tst_t{ flex: 1; min-width: 0; font-size: 14px; font-weight: 500; line-height: 19px; color: #1c1f1d; }
+.tst_x{ flex: 0 0 auto; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #767c78; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s; }
+.tst_x:hover{ background: #f1f3f0; color: #1c1f1d; }
 .tst_bar{ position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--c); opacity: .5; transform-origin: left; animation: tst_bar 4s linear forwards; }
 .tst.tst_pause .tst_bar{ animation-play-state: paused; }
 @keyframes tst_bar{ from{ transform: scaleX(1); } to{ transform: scaleX(0); } }
@@ -349,23 +362,69 @@ tr.k_cr_det > td{ height: auto; padding: 10px 20px 16px; background: #fafbfc; }
 /* Растау терезесі (ask): браузердің confirm орнына (2026-11-03) */
 .ask_bg{ position: fixed; inset: 0; z-index: 200001; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(16,24,40,.45); opacity: 0; transition: opacity .2s; }
 .ask_bg.ask_on{ opacity: 1; }
-.ask{ width: 400px; max-width: 100%; padding: 24px 22px 20px; border-radius: 16px; background: #fff; box-shadow: 0 20px 50px rgba(16,24,40,.25); text-align: center; transform: translateY(12px) scale(.97); transition: transform .25s cubic-bezier(.2,.9,.3,1.2); }
+.ask{ width: 400px; max-width: 100%; padding: 24px 24px 20px; border-radius: 16px; background: #fff; box-shadow: 0 20px 50px rgba(16,24,40,.25); text-align: center; transform: translateY(12px) scale(.97); transition: transform .25s cubic-bezier(.22,1,.36,1); }
 .ask_bg.ask_on .ask{ transform: none; }
-.ask_i{ width: 52px; height: 52px; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #e3f5ec; color: #0EA768; font-size: 24px; }
+.ask_i{ width: 52px; height: 52px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #e3f5ec; color: #0EA768; font-size: 24px; }
 .ask_dg .ask_i{ background: #fdf3e1; color: #e9a23b; }
-.ask_q{ font-size: 16px; font-weight: 700; line-height: 1.4; color: #1d2433; }
-.ask_q small{ display: block; margin-top: 6px; font-size: 13px; font-weight: 400; color: #6b7480; }
+.ask_q{ font-size: 16px; font-weight: 600; line-height: 1.4; color: #1c1f1d; }
+.ask_q small{ display: block; margin-top: 6px; font-size: 13px; font-weight: 400; color: #545a56; }
 .ask_b{ display: flex; gap: 10px; margin-top: 20px; }
-.ask_b span{ flex: 1; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; user-select: none; transition: .15s; outline: none; }
-.ask_no{ background: #f0f2f5; color: #1d2433; }
-.ask_no:hover{ background: #e6e9ee; }
+.ask_b span{ flex: 1; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; user-select: none; transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s; outline: none; }
+.ask_no{ background: #f1f3f0; color: #1c1f1d; }
+.ask_no:hover{ background: #eceeea; }
 .ask_ok{ background: #0EA768; color: #fff; }
-.ask_ok:hover{ background: #0b9159; }
+.ask_ok:hover{ background: #0c8f59; }
 .ask_dg .ask_ok{ background: #e9a23b; }
 .ask_dg .ask_ok:hover{ background: #d48f2a; }
 
 /* аватар: сурет немесе бас әріптер */
-.ava_box{ display: flex; align-items: center; justify-content: center; overflow: hidden; background: linear-gradient(135deg, #2bb673, #1a8f57); color: #fff; font-weight: 600; letter-spacing: .5px; font-size: 18px; flex-shrink: 0; }
+.ava_box{ display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--bp-green-bg); color: var(--bp-green-ink); font-weight: 600; font-size: 18px; flex-shrink: 0; }
 .ub1_lti.ava_box{ font-size: 20px; }
 .ava_box img{ width: 100%; height: 100%; object-fit: cover; display: block; image-rendering: auto; }
-.ava_box i{ color: #fff; }
+.ava_box i{ color: var(--bp-green-ink); }
+
+/* Жоғарғы мәзірдегі ашылмалы топ (Аналитика ▾): пункт биіктігі мәзірмен бірдей 48, жолақтан шықпайды (2026-11-20) */
+.mp_topc .mp_dd_t{ height: 48px; padding: 0 16px; font-size: 15px; font-weight: 500; color: var(--bp-text2); }
+.mp_topc .mp_dd_t i{ color: var(--bp-muted); }
+.mp_topc .mp_dd_act .mp_dd_t, .mp_topc .mp_dd_act:hover .mp_dd_t{ background: var(--bp-green-bg); color: var(--bp-green-ink); font-weight: 600; }
+.mp_topc .mp_dd_act .mp_dd_t i{ color: var(--bp-green); }
+.mp_topc .mp_dd_c{ margin-top: 8px; padding: 4px; border-radius: 14px; box-shadow: var(--bp-pop); }
+.mp_topc .mp_dd_c::before{ top: -8px; height: 8px; }
+
+/* ₸ белгісі санның 75%-ы (fun.js ораған span) */
+.tg_sym{ font-size: .75em; margin-left: .3em; }
+
+/* ---------- Бет атауы мәзір қатарында (2026-11-20, user): атау, «← Артқа» және мәзір бір қатарда, бір биіктікте ---------- */
+.aheader_tl{ display: none; }
+@media (min-width: 1440px){
+	.aheader_c{ gap: 12px; }
+	.aheader_tl{ display: flex; align-items: center; gap: 12px; margin-right: auto; min-width: 0; height: 56px; }
+	.aheader_h{ font-size: 24px; line-height: 32px; font-weight: 500; color: var(--bp-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px; }
+	/* бет ішіндегі ескі атау жасырылады, тек мәзірдің астынан орын қалады */
+	body:has(.aheader_tl) .head_c, body:has(.aheader_tl) .head_c.head_c_back{ display: block; padding: 102px 0 0; }
+	body:has(.aheader_tl) .head_c > h1, body:has(.aheader_tl) .head_c .head_back_m{ display: none; }
+	/* бет ішіндегі өз «артқа» сілтемелері қайталанбасын */
+	body:has(.aheader_bk) .wb_back{ display: none; }
+}
+.aheader_bk{ height: 56px; display: inline-flex; align-items: center; gap: 10px; padding: 0 20px 0 16px; background: #fff; border-radius: 14px; box-shadow: var(--bp-shadow); font-size: 15px; font-weight: 500; color: var(--bp-text2); white-space: nowrap; transition: background-color .15s var(--bp-ease), color .15s var(--bp-ease); }
+.aheader_bk i{ font-size: 15px; color: var(--bp-muted); transition: transform .15s var(--bp-ease); }
+.aheader_bk:hover{ background: var(--bp-pill); color: var(--bp-text); }
+.aheader_bk:hover i{ transform: translateX(-2px); }
+.head_c .head_back_m{ display: none; }
+@media (max-width: 1439px){
+	.aheader_tl{ display: flex; margin-right: auto; }
+	.aheader_tl .aheader_h{ display: none; }
+}
+@media (max-width: 768px){ .aheader_tl{ display: none !important; } .head_c .head_back_m{ display: inline-flex; align-items: center; gap: 8px; font-weight: 500; color: var(--bp-text2); margin-bottom: 8px; } }
+
+/* Unslop: мәзір жазуы қанығырақ (user 2026-11-20) */
+body .mp_topc .mp_topi, body .mp_topc .mp_dd_t{ color: #1c1f1d; font-weight: 500; }
+body .mp_topc .mp_topi i, body .mp_topc .mp_dd_t i{ color: #3f4541; }
+body .mp_topc .mp_topi_act, body .mp_topc .mp_topi_act:hover, body .mp_topc .mp_dd_act .mp_dd_t, body .mp_topc .mp_dd_act:hover .mp_dd_t{ color: var(--bp-green-ink); font-weight: 600; }
+body .mp_topc .mp_topi_act i, body .mp_topc .mp_dd_act .mp_dd_t i{ color: var(--bp-green); }
+body .mp_topc .mp_dd_i{ color: #1c1f1d; font-weight: 500; }
+body .mp_topc .mp_dd_i i{ color: #3f4541; }
+body .mp_topc .mp_dd_i:hover{ background: var(--bp-green-bg); color: var(--bp-green-ink); }
+body .mp_topc .mp_dd_i:hover i{ color: var(--bp-green); }
+body .mp_topc .mp_dd_i_act, body .mp_topc .mp_dd_i_act:hover{ color: var(--bp-green-ink); font-weight: 600; }
+body .mp_topc .mp_dd_i_act i{ color: var(--bp-green); }

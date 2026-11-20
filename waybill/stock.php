@@ -91,7 +91,7 @@
 	</div>
 
 	<? if ($neg): ?>
-		<div class="wbm_neg" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:12px 16px;border-radius:12px;background:#fdecec;color:#c0392b;font-weight:700;font-size:14px">
+		<div class="wbm_neg" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:12px 16px;border-radius:12px;background:#fdecec;color:#dc2626;font-weight:600;font-size:14px">
 			<span><i class="fal fa-exclamation-triangle"></i> <?=$neg?> шикізат минуста — накладной енгізіңіз немесе ревизия жасаңыз</span>
 			<a class="wb_btn <?=($only_neg ? 'wb_btn_red' : 'wb_btn_light')?>" style="height:38px" href="<?=($only_neg ? '/waybill/stock.php' : '/waybill/stock.php?neg=1')?>"><?=($only_neg ? 'Барлығын көрсету' : 'Тек минустар')?></a>
 		</div>

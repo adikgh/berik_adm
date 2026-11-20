@@ -1,43 +1,43 @@
 /* РНП беті. Google кестедегі түстер: көк-жасыл тақырып, қара шығын, сары маржа, жасыл таза пайда. */
-.rnp_page{ --rnp-in: #f3f3f3; --rnp-line: var(--bp-line, #e7e7e7); }
+.rnp_page{ --rnp-in: #f3f3f3; --rnp-line: var(--bp-line, #e6e8e4); }
 
 .rnp_legend{ display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13px; color: var(--st-muted); }
 .rnp_legend span{ display: inline-flex; align-items: center; gap: 6px; }
 .rnp_lg{ display: inline-block; width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--rnp-line); }
 .rnp_lg_in{ background: var(--rnp-in); }
-.rnp_lg_auto{ background: #e8f3fb; }
+.rnp_lg_auto{ background: #eef6f1; }
 .rnp_save{ margin-left: auto; font-size: 13px; font-weight: 600; min-height: 18px; }
 .rnp_save_w{ color: var(--st-muted); }
 .rnp_save_ok{ color: var(--st-green); }
 .rnp_save_err{ color: #d63b3b; }
 
-.rnp_wrap{ overflow: auto; max-height: calc(100vh - 210px); background: #fff; border-radius: 14px; box-shadow: var(--st-shadow); margin-bottom: 30px; }
+.rnp_wrap{ overflow: auto; max-height: calc(100vh - 210px); background: #fff; border-radius: 14px; box-shadow: var(--st-shadow); margin-bottom: 32px; }
 .rnp_tb{ border-collapse: separate; border-spacing: 0; font-size: 13px; white-space: nowrap; }
 .rnp_tb th, .rnp_tb td{ padding: 0 10px; height: 30px; border-bottom: 1px solid var(--rnp-line); border-right: 1px solid var(--rnp-line); text-align: right; }
 
 /* тақырып пен бірінші баған қозғалмайды */
-.rnp_tb thead th{ position: sticky; top: 0; z-index: 3; background: #fff; height: 44px; font-weight: 700; color: var(--st-muted); }
+.rnp_tb thead th{ position: sticky; top: 0; z-index: 3; background: #fff; height: 44px; font-weight: 600; color: var(--st-muted); }
 .rnp_tb thead th span{ display: block; font-size: 11px; font-weight: 600; }
 .rnp_tb .rnp_c0{ position: sticky; left: 0; z-index: 2; text-align: left; min-width: 230px; max-width: 260px; background: #fff; font-weight: 600; color: var(--st-text); }
 .rnp_tb thead .rnp_c0{ z-index: 4; color: var(--st-text); }
 .rnp_cp, .rnp_cf{ min-width: 110px; }
 .rnp_cd{ min-width: 92px; }
-.rnp_tb .rnp_cf{ font-weight: 700; background: #fafafa; }
+.rnp_tb .rnp_cf{ font-weight: 600; background: #fafafa; }
 .rnp_tb thead .rnp_cf, .rnp_tb thead .rnp_cp{ color: var(--st-text); }
 .rnp_tb th.rnp_today{ color: var(--st-green); }
 .rnp_tb td.rnp_today{ box-shadow: inset 2px 0 0 #bfe8d4, inset -2px 0 0 #bfe8d4; }
 .rnp_tb th.rnp_we{ color: #d68a3b; }
 
 /* жол түрлері */
-.rnp_l1 .rnp_c0{ padding-left: 26px; font-weight: 500; }
-.rnp_grp td{ font-weight: 700; }
+.rnp_l1 .rnp_c0{ padding-left: 28px; font-weight: 500; }
+.rnp_grp td{ font-weight: 600; }
 .rnp_b td{ font-weight: 600; }
-.rnp_tb tr.rnp_hd_g td{ background: #46bdc6; color: #fff; font-weight: 800; }
-.rnp_tb tr.rnp_hd_d td{ background: #434343; color: #fff; font-weight: 800; }
-.rnp_tb tr.rnp_hd_o td{ background: #f9cb9c; font-weight: 800; }
-.rnp_tb tr.rnp_hd_n td{ background: #93c47d; font-weight: 800; }
-.rnp_t_auto td.rnp_cd, .rnp_t_auto td.rnp_cf{ background: #e8f3fb; }
-.rnp_auto_i{ font-size: 11px; color: #1f75a8; margin-left: 4px; }
+.rnp_tb tr.rnp_hd_g td{ background: #46bdc6; color: #fff; font-weight: 600; }
+.rnp_tb tr.rnp_hd_d td{ background: #434343; color: #fff; font-weight: 600; }
+.rnp_tb tr.rnp_hd_o td{ background: #f9cb9c; font-weight: 600; }
+.rnp_tb tr.rnp_hd_n td{ background: #93c47d; font-weight: 600; }
+.rnp_t_auto td.rnp_cd, .rnp_t_auto td.rnp_cf{ background: #eef6f1; }
+.rnp_auto_i{ font-size: 11px; color: #0c8f59; margin-left: 4px; }
 .rnp_gap td{ height: 10px; border-right: 0; background: #fff; }
 .rnp_gap td{ position: sticky; left: 0; }
 .rnp_neg{ color: #d63b3b; }

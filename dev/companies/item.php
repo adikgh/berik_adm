@@ -52,7 +52,7 @@
 				<form data-post="get.php?pay_add" class="pay_f" data-ask="<?=dev::h(t::w('Add this payment?', 'Төлемді енгіземіз бе?'))?>">
 					<input type="hidden" name="company_id" value="<?=$id?>">
 					<label class="mb"><?=t::w('Tariff', 'Тариф')?><select name="tariff_id">
-						<? if ($trial_can): ?><option value="trial" data-price="0" selected><?=t::w('Free trial', 'Тегін сынақ')?> · <?=sprintf(t::w('%d days', '%d күн'), dev::$trial_days)?> · 0 ₸</option><? endif ?>
+						<? if ($trial_can): ?><option value="trial" data-price="0" selected><?=t::w('Plan free', 'Free')?> · <?=sprintf(t::w('Plan free days', '%d күн тегін'), dev::$trial_days)?> · 0 ₸</option><? endif ?>
 						<? foreach ($tar_on as $t): ?><option value="<?=$t['id']?>" data-price="<?=$t['price']?>" <?=!$trial_can && $t['id'] == $def_t ? 'selected' : ''?>><?=dev::h($t['name'])?> · <?=dev::money($t['price'])?>/<?=t::w('mo.', 'ай')?></option><? endforeach ?>
 					</select></label>
 					<? if ($trial_can): ?>

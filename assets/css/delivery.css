@@ -1,15 +1,15 @@
 /* Жеткізу аймақтары беті (clients.css үстіне) */
 .dz_fields{ display: grid; grid-template-columns: 2fr 1fr 1fr 110px; gap: 12px; align-items: start; }
 .dz_f{ display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.dz_f span{ font-size: 12px; font-weight: 700; color: var(--mut); text-transform: uppercase; letter-spacing: .3px; }
+.dz_f span{ font-size: 12px; font-weight: 600; color: var(--mut);   }
 .dz_f .cl_inp{ width: 100%; }
 .dz_f textarea.cl_inp{ min-height: 48px; font-weight: 600; }
 .dz_form_b{ display: flex; justify-content: flex-end; margin-top: 12px; }
 .dz_form .cl_box_h .cl_btn{ height: 38px; padding: 0 12px; }
 .dz_td_act{ flex: 0 0 96px; display: flex; justify-content: flex-end; gap: 6px; }
-.dz_ib{ width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; background: #f5f5f5; color: #444; font-size: 15px; cursor: pointer; transition: .15s; }
-.dz_ib:hover{ background: #e6f0f7; color: var(--b); }
-.dz_del:hover{ background: #fbe7e7; color: #c0392b; }
+.dz_ib{ width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; background: #f1f3f0; color: #2a2e2b; font-size: 15px; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, visibility .15s; }
+.dz_ib:hover{ background: #eef6f1; color: var(--b); }
+.dz_del:hover{ background: #fdecec; color: #dc2626; }
 .dz_total{ margin: -4px 0 0 4px; }
 
 @media (max-width: 768px){

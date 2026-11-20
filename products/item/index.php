@@ -56,7 +56,7 @@
 			if (!class_exists('wb')) @include_once "../../waybill/lib.php";
 			$nc_st = class_exists('wb') ? (wb::comp_check($company)['dish'][$product_id] ?? '') : '';
 			if ($nc_st && $kind === 0): ?>
-			<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 12px;padding:12px 16px;border-radius:12px;background:<?=($nc_st == 'none' ? '#fdecec' : '#fff8e6')?>;color:<?=($nc_st == 'none' ? '#c0392b' : '#8a6100')?>;font-weight:700;font-size:14px">
+			<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 12px;padding:12px 16px;border-radius:12px;background:<?=($nc_st == 'none' ? '#fdecec' : '#fff8e6')?>;color:<?=($nc_st == 'none' ? '#dc2626' : '#8a6100')?>;font-weight:600;font-size:14px">
 				<i class="fal fa-exclamation-triangle"></i>
 				<span><?=($nc_st == 'none' ? 'Граммовка жоқ: бұл тағам сатылғанда шикізат азаймайды. Құрамын төменде толтырыңыз.' : 'Граммовка толық емес: құрамындағы кейбір дайындама шикізатқа байланбаған (Себес → Дайындамалар).')?></span>
 			</div>
@@ -169,7 +169,7 @@
 			<style>
 				.pk_seg{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 				.pk_b{ text-align: left; padding: 14px 16px; border: 2px solid var(--bp-line, #e7e7e7); border-radius: 14px; background: #fff; font: inherit; cursor: pointer; display: grid; grid-template-columns: 34px 1fr; column-gap: 8px; align-items: center; color: #1b1f27; }
-				.pk_b i{ grid-row: 1 / 3; font-size: 22px; color: #8a8f98; }
+				.pk_b i{ grid-row: 1 / 3; font-size: 22px; color: #767c78; }
 				.pk_b b{ font-size: 16px; } .pk_b small{ font-size: 12px; color: #6b717c; line-height: 1.4; margin-top: 2px; }
 				.pk_b:hover{ border-color: #cfd5dd; }
 				.pk_b.pk_on{ border-color: var(--bp-green, #0EA768); background: #eefaf4; } .pk_b.pk_on i{ color: var(--bp-green, #0EA768); }
@@ -194,7 +194,7 @@
 				})();
 			</script>
 			<? endif ?>
-			<style>.ci_lnk{ color: inherit; } .ci_lnk:hover{ color: var(--bp-blue, #1f75a8); text-decoration: underline; } .ci_lnk i{ font-size: 12px; color: var(--bp-blue, #1f75a8); margin-left: 4px; }</style>
+			<style>.ci_lnk{ color: inherit; } .ci_lnk:hover{ color: var(--bp-blue, #0c8f59); text-decoration: underline; } .ci_lnk i{ font-size: 12px; color: var(--bp-blue, #0c8f59); margin-left: 4px; }</style>
 			<? if ($kind === 0): // тек позицияда: граммовка ?>
 			<div class="item_c ci_c">
 				<div class="ci_head">
@@ -326,14 +326,14 @@
 				.si_add{ display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 				.si_sel{ flex: 1; min-width: 220px; height: 46px; padding: 0 12px; border: 1px solid var(--bp-line, #e7e7e7); border-radius: 10px; background: #fff; font: inherit; font-size: 15px; }
 				.si_qty{ width: 80px; height: 46px; padding: 0 12px; border: 1px solid var(--bp-line, #e7e7e7); border-radius: 10px; font: inherit; font-size: 15px; text-align: center; }
-				.si_add_b{ height: 46px; border: 0; cursor: pointer; font: inherit; font-weight: 700; display: flex; align-items: center; gap: 8px; background: var(--bp-green, #0EA768) !important; color: #fff; }
+				.si_add_b{ height: 46px; border: 0; cursor: pointer; font: inherit; font-weight:600; display: flex; align-items: center; gap: 8px; background: var(--bp-green, #0EA768) !important; color: #fff; }
 				.si_c .ci_nm a{ color: inherit; }
-				.pk_sub{ font-size: 13px; font-weight: 500; color: var(--bp-muted, #8a8f98); margin-left: 6px; }
+				.pk_sub{ font-size: 13px; font-weight: 500; color: var(--bp-muted, #767c78); margin-left: 6px; }
 				.si_ai{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding: 10px 12px; border-radius: 12px; background: #f5f2ff; }
-				.si_ai_b{ height: 42px; padding: 0 16px; border: 0; border-radius: 10px; background: #6b4ce6; color: #fff; font: inherit; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+				.si_ai_b{ height: 42px; padding: 0 16px; border: 0; border-radius: 10px; background: #6b4ce6; color: #fff; font: inherit; font-size: 14px; font-weight:600; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
 				.si_ai_b:hover{ background: #5a3cd4; } .si_ai_b[disabled]{ opacity: .6; cursor: wait; }
 				.si_ai small{ flex: 1; min-width: 200px; font-size: 12px; color: #6b5fa8; line-height: 1.4; }
-				.si_c .ci_nm a:hover{ color: var(--bp-blue, #1f75a8); }
+				.si_c .ci_nm a:hover{ color: var(--bp-blue, #0c8f59); }
 			</style>
 			<script>
 				(function () {

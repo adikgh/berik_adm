@@ -174,7 +174,7 @@
                     <? if ($k_changed): ?><span class="ks_chg"><i class="fal fa-exclamation-triangle"></i> <?=t::w('Orders changed after saving', 'Сақталғаннан кейін тапсырыс өзгерді')?></span><? endif ?>
                     <? if (@$user_right['positions_id'] != 3): ?><span class="ks_resave" data-day="<?=$k_from?>"><i class="fal fa-sync"></i> <?=t::w('Re-save', 'Қайта сақтау')?></span><? endif ?>
                 <? elseif ($k_is_today): ?>
-                    <span class="ks_live"><i class="fal fa-circle"></i> <?=t::w('Live · saved automatically at 06:00', 'Тірі есеп · 06:00-де өзі сақталады')?></span>
+                    <span class="ks_live"><i class="fal fa-circle"></i> <?=t::w('Today is still open · the report is saved at 06:00', 'Бүгінгі күн әлі жабылмаған · есеп 06:00-де сақталады')?></span>
                 <? elseif (!$k_daily): ?>
                     <span class="ks_live"><i class="fal fa-database"></i> <?=t::w('Past days from saved reports', 'Өткен күндер — сақталған есептен')?><?=(($k_today >= $k_from && $k_today < $k_to) ? t::w(', today live', ', бүгін — тірі') : '')?></span>
                 <? endif ?>

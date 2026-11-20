@@ -81,7 +81,7 @@
 	.sg_note{margin:0 0 14px;text-align:center;font-size:15px;line-height:1.45;color:#444}
 	.sg_note .fa-whatsapp{color:#25D366}
 	.sg_test{margin:0 0 12px;text-align:center;padding:8px 10px;border-radius:10px;background:#FFF6DA;color:#7A5B00;font-size:14px}
-	.sg_otp{text-align:center;letter-spacing:10px;font-size:24px !important;font-weight:700}
+	.sg_otp{text-align:center;letter-spacing:10px;font-size:24px !important;font-weight:600}
 	.sg_trust{display:flex;align-items:center;gap:8px;margin:2px 0 12px;font-size:14px;color:#555;cursor:pointer}
 	.sg_box input[type=checkbox]{-webkit-appearance:auto;appearance:auto;padding:0;margin:0;min-height:0;max-height:none;width:18px;height:18px;border:0;flex:none;accent-color:#0EA768;cursor:pointer}
 	.sg_links{display:flex;justify-content:space-between;gap:10px;margin-top:6px}

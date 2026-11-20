@@ -175,7 +175,7 @@ $(document).ready(function() {
 				}),
 				success: function(data){
 					if (data == 'yes') {
-						mess('Cәтті сақталды!')
+						mess('Сақталды')
 					} else {console.log(data)}
 					console.log(data);
 				},
@@ -894,7 +894,7 @@ $(document).ready(function() {
 				data: ({name: name.val(), phone: phone.val()}),
 				success: function(data){
 					if (data == 'yes') mess('Сәтті жіберілді')
-					else mess('Қайта кіріуіңізді сұраймын!')
+					else mess('Қайта кіріңіз')
 				},
 				beforeSend: function(){ mess('Отправка..') },
 				error: function(data){ mess('Ошибка..') }
@@ -919,7 +919,7 @@ $(document).ready(function() {
 				}),
 				success: function(data){
 					if (data == 'yes') location.href = '/cours/maksat-and-motivation2/video.php';
-					else mess('Қайта кіріуіңізді сұраймын!')
+					else mess('Қайта кіріңіз')
 				},
 				beforeSend: function(){},
 				error: function(data){}

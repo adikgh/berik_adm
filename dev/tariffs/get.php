@@ -8,7 +8,7 @@
 		$name = dev::e(mb_substr((string)@$_POST['name'], 0, 100));
 		$price = (int)preg_replace('/\D/', '', (string)@$_POST['price']);
 		if ($name === '' || $price <= 0) out(['ok' => false, 'msg' => t::w('Enter name and price', 'Атауы мен бағасын жазыңыз')]);
-		$v = "name = '$name', price = '$price', descr = '" . dev::e(mb_substr((string)@$_POST['descr'], 0, 250)) . "', arh = '" . (empty($_POST['arh']) ? 0 : 1) . "'";
+		$v = "name = '$name', price = '$price', price_usd = '" . (int)preg_replace('/\D/', '', (string)@$_POST['price_usd']) . "', descr = '" . dev::e(mb_substr((string)@$_POST['descr'], 0, 250)) . "', arh = '" . (empty($_POST['arh']) ? 0 : 1) . "'";
 		foreach (dev::$lims as $k) $v .= ", $k = '" . max(0, (int)@$_POST[$k]) . "'";
 		if ($id) db::query("update company_tariff set $v where id = '$id'");
 		else { db::query("insert into company_tariff set $v, number = '" . ((int)dev::one("select max(number) from company_tariff") + 1) . "'"); $id = (int)mysqli_insert_id(db::$connect); }

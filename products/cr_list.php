@@ -178,13 +178,13 @@
 		.cr_ic_p{ background: #e3f5ec !important; color: var(--bp-green, #0EA768) !important; }
 		.cr_sub{ font-size: 12px; color: #8a94a6; margin-top: 2px; }
 		.cr_sub .cr_off{ color: #b0b6c0; }
-		.cr_menu{ color: var(--bp-blue, #1f75a8); }
+		.cr_menu{ color: var(--bp-blue, #0c8f59); }
 		.cr_grp{ display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 18px 4px 8px; }
 		.cr_grp b{ font-size: 16px; } .cr_grp small{ font-size: 12px; font-weight: 600; color: #8a94a6; }
 		.cr_grp span{ flex-basis: 100%; font-size: 13px; color: #8a94a6; }
-		.cr_ic{ display: flex; align-items: center; justify-content: center; background: #eef3f8; color: #1f75a8; font-size: 16px; }
+		.cr_ic{ display: flex; align-items: center; justify-content: center; background: #eef3f8; color: #0c8f59; font-size: 16px; }
 		.cr_row .ctg_cnt{ color: #1b1f27; font-weight: 600; }
-		.cr_row .ctg_cnt m{ color: #c92a2a; font-weight: 500; }
+		.cr_row .ctg_cnt m{ color: #dc2626; font-weight: 500; }
 		.cat_pick{ display: flex; flex-wrap: wrap; gap: 6px; padding-top: 6px; }
 		.cat_pick .cp_i{ height: 40px; padding: 0 14px; border: 1px solid var(--bp-line, #e6e9ef); background: #fff; font: inherit; font-size: 14px; cursor: pointer; }
 		.cat_pick .cp_i.k_br_act{ border-color: transparent; }
@@ -192,7 +192,7 @@
 		.cr_price_w .cr_price{ padding-right: 44px; }
 		.cr_sfx{ position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #8a94a6; font-weight: 600; pointer-events: none; }
 		.cr_hint{ margin-top: 6px; font-size: 13px; color: #8a94a6; }
-		.cr_save{ width: 100%; border: 0; color: #fff; cursor: pointer; font: inherit; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--bp-green, #0EA768) !important; }
+		.cr_save{ width: 100%; border: 0; color: #fff; cursor: pointer; font: inherit; font-weight:600; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--bp-green, #0EA768) !important; }
 		.cr_save:hover{ background: var(--bp-green-h, #0c8f59) !important; }
 		@media (max-width: 700px){ .cr_srch{ max-width: none; } }
 	</style>

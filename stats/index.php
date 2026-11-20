@@ -522,7 +522,7 @@
 	<style>
 		.st_kpis .st_kpi { cursor: pointer; transition: box-shadow .15s, border-color .15s; }
 		.st_kpis .st_kpi:hover { box-shadow: 0 2px 10px rgba(0,0,0,.08); }
-		.st_kpis .st_kpi_act { box-shadow: 0 0 0 2px #1f75a8 inset; }
+		.st_kpis .st_kpi_act { box-shadow: 0 0 0 2px #0c8f59 inset; }
 		.st_g_m { font-weight: 400; opacity: .6; }
 		.st_chart_otk .st_col_f { background: #e5484d; }
 	</style>

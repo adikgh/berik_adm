@@ -76,7 +76,7 @@
 				<button type="button" class="cs_tab cs_tab_act" data-tab="sets">Сеттер <span><?=count($set_rows)?></span></button>
 				<button type="button" class="cs_tab" data-tab="dishes">Тағамдар <span><?=count($dish_rows)?></span></button>
 				<button type="button" class="cs_tab" data-tab="prep">Дайындамалар <span><?=$n_prep?></span></button>
-				<? if ($miss_rows || $cc['comp']): ?><button type="button" class="cs_tab" data-tab="missing" style="color:#c0392b">Граммовкасы жоқ <span style="background:#e74c3c;color:#fff"><?=count($miss_rows) + count($cc['comp'])?></span></button><? endif ?>
+				<? if ($miss_rows || $cc['comp']): ?><button type="button" class="cs_tab" data-tab="missing" style="color:#dc2626">Граммовкасы жоқ <span style="background:#dc2626;color:#fff"><?=count($miss_rows) + count($cc['comp'])?></span></button><? endif ?>
 				</div>
 			</div>
 
@@ -175,7 +175,7 @@
 					<? endforeach ?>
 					<? foreach ($cc['comp'] as $cid => $cn): ?>
 						<tr><td class="cs_nm"><?=htmlspecialchars($cn)?> <span class="cs_tag">дайындама</span></td>
-							<td><span class="wbm_b" style="display:inline-block;padding:2px 8px;border-radius:20px;background:#fdecec;color:#c0392b;font-size:11px;font-weight:700">Шикізатқа байланбаған</span></td>
+							<td><span class="wbm_b" style="display:inline-block;padding:2px 8px;border-radius:20px;background:#fdecec;color:#dc2626;font-size:11px;font-weight:600">Шикізатқа байланбаған</span></td>
 							<td class="cs_mut">Дайындамалар қойындысында рецепт жазыңыз не шикізат таңдаңыз</td><td></td></tr>
 					<? endforeach ?>
 					</tbody></table></div>

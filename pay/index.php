@@ -24,7 +24,7 @@
 	$sub = plan::$sub;
 	$cur_tid = $sub ? (int)$sub['tariff_id'] : 0;
 	$cur_name = $cur_tid && isset($tariffs[$cur_tid]) ? $tariffs[$cur_tid]['name'] : (plan::$tariff['name'] ?? '');
-	if (plan::$trial) $cur_name = t::w('Free trial', 'Тегін сынақ') . ($cur_name ? ' · ' . $cur_name : '');
+	if (plan::$trial) $cur_name = t::w('Plan free', 'Free') . ' · ' . sprintf(t::w('Plan free days', '%d күн тегін'), 14);
 	$days = plan::$days;
 	$st_txt = [
 		'active' => t::w('Active', 'Белсенді'),
@@ -79,9 +79,11 @@
 		<div class="cl_box_h"><span><i class="fal fa-layer-group"></i> <?=t::w('Tariffs', 'Тарифтер')?></span></div>
 		<div class="pay_tars">
 		<? foreach ($tariffs as $tid => $t): $tm = $tmods[$tid] ?? []; ?>
-			<div class="pay_tar <?=($sub && !plan::$trial && $tid == $cur_tid) ? 'pay_tar_cur' : ''?>">
-				<div class="pay_tar_h"><b><?=htmlspecialchars($t['name'])?></b><? if ($sub && !plan::$trial && $tid == $cur_tid): ?><span class="pay_badge"><?=t::w('Current', 'Қазіргі')?></span><? endif ?></div>
-				<div class="pay_price"><?=$money($t['price'])?> <small>/ <?=t::w('mo.', 'ай')?></small></div>
+			<? $is_cur = $sub && !plan::$trial && $tid == $cur_tid; $is_pop = strcasecmp(trim($t['name']), 'Pro') === 0; // Pro — танымал ?>
+			<div class="pay_tar <?=$is_cur ? 'pay_tar_cur' : ''?> <?=$is_pop ? 'pay_tar_pop' : ''?>">
+				<div class="pay_tar_h"><b><?=htmlspecialchars($t['name'])?></b>
+					<span class="pay_tar_bs"><? if ($is_pop): ?><span class="pay_pop"><?=t::w('Plan popular', '★ Танымал')?></span><? endif ?><? if ($is_cur): ?><span class="pay_badge"><?=t::w('Current', 'Қазіргі')?></span><? endif ?></span></div>
+				<div class="pay_price"><?=$money($t['price'])?> <small>/ <?=t::w('mo.', 'ай')?></small><? if ((int)@$t['price_usd']): ?> <span class="pay_usd">≈ $<?=(int)$t['price_usd']?></span><? endif ?></div>
 				<? if ($t['descr']): ?><p class="pay_mut"><?=htmlspecialchars($t['descr'])?></p><? endif ?>
 				<? if ($has): ?>
 					<div class="pay_lims">

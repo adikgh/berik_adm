@@ -62,7 +62,7 @@
 	.mg_log { margin-top: 14px; display: grid; gap: 6px; }
 	.mg_row { display: flex; gap: 10px; align-items: center; font-size: 14px; }
 	.mg_row img { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; }
-	.mg_bad { color: #c0392b; }
+	.mg_bad { color: #dc2626; }
 </style>
 <script>
 	(function () {

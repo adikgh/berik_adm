@@ -30,7 +30,7 @@
 				<? foreach ([1, 6, 12, 24] as $m): $b = dev::bonus_for($m); ?><th class="num"><?=$m?> <?=$mo?><?=$b ? ' <span style="color:var(--g)">+' . $b . '</span>' : ''?></th><? endforeach ?>
 			</tr></thead>
 			<tbody>
-				<tr><td class="nm"><b><?=t::w('Free trial', 'Тегін сынақ')?></b><small><?=sprintf(t::w('%d days', '%d күн'), dev::$trial_days)?> · 0 ₸</small></td><td class="num" colspan="4"><small><?=t::w('Once per company, only for a new company with no payments', 'Әр компанияға бір рет, тек төлемі жоқ жаңа компанияға')?></small></td></tr>
+				<tr><td class="nm"><b><?=t::w('Plan free', 'Free')?></b><small><?=sprintf(t::w('Plan free days', '%d күн тегін'), dev::$trial_days)?> · 0 ₸</small></td><td class="num" colspan="4"><small><?=t::w('Once per company, only for a new company with no payments', 'Әр компанияға бір рет, тек төлемі жоқ жаңа компанияға')?></small></td></tr>
 				<? foreach ($tar as $t): if ($t['arh']) continue; ?>
 				<tr><td class="nm"><b><?=dev::h($t['name'])?></b><small><?=dev::money($t['price'])?> / <?=$mo?></small></td>
 				<? foreach ([1, 6, 12, 24] as $m): $b = dev::bonus_for($m); ?>
@@ -42,8 +42,8 @@
 	</div>
 	<div class="grid g3 mt">
 		<form class="card" data-post="get.php?trial" style="margin:0;border:2px solid var(--bl2, #1f75a8)">
-			<div class="card_h"><h2><i class="fal fa-gift"></i> <?=t::w('Free trial', 'Тегін сынақ')?></h2><small><?=sprintf(t::w('%d active', '%d белсенді'), $trial_n)?></small></div>
-			<div class="kpi" style="padding:0;box-shadow:none"><b>0 ₸</b><small><?=sprintf(t::w('%d days', '%d күн'), dev::$trial_days)?></small></div>
+			<div class="card_h"><h2><i class="fal fa-gift"></i> <?=t::w('Plan free', 'Free')?></h2><small><?=sprintf(t::w('%d active', '%d белсенді'), $trial_n)?></small></div>
+			<div class="kpi" style="padding:0;box-shadow:none"><b>0 ₸</b><small><?=sprintf(t::w('Plan free days', '%d күн тегін'), dev::$trial_days)?></small></div>
 			<p class="note mb"><?=t::w('Chosen as a tariff when a company is registered or paid. Given once per company: not again after a trial, a payment or a set subscription. The paid period starts after the trial.', 'Компания тіркегенде не төлем енгізгенде тариф ретінде таңдалады. Әр компанияға бір рет: сынақ, төлем не жазылым мерзімі болған компанияға берілмейді. Ақылы мерзім сынақ біткен соң басталады.')?></p>
 			<? $plan_fields(@$tmods[0] ?: [], dev::trial_lims()); ?>
 			<button class="btn btn_l" type="submit"><?=t::w('Save', 'Сақтау')?></button>
@@ -54,6 +54,7 @@
 			<div class="card_h"><h2><?=dev::h($t['name'])?></h2><small><?=sprintf(t::w('%d active', '%d белсенді'), (int)@$used[$t['id']]['n'])?></small></div>
 			<label class="mb"><?=t::w('Title', 'Атауы')?><input name="name" value="<?=dev::h($t['name'])?>"></label>
 			<label class="mb"><?=t::w('Per month', 'Айына')?>, ₸<input name="price" inputmode="numeric" value="<?=(int)$t['price']?>"></label>
+			<label class="mb"><?=t::w('Per month', 'Айына')?>, $<input name="price_usd" inputmode="numeric" value="<?=(int)@$t['price_usd']?>"></label>
 			<label class="mb"><?=t::w('Description', 'Сипаттамасы')?><input name="descr" value="<?=dev::h($t['descr'])?>"></label>
 			<? $plan_fields(@$tmods[(int)$t['id']] ?: [], $t); ?>
 			<label class="chk mb"><input type="checkbox" name="arh" value="1" <?=$t['arh'] ? 'checked' : ''?>> <?=t::w('Hidden (not offered for new payments)', 'Жасырын (жаңа төлемге шықпайды)')?></label>

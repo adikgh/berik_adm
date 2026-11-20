@@ -38,7 +38,7 @@
 
 
 <!-- css -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;600;700;800;900&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600&display=swap" />
 <link rel="stylesheet" href="/assets/pl/fontawesome/css/all.min.css" />
 <link rel="stylesheet" type="text/css" href="/assets/css/anim.css?v=<?=$ver?>" />
 <? if (@$site_set['swiper'] == true): ?> <link rel="stylesheet" href="/assets/pl/swiper-bundle.min.css" /> <? endif ?>

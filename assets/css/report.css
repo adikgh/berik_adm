@@ -17,7 +17,7 @@
 	/* width: 100%; */
 	/* border-radius: 30px; */
 	/* border: 1px solid var(--gr3); */
-	/* transition: .3s; */
+	/* transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s; */
 
 	overflow: auto;
 
@@ -33,7 +33,7 @@
 	justify-content: space-between;
 	align-items: center;
 	flex-wrap: wrap;
-	padding: 15px 30px;
+	padding: 15px 32px;
 	border-bottom: 1px solid var(--gr2);
 	margin-bottom: 0;
 }
@@ -78,8 +78,8 @@
 	display: flex;
 	justify-content: flex-start;
 	align-items: center;
-	transition: .3s;
-	padding: 0 20px 0 30px;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
+	padding: 0 20px 0 32px;
 	position: sticky;
 	top: 0;
 	z-index: 88;
@@ -144,9 +144,9 @@
 .uc_ui{
 	position: relative;
 	min-height: 74px;
-	transition: .3s;
-	/* padding: 0 30px; */
-	padding: 10px 20px 10px 30px;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
+	/* padding: 0 32px; */
+	padding: 10px 20px 10px 32px;
 	/* border-bottom: 1px solid var(--gr2); */
 	display: flex;
 	justify-content: flex-start;
@@ -322,7 +322,7 @@
 .uc_ui_phone{
 	position: relative;
 	width: 100%;
-	margin-top: 5px;
+	margin-top: 4px;
 	height: 20px;
 	line-height: 20px;
 	font-size: 14px;
@@ -491,7 +491,7 @@
 .uc_ui_ins_date{
 	position: relative;
 	width: 160px;
-	margin-right: 30px;
+	margin-right: 32px;
 }
 
 
@@ -530,7 +530,7 @@
 	position: relative;
 	width: 44px;
 	height: 44px;
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 }
 @media (max-width: 500px) {
 	.uc_uib{
@@ -551,7 +551,7 @@
 	justify-content: center;
 	align-items: center;
 	border-radius: 50%;
-	transition: .3s;
+	transition: background-color .3s, border-color .3s, color .3s, opacity .3s, transform .3s, visibility .3s;
 	cursor: pointer;
 	font-size: 20px;
 }

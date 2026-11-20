@@ -61,7 +61,7 @@
 </div>
 
 <style>
-	.wbs_ok { color: #1a7f37; } .wbs_err { color: #c0392b; }
+	.wbs_ok { color: #1a7f37; } .wbs_err { color: #dc2626; }
 	.wbs_paste { margin-top: 16px; display: grid; gap: 8px; max-width: 640px; }
 	.wb_box p { margin: 8px 0 12px; line-height: 1.5; }
 </style>
