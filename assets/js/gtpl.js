@@ -93,7 +93,7 @@
 			var prev = m.querySelector('.gt_prev'), go = m.querySelector('.gt_go');
 			function v() { return m.querySelector('input[name=gtv]:checked').value; }
 			function preview() {
-				prev.innerHTML = 'Тексерілуде…'; go.disabled = true;
+				prev.innerHTML = '<span class="gt_spin"></span> Тексерілуде…'; go.disabled = true;
 				post('all', { variant: v(), dry: 1 }).then(function (r) {
 					if (r.error) { prev.innerHTML = 'Қате: ' + esc(r.error); return; }
 					prev.innerHTML = '<div><b>' + r.ok.length + '</b> тағамға шаблон табылды' + (r.none.length ? ', <b>' + r.none.length + '</b> тағамға табылмады' : '') + '.</div>' +
@@ -155,26 +155,31 @@
 		var prev = m.querySelector('.gt_prev'), go = m.querySelector('.gt_go');
 		function v() { return m.querySelector('input[name=gsv]:checked').value; }
 		function preview() {
-			prev.textContent = '…'; go.disabled = true;
+			prev.innerHTML = '<span class="gt_spin"></span> ' + esc(w('Checking', 'Тексерілуде…')); go.disabled = true;
 			post('semi_all', { variant: v(), dry: 1 }).then(function (r) {
 				if (r.error) { prev.textContent = r.error; return; }
 				prev.innerHTML = r.ok.length ? '<div><b>' + r.ok.length + '</b> ' + w('tpl semis found', 'дайындамаға шаблон табылды') + '</div><details open><summary>' + w('tpl List', 'Тізім') + '</summary><ul>' +
 					r.ok.map(function (x) { return '<li>' + esc(x.name) + ' → ' + esc(x.tpl) + '</li>'; }).join('') + '</ul></details>'
 					: w('tpl No empty semis', 'Рецепті жоқ, шаблоны бар дайындама жоқ. Жаңасын «Дайындама қосу» арқылы шаблоннан не ЖИ-мен қосыңыз.');
 				go.disabled = !r.ok.length;
-			});
+			}).catch(function () { prev.textContent = w('pp Connection error', 'Байланыс қатесі, қайта көріңіз'); });
 		}
 		m.addEventListener('change', preview);
 		m.querySelector('.gt_mx').onclick = function () { m.remove(); };
 		go.onclick = function () {
-			go.disabled = true; go.textContent = '…';
+			if (go.disabled) return;
+			go.disabled = true; go.textContent = w('pp Loading', 'Толтырылуда…');
+			prev.innerHTML = '<span class="gt_spin"></span> ' + esc(w('pp Loading', 'Толтырылуда…'));
 			post('semi_all', { variant: v() }).then(function (r) {
+				if (r.error) { go.disabled = false; go.textContent = w('tpl Fill', 'Толтыру'); prev.textContent = r.error; return; }
 				prices(r.ids, prev, function () { location.hash = 'prep'; location.reload(); });
-			});
+			}).catch(function () { go.disabled = false; go.textContent = w('tpl Fill', 'Толтыру'); prev.textContent = w('pp Connection error', 'Байланыс қатесі, қайта көріңіз'); });
 		};
 		preview();
 	}
 
+	// өшік «Толтыру» батырмасы анық көрінсін (басуға болмайтыны)
+	if (!document.getElementById('gt_dis_css')) { var cs = document.createElement('style'); cs.id = 'gt_dis_css'; cs.textContent = '.gt_modal .gt_go:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.6)}.gt_spin{display:inline-block;width:14px;height:14px;border:2px solid #d1d5db;border-top-color:#16a34a;border-radius:50%;vertical-align:-2px;animation:gt_r .8s linear infinite}@keyframes gt_r{to{transform:rotate(360deg)}}'; document.head.appendChild(cs); }
 	document.querySelectorAll('.gt_box').forEach(itemBox);
 	// Себес блогы AJAX-пен жаңарады: батырмалар document арқылы
 	document.addEventListener('click', function (e) {
