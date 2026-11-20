@@ -31,6 +31,13 @@
 	// r12 / c5 / d7 → [түрі, id]
 	$code = function ($v) { return preg_match('/^([rcd])(\d+)$/', (string)$v, $m) ? [$m[1], (int)$m[2]] : [null, 0]; };
 
+	// ── Факт мәндері (қолмен, cost_setting_fact): сақтау және соңғы толық айдың нақты деректері (сақтамайды, JSON)
+	if ($a == 'fact_setting' || $a == 'fact_auto') {
+		include_once __DIR__.'/fact.php';
+		if ($a == 'fact_auto') { header('Content-Type: application/json; charset=utf-8'); exit(json_encode(c2fact::auto($cmp), JSON_UNESCAPED_UNICODE)); }
+		exit(c2fact::save($cmp, $_POST) ? 'yes' : 'error');
+	}
+
 	// ── ЖИ: сеттегі жоқ / граммовкасыз / бағасыз заттарды толтыру (products/cost2/ai.php). Жауап JSON
 	if ($a == 'ai_set' || $a == 'ai_sets') {
 		@set_time_limit(300);
