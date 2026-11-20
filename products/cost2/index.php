@@ -105,15 +105,75 @@
 		$has_pp = is_file(__DIR__.'/../cost/prep_pop.php') && is_file(__DIR__.'/../../assets/js/prep_pop.js');
 		uasort($sets, function ($a, $b) { return [$a['arh'], $a['name']] <=> [$b['arh'], $b['name']]; });
 
-		// Қорытынды: сеттің толық себесі мен ұсынылатын бағасы (кестенің оң жағы)
+		// План | Факт. План — «Баға стандарттары» (cost_setting). Факт (?f=1) — таңдалған кезеңнің нақты деректері:
+		//   тапсырыс саны — retail_orders (ОПиУ / Статистикадағыдай: number бар, статус 1, 8, 2, 11, 3, 9, 4; жұмыс күні 06:00-ден),
+		//   шығындар — ОПиУ қолмен енгізілгені (company_pnl, plan = 0), доставка — курьер жалақысы (ОПиУ-дағыдай), бәрі ÷ тапсырыс саны.
+		//   ОПиУ-да бабы жоқ / 0 болса — жоспар мәні (сұр, «жоспар»). Ингредиент — рецепт, наценка — жоспардағы.
+		$fact = !empty($_GET['f']);
+		$fp = in_array(@$_GET['p'], ['w', 'm', 'y'], true) ? $_GET['p'] : 'm';
+		$stu = $st; $plan_k = []; $over_u = $over; $fx = null;
+		if ($fact) {
+			$today_bd = date('Y-m-d', time() - 6 * 3600); $now_dt = date('Y-m-d H:i:s');
+			$ad = preg_match('/^20\d{2}-\d{2}-\d{2}$/', (string)@$_GET['d']) && strtotime($_GET['d']) ? date('Y-m-d', strtotime($_GET['d'])) : $today_bd;
+			$at = strtotime($ad);
+			if ($fp == 'w') { $ws = strtotime('-'.(date('N', $at) - 1).' day', $at); $r_start = date('Y-m-d', $ws); $r_end = date('Y-m-d', strtotime('+7 day', $ws)); $title = date('d.m', $ws).' – '.date('d.m.Y', strtotime('+6 day', $ws)); $prev = date('Y-m-d', strtotime('-7 day', $ws)); }
+			elseif ($fp == 'y') { $r_start = date('Y', $at).'-01-01'; $r_end = (date('Y', $at) + 1).'-01-01'; $title = date('Y', $at); $prev = (date('Y', $at) - 1).'-01-01'; }
+			else { $r_start = date('Y-m-01', $at); $r_end = date('Y-m-d', strtotime("$r_start +1 month")); $title = date('m.Y', $at); $prev = date('Y-m-d', strtotime("$r_start -1 month")); }
+			$p_start = "$r_start 06:00:00"; $p_end = "$r_end 06:00:00"; $p_to = $now_dt < $p_end ? $now_dt : $p_end;
+			// кезеңде өткен жұмыс күндері (бүгін де кіреді)
+			$last = min(strtotime($today_bd), strtotime($r_end) - 86400);
+			$days = $last >= strtotime($r_start) ? (int)round(($last - strtotime($r_start)) / 86400) + 1 : 0;
+			$ok_st = "o.order_status in (1, 8, 2, 11, 3, 9, 4)";
+			$ow = "o.company_id = '$cmp' and o.number is not null and $ok_st and o.ins_dt >= '$p_start' and o.ins_dt < '$p_to'";
+			$orders = (int)@mysqli_fetch_row(db::query("select count(*) from retail_orders o where $ow"))[0];
+			// ОПиУ баптары
+			$pnl = [];
+			$t = db::query("show tables like 'company_pnl'");
+			if ($t && mysqli_num_rows($t)) {
+				$q = db::query("select row_key, SUM(amount) a from company_pnl where company_id = '$cmp' and `plan` = 0 and `day` >= '$r_start' and `day` < '$r_end' group by row_key");
+				while ($q && $r = mysqli_fetch_assoc($q)) $pnl[$r['row_key']] = (float)$r['a'];
+			}
+			// курьер жалақысы (ОПиУ-дағыдай): сақталған күндік есеп, қалғаны тапсырыстардан (жеткізу ақысы + компанияның жеткізу бағасы)
+			$cour = 0; $saved = [];
+			$t = db::query("show tables like 'courier_day_report'");
+			if ($t && mysqli_num_rows($t)) {
+				$q = db::query("select `day`, courier_id, salary from courier_day_report where company_id = '$cmp' and `day` >= '$r_start' and `day` < '$r_end'");
+				while ($q && $r = mysqli_fetch_assoc($q)) { $saved[$r['day'].'|'.$r['courier_id']] = 1; $cour += (int)$r['salary']; }
+			}
+			$dprice = (int)@mysqli_fetch_row(db::query("select delivery_price from company where id = '$cmp'"))[0];
+			$q = db::query("select DATE(DATE_SUB(o.ins_dt, INTERVAL 6 HOUR)) dd, o.`сourier_id` u, COUNT(*) n, SUM(o.pay_delivery) pd from retail_orders o
+				where o.company_id = '$cmp' and o.number is not null and o.`сourier_id` > 0 and o.order_status in (1, 8, 2, 11, 3, 4) and o.ins_dt >= '$p_start' and o.ins_dt < '$p_to' group by dd, u");
+			while ($q && $r = mysqli_fetch_assoc($q)) if (!isset($saved[$r['dd'].'|'.$r['u']])) $cour += (int)$r['pd'] + (int)$r['n'] * $dprice;
+			$g = function ($ks) use ($pnl) { $v = 0; foreach ($ks as $k) $v += $pnl[$k] ?? 0; return $v; };
+			$sum = ['salary' => $g(['st_hall', 'st_kitchen', 'st_other']), 'rent' => $g(['f_rent']), 'utility' => $g(['f_util', 'f_net']), 'delivery' => $cour,
+				'ads' => $g(['m_t_hall', 'm_t_dlv', 'm_tiktok', 'm_agg', 'm_print', 'm_other', 'st_agency'])];
+			foreach ($sum as $k => $v) { if ($orders > 0 && $v > 0) $stu[$k] = round($v / $orders); else $plan_k[$k] = 1; }
+			if ($orders > 0 && $days > 0) $stu['orders_day'] = round($orders / $days, 1); else $plan_k['orders_day'] = 1;
+			$over_u = cost::overhead($stu);
+			// сеттердің сатылымы: дана және жеңілдікпен нақты бағасы (тапсырыс жеңілдігі тағамдарға үлесімен бөлінеді, жеткізу алынады)
+			if ($sets) {
+				$ids = implode(',', array_map('intval', array_keys($sets)));
+				$q = db::query("select p.product_id, SUM(p.quantity) q, SUM(p.price * p.quantity * COALESCE(LEAST(1, GREATEST(0, (o.total - IFNULL(o.pay_delivery, 0)) / NULLIF(t.s, 0))), 1)) rev
+					from retail_orders o join retail_orders_products p on p.order_id = o.id
+					join (select p2.order_id, SUM(p2.price * p2.quantity) s from retail_orders_products p2 join retail_orders o on o.id = p2.order_id where $ow group by p2.order_id) t on t.order_id = o.id
+					where $ow and p.product_id in ($ids) group by p.product_id");
+				while ($q && $r = mysqli_fetch_assoc($q)) if (isset($sets[(int)$r['product_id']]) && (int)$r['q'] > 0) { $sets[(int)$r['product_id']]['sold'] = (int)$r['q']; $sets[(int)$r['product_id']]['avg'] = $r['rev'] / $r['q']; }
+			}
+			$fx = ['start' => $r_start, 'title' => $title, 'orders' => $orders, 'days' => $days, 'prev' => $prev, 'next' => $r_end, 'cur' => $today_bd >= $r_start && $today_bd < $r_end];
+		}
+
+		// Қорытынды: сеттің толық себесі мен ұсынылатын бағасы (кестенің оң жағы). Фактта пайда нақты орташа сату бағасымен
 		$mk = $st['markup'] / 100;
 		foreach ($sets as &$x) {
-			$x['full'] = $x['sum'] + $over;
+			$x['full'] = $x['sum'] + $over_u;
 			$x['mk'] = $x['full'] * $mk;
 			$x['total'] = $x['full'] + $x['mk'];
 			$x['nice'] = cost::nice($x['total']);
-			$x['profit'] = $x['price'] - $x['full'];
-			$x['pct'] = $x['price'] ? $x['profit'] / $x['price'] * 100 : 0;
+			$x['sold'] = $x['sold'] ?? 0;
+			$x['avg'] = $x['avg'] ?? 0;
+			$x['pu'] = $fact && $x['sold'] ? $x['avg'] : $x['price'];
+			$x['profit'] = $x['pu'] - $x['full'];
+			$x['pct'] = $x['pu'] ? $x['profit'] / $x['pu'] * 100 : 0;
 		}
 		unset($x);
 		$used_raw = $raw;
@@ -173,19 +233,35 @@
 			<div class="c2_stat c2_stat_neg"><span><?=t::w('c2 Sold at a loss', 'Шығынмен сатылады')?></span><b><?=$n_bad?></b></div>
 			<div class="c2_stat c2_stat_warn"><span><?=t::w('c2 Profit under 5%', 'Пайдасы 5%-дан аз')?></span><b><?=$n_low?></b></div>
 			<div class="c2_stat"><span><?=t::w('c2 Average profit', 'Орташа пайда')?></span><b><?=$avg?>%</b></div>
-			<div class="c2_stat"><span><?=t::w('c2 Cost per order', 'Бір заказға шығын')?></span><b><?=$f($over)?> ₸</b></div>
+			<div class="c2_stat"><span><?=t::w('c2 Cost per order', 'Бір заказға шығын')?></span><b><?=$f($over_u)?> ₸</b></div>
 		</div>
 
 		<!-- баға стандарттары: /products/cost/get.php?setting -->
-		<div class="c2_card c2_std">
-			<div class="c2_h"><?=t::w('c2 Price standards', 'Баға стандарттары')?> <small><?=t::w('c2 per order, tg', 'бір заказға, тг')?></small></div>
-			<form class="c2_stf" autocomplete="off">
-			<? foreach (['orders_day' => t::w('c2 Orders per day', 'Заказ / күн'), 'salary' => t::w('c2 Salary', 'Айлық'), 'rent' => t::w('c2 Rent', 'Аренда'), 'utility' => t::w('c2 Utilities', 'К.у.'), 'delivery' => t::w('c2 Delivery', 'Доставка'), 'ads' => t::w('c2 Advertising', 'Реклама'), 'markup' => t::w('c2 Markup', 'Наценка').', %'] as $k => $l): ?>
-				<label><span><?=$h($l)?></span><input class="c2_in" name="<?=$k?>" inputmode="decimal" value="<?=$h($st[$k] + 0)?>"></label>
+		<div class="c2_card c2_std<?=$fact ? ' c2_std_fact' : ''?>">
+			<div class="c2_stdh">
+				<div class="c2_h"><?=t::w('c2 Price standards', 'Баға стандарттары')?> <small><?=t::w('c2 per order, tg', 'бір заказға, тг')?></small></div>
+				<div class="c2_seg c2_pf" role="tablist">
+					<a class="c2_seg_i<?=$fact ? '' : ' c2_seg_act'?>" data-ajx=".c2_page" data-m="plan" href="/products/cost2/"><?=t::w('c2 Plan', 'План')?></a><a class="c2_seg_i<?=$fact ? ' c2_seg_act' : ''?>" data-ajx=".c2_page" data-m="fact" href="?f=1&p=<?=$fp?>"><?=t::w('c2 Fact', 'Факт')?></a>
+				</div>
+				<? if ($fact): ?>
+				<div class="c2_seg c2_per">
+					<? foreach (['w' => t::w('c2 Week', 'Апта'), 'm' => t::w('c2 Month', 'Ай'), 'y' => t::w('c2 Year', 'Жыл')] as $k => $l): ?><a class="c2_seg_i<?=$fp == $k ? ' c2_seg_act' : ''?>" data-ajx=".c2_page" data-p="<?=$k?>" href="?f=1&p=<?=$k?><?=$fx['cur'] ? '' : '&d='.$fx['start']?>"><?=$h($l)?></a><? endforeach ?>
+				</div>
+				<div class="c2_pnav">
+					<a class="c2_pnav_b" data-ajx=".c2_page" href="?f=1&p=<?=$fp?>&d=<?=$fx['prev']?>" aria-label="&lt;"><i class="far fa-angle-left"></i></a>
+					<b><?=$h($fx['title'])?></b>
+					<a class="c2_pnav_b" data-ajx=".c2_page" href="?f=1&p=<?=$fp?>&d=<?=$fx['next']?>" aria-label="&gt;"><i class="far fa-angle-right"></i></a>
+				</div>
+				<? endif ?>
+			</div>
+			<? if ($fact): ?><div class="c2_fact_n"><i class="fal fa-chart-line"></i> <?=$h(str_replace(['{period}', '{orders}', '{days}'], [$fx['title'], $fx['orders'], $fx['days']], t::w('c2 Fact source', 'Факт: {period}, {orders} тапсырыс, {days} күн. Тапсырыс саны мен сатылым — сатылымдардан (бас тартылғандарсыз), шығындар — ОПиУ-дан, доставка — курьер жалақысы. ÷ тапсырыс саны.')))?></div><? endif ?>
+			<form class="c2_stf" autocomplete="off"<?=$fact ? ' data-ro="1"' : ''?>>
+			<? foreach (['orders_day' => t::w('c2 Orders per day', 'Заказ / күн'), 'salary' => t::w('c2 Salary', 'Айлық'), 'rent' => t::w('c2 Rent', 'Аренда'), 'utility' => t::w('c2 Utilities', 'К.у.'), 'delivery' => t::w('c2 Delivery', 'Доставка'), 'ads' => t::w('c2 Advertising', 'Реклама'), 'markup' => t::w('c2 Markup', 'Наценка').', %'] as $k => $l): $gp = $fact && ($k == 'markup' || isset($plan_k[$k])); ?>
+				<label<?=$gp ? ' class="c2_isplan"' : ''?>><span><?=$h($l)?><?=$gp ? ' <i class="c2_pl">'.t::w('c2 plan value', 'жоспар').'</i>' : ''?></span><input class="c2_in" name="<?=$k?>" inputmode="decimal" value="<?=$h($stu[$k] + 0)?>"<?=$fact ? ' readonly tabindex="-1"' : ''?>></label>
 			<? endforeach ?>
-				<button type="submit" class="c2_std_ok"><i class="far fa-check"></i> <?=t::w('c2 Save', 'Сақтау')?></button>
+				<? if (!$fact): ?><button type="submit" class="c2_std_ok"><i class="far fa-check"></i> <?=t::w('c2 Save', 'Сақтау')?></button><? endif ?>
 			</form>
-			<div class="c2_std_n"><i class="fal fa-info-circle"></i> <?=$h(str_replace(['{over}', '{mk}'], [$f($over), $st['markup'] + 0], t::w('c2 Standards hint', 'Сеттің толық себесі = тағамдар себесі + {over} тг (айлық, аренда, к.у., доставка, реклама). Ұсынылатын баға = толық себес + {mk}%, сосын 490 / 990-ға дейін дөңгелектенеді.')))?></div>
+			<div class="c2_std_n"><i class="fal fa-info-circle"></i> <?=$h(str_replace(['{over}', '{mk}'], [$f($over_u), $st['markup'] + 0], t::w('c2 Standards hint', 'Сеттің толық себесі = тағамдар себесі + {over} тг (айлық, аренда, к.у., доставка, реклама). Ұсынылатын баға = толық себес + {mk}%, сосын 490 / 990-ға дейін дөңгелектенеді.')))?><?=$fact ? ' '.$h(t::w('c2 Fact gray', 'Сұр мәндер — ОПиУ-да бұл кезеңге шығын жазылмаған (не тапсырыс жоқ), сондықтан жоспар мәні алынды. Пайда сатылған сетте нақты орташа сату бағасымен, сатылмағанында қазіргі бағамен.')) : ''?></div>
 		</div>
 
 		<!-- 1. Қорытынды кесте (Google кестесінің оң жағы) -->
@@ -197,6 +273,7 @@
 					<th><?=t::w('c2 Salary', 'Айлық')?></th><th><?=t::w('c2 Rent', 'Аренда')?></th><th><?=t::w('c2 Utilities', 'К.у.')?></th><th><?=t::w('c2 Delivery', 'Доставка')?></th><th><?=t::w('c2 Advertising', 'Реклама')?></th>
 					<th class="c2_hl c2_srt" data-st="n"><?=t::w('c2 Total cost', 'Толық себес')?></th><th class="c2_srt" data-st="n"><?=t::w('c2 Markup', 'Наценка')?> <?=$st['markup'] + 0?>%</th><th class="c2_srt" data-st="n"><?=t::w('c2 Total', 'Наценкамен')?></th>
 					<th class="c2_hl c2_srt" data-st="n"><?=t::w('c2 Suggested', 'Ұсыныс')?></th><th class="c2_srt" data-st="n"><?=t::w('c2 Current price', 'Қазіргі баға')?></th><th class="c2_srt" data-st="n"><?=t::w('c2 Profit', 'Пайда')?></th>
+					<? if ($fact): ?><th class="c2_srt" data-st="n"><?=t::w('c2 Sold', 'Сатылды')?></th><th class="c2_srt" data-st="n"><?=t::w('c2 Avg sale price', 'Орташа сату бағасы')?></th><? endif ?>
 				</tr></thead>
 				<tbody>
 				<? $n = 0; foreach ($sets as $x): $n++; $pc = $x['profit'] < 0 ? 'c2_neg' : ($x['pct'] < 5 ? 'c2_warn' : 'c2_pos'); ?>
@@ -204,10 +281,11 @@
 						<td class="c2_mut"><?=$n?></td>
 						<td class="c2_l c2_nm" data-v="<?=$h($x['name'])?>"><a href="#s<?=$x['id']?>" class="c2_go"><?=$h($x['name'])?></a><?=$x['arh'] ? ' <span class="c2_tag">'.t::w('c2 archive', 'архив').'</span>' : ''?><?=$x['miss'] ? ' <span class="c2_tag c2_tag_r" title="'.$h(t::w('c2 Some items have no cost', 'Кейбір затының себесі жоқ')).'">!</span>' : ''?></td>
 						<td data-v="<?=round($x['sum'], 2)?>"><?=$f($x['sum'])?></td>
-						<td class="c2_mut"><?=$f($st['salary'])?></td><td class="c2_mut"><?=$f($st['rent'])?></td><td class="c2_mut"><?=$f($st['utility'])?></td><td class="c2_mut"><?=$f($st['delivery'])?></td><td class="c2_mut"><?=$f($st['ads'])?></td>
+						<? foreach (['salary', 'rent', 'utility', 'delivery', 'ads'] as $k): ?><td class="c2_mut<?=$fact && isset($plan_k[$k]) ? ' c2_isplan' : ''?>"><?=$f($stu[$k])?></td><? endforeach ?>
 						<td class="c2_hl" data-v="<?=round($x['full'], 2)?>"><b><?=$f($x['full'])?></b></td><td class="c2_mut" data-v="<?=round($x['mk'], 2)?>"><?=$f($x['mk'])?></td><td data-v="<?=round($x['total'], 2)?>"><?=$f($x['total'])?></td>
 						<td class="c2_hl" data-v="<?=(int)$x['nice']?>"><b><?=$f($x['nice'])?></b></td><td data-v="<?=(int)$x['price']?>"><?=$f($x['price'])?></td>
 						<td data-v="<?=round($x['profit'], 2)?>"><span class="c2_p <?=$pc?>"><?=$f($x['profit'])?> <small><?=(int)round($x['pct'])?>%</small></span></td>
+						<? if ($fact): ?><td data-v="<?=$x['sold']?>"><?=$x['sold'] ? $f($x['sold']) : '<span class="c2_mut">0</span>'?></td><td data-v="<?=round($x['avg'], 2)?>"><?=$x['sold'] ? $f($x['avg']) : '<span class="c2_mut">—</span>'?></td><? endif ?>
 					</tr>
 				<? endforeach ?>
 				</tbody>
@@ -499,8 +577,15 @@
 		});
 
 		// баға стандарттары: сақтау, сосын .c2_page AJAX-пен жаңарады
+		// План | Факт және кезең таңдауы (localStorage c2_pf: {m: plan|fact, p: w|m|y}); бет ашылғанда URL-де f жоқ болса, Факт қайта ашылады
+		var pfGet = function () { try { return JSON.parse(localStorage.getItem('c2_pf') || '{}') || {}; } catch (e) { return {}; } };
+		var pfSet = function (o) { try { var v = pfGet(); for (var k in o) v[k] = o[k]; localStorage.setItem('c2_pf', JSON.stringify(v)); } catch (e) {} };
+		$(document).on('click', '.c2_pf [data-m]', function () { pfSet({ m: this.dataset.m }); });
+		$(document).on('click', '.c2_per [data-p]', function () { pfSet({ p: this.dataset.p }); });
+		(function () { var v = pfGet(); if (v.m == 'fact' && !/[?&]f=/.test(location.search) && window.ajxGo) ajxGo('?f=1&p=' + (['w', 'm', 'y'].indexOf(v.p) >= 0 ? v.p : 'm'), '.c2_page'); })();
 		$(document).on('submit', '.c2_stf', function (e) {
 			e.preventDefault();
+			if (this.dataset.ro) return;
 			var b = this.querySelector('.c2_std_ok'); b.disabled = true;
 			fetch('/products/cost/get.php?setting', { method: 'POST', body: new FormData(this), credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {
 				b.disabled = false;
