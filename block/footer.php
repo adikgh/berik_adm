@@ -30,6 +30,7 @@
 	<script src="/assets/js/berik_admin.js?v=<?=@filemtime($_SERVER['DOCUMENT_ROOT'].'/assets/js/berik_admin.js')?>"></script>
 	<script src="/assets/js/berik_mobile.js?v=<?=@filemtime($_SERVER['DOCUMENT_ROOT'].'/assets/js/berik_mobile.js')?>"></script>
 	<? include __DIR__."/acc_pop.php"; // Аккаунт поп-апы ?>
+	<? include __DIR__."/onboard.php"; // «Жұмысты бастау» виджеті (config/onboard.php) ?>
 		
 </body>
 </html>
