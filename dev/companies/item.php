@@ -27,6 +27,10 @@
 ?>
 <? include "../block/header.php"; ?>
 	<div class="tools">
+		<div class="tabs">
+			<a href="item.php?id=<?=$id?>" class="on"><?=t::w('Subscription', 'Жазылым')?></a>
+			<a href="settings.php?id=<?=$id?>"><?=t::w('Company settings', 'Компания баптаулары')?></a>
+		</div>
 		<span class="st st_<?=$st[0]?>" style="font-size:14px;padding:8px 14px"><?=$st[1]?><?=$st[2] !== null ? ' · ' . dev::days_txt($st[2]) : ''?></span>
 		<? if (!empty($sub['arh'])): ?><span class="st st_none" style="font-size:14px;padding:8px 14px"><i class="fal fa-archive"></i>&nbsp;<?=t::w('In archive', 'Архивте')?><?=$sub['arh_dt'] ? ' · ' . dev::d($sub['arh_dt']) : ''?></span><? endif ?>
 		<? if (dev::can('company_arh')): ?>
