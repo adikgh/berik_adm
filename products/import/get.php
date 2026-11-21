@@ -41,7 +41,7 @@
 		foreach ((array)glob($dir.'*') as $f) if (is_file($f) && filemtime($f) < time() - 86400) @unlink($f); // кешегі уақытша файлдар
 		$tok = bin2hex(random_bytes(8));
 		$imgs = []; // [bytes, mime]
-		$src = (string)@$_POST['src']; $capt = []; $note_src = '';
+		$src = (string)@$_POST['src']; $note_src = '';
 
 		if ($src == 'insta') {
 			$acc = trim((string)@$_POST['insta']);
@@ -56,17 +56,39 @@
 			$res = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
 			$posts = json_decode((string)$res, true);
 			if ($code >= 300 || !is_array($posts)) { error_log('apify '.$code.': '.substr((string)$res, 0, 300)); $out(['ok' => 0, 'error' => $code == 401 ? 'Apify токені қате' : ($code == 402 ? 'Apify балансы бітті' : 'Instagram-ды ашу мүмкін болмады, сәлден соң қайталаңыз')]); }
-			if (!$posts || isset($posts[0]['error'])) $out(['ok' => 0, 'error' => 'Аккаунт табылмады не жабық (private)']);
-			// посттардың мәтіні + суреттері (карусель ішіндегілері де), 24 суретке дейін
-			$urls = [];
+			$posts = array_values(array_filter($posts, function ($p) { return is_array($p) && empty($p['error']); }));
+			if (!$posts) $out(['ok' => 0, 'error' => 'Аккаунт табылмады не жабық (private)']);
+			// жаңа посттар алдымен (бір сет бірнеше рет жарияланса, соңғы бағасы дұрыс)
+			usort($posts, function ($a, $b) { return strcmp((string)@$b['timestamp'], (string)@$a['timestamp']); });
+			// әр пост: мәтіні + суреттері (карусельден 3-ке дейін), барлығы 40 суретке дейін
+			$pp = []; $urls = [];
 			foreach ($posts as $p) {
-				$c = trim((string)@$p['caption']);
+				$us = [];
 				foreach (array_merge([(string)@$p['displayUrl']], (array)@$p['images'], array_map(function ($x) { return (string)@$x['displayUrl']; }, (array)@$p['childPosts'])) as $u)
-					if ($u && !in_array($u, $urls) && count($urls) < 24) { $urls[] = $u; if ($c !== '') { $capt[] = 'Пост '.count($urls).': '.mb_substr($c, 0, 600); $c = ''; } }
+					if ($u && !isset($urls[$u]) && count($us) < 3 && count($urls) < 40) { $us[] = $u; $urls[$u] = 1; }
+				$c = trim((string)@$p['caption']);
+				if ($us || $c !== '') $pp[] = ['date' => substr((string)@$p['timestamp'], 0, 10), 'caption' => mb_substr($c, 0, 1500), 'urls' => $us];
 			}
-			foreach ($urls as $u) {
-				$b = @file_get_contents($u, false, stream_context_create(['http' => ['timeout' => 15, 'header' => "User-Agent: Mozilla/5.0\r\n"]]));
-				if ($b && strlen($b) < 8e6 && ($i = @getimagesizefromstring($b)) && in_array($i['mime'], ['image/jpeg', 'image/png', 'image/webp'])) $imgs[] = [$b, $i['mime']];
+			// суреттерді параллель жүктеу
+			$mh = curl_multi_init(); $hs = [];
+			foreach (array_keys($urls) as $u) {
+				$h = curl_init($u);
+				curl_setopt_array($h, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true, CURLOPT_TIMEOUT => 25, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_USERAGENT => 'Mozilla/5.0']);
+				curl_multi_add_handle($mh, $h); $hs[$u] = $h;
+			}
+			do { $st = curl_multi_exec($mh, $run); if ($run) curl_multi_select($mh, 1); } while ($run && $st == CURLM_OK);
+			$got = [];
+			foreach ($hs as $u => $h) { $got[$u] = (string)curl_multi_getcontent($h); curl_multi_remove_handle($mh, $h); curl_close($h); }
+			curl_multi_close($mh);
+			// Claude-қа: «Пост N (күні)» мәтіні, артынан сол посттың суреттері (нөмірі $imgs индексімен бірдей)
+			$ig = [];
+			foreach ($pp as $n => $p) {
+				$ig[] = ['type' => 'text', 'text' => 'Пост '.($n + 1).' ('.$p['date'].')'.($p['caption'] !== '' ? ":\n".$p['caption'] : ': без подписи')];
+				foreach ($p['urls'] as $u) {
+					$b = $got[$u];
+					if (!$b || strlen($b) > 8e6 || !($i = @getimagesizefromstring($b)) || !in_array($i['mime'], ['image/jpeg', 'image/png', 'image/webp'])) continue;
+					$imgs[] = [$b, $i['mime'], count($ig)]; $ig[] = null; // орны: сурет блогы кейін қойылады
+				}
 			}
 			$note_src = '@'.$acc;
 		} elseif ($src == 'web') {
@@ -101,12 +123,14 @@
 			foreach ($imgs as $k => $im) {
 				if ($im[1] == 'application/pdf') { $content[] = claude::pdf_block($im[0]); continue; }
 				@file_put_contents($dir.$cmp.'_'.$tok.'_'.$k.'.img', $im[0]);
-				$content[] = ['type' => 'text', 'text' => 'Изображение №'.$k.':'];
-				$content[] = claude::image_block($im[0], $im[1]);
+				$bl = [['type' => 'text', 'text' => 'Изображение №'.$k.':'], claude::image_block($im[0], $im[1])];
+				if (isset($im[2])) $ig[$im[2]] = $bl; else array_push($content, ...$bl);
 			}
+			// Instagram: посттар ретімен, әр мәтіннің артынан өз суреттері
+			if ($src == 'insta') foreach ($ig as $b) { if (!$b) continue; if (isset($b['type'])) $content[] = $b; else array_push($content, ...$b); }
 			if (!$content) $out(['ok' => 0, 'error' => 'Instagram-да сурет табылмады']);
 			$have = []; foreach ($list as $id => $n) $have[] = $id.' | '.$txt($n);
-			$system = "Ты переносишь МЕНЮ кафе доставки еды (Казахстан) в учётную систему. Прочитай ВСЁ меню на изображениях".($capt ? " и в подписях постов Instagram" : "")." полностью, ничего не пропускай.\n"
+			$system = "Ты переносишь МЕНЮ кафе доставки еды (Казахстан) в учётную систему. Прочитай ВСЁ меню на изображениях".($src == 'insta' ? " и в подписях постов Instagram" : "")." полностью, ничего не пропускай.\n"
 				."Правила:\n- Одна позиция = одно блюдо с ценой. Варианты размера (25/30/35 см, 0.5/1 л) — отдельные позиции с размером в названии.\n"
 				."- name — как в меню (по-русски, если меню на русском), name_kz — казахское название, если есть, иначе пусто. Без кавычек и лишних слов.\n"
 				."- price — целое число тенге; если цены нет — 0. cat — раздел меню (Роллы, Пицца, Сеты, Напитки…).\n"
@@ -115,8 +139,11 @@
 				."- img — номер изображения, где есть ФОТО именно этого блюда, и box — рамка фото блюда [x, y, w, h] в долях от 0 до 1 от размера изображения; если фото блюда нет — img = -1, box = [0,0,0,0].\n"
 				."- same — id из списка УЖЕ ЕСТЬ, если это то же блюдо (то же название, может отличаться написание), иначе 0.\n"
 				."- quality: good — всё читается; medium — часть неразборчива; poor — плохо видно или это не меню. note — 1 предложение.\n\n"
+				.($src == 'insta' ? "\nInstagram: посты идут от НОВЫХ к старым, после текста поста — его изображения. Подпись и фото одного поста описывают одно и то же.\n"
+					."- Одно блюдо/сет из нескольких постов (повтор, видео) — ОДНА позиция; цена — из самого нового поста, где она есть.\n"
+					."- Состав сета (роллы, пиццы, допы внутри сета) — только в set_items, НЕ отдельными позициями. Отдельная позиция — только если её продают отдельно (есть своя цена в меню/посте).\n"
+					."- Розыгрыши, отзывы, вакансии, контакты — не позиции. img — фото из того же поста.\n\n" : '')
 				."УЖЕ ЕСТЬ В СИСТЕМЕ (id | название):\n".($have ? implode("\n", array_slice($have, 0, 600)) : '(пусто)');
-			if ($capt) $content[] = ['type' => 'text', 'text' => "Подписи постов Instagram:\n".implode("\n", $capt)];
 			$content[] = ['type' => 'text', 'text' => 'Перечисли все позиции меню.'];
 			$schema = ['type' => 'object', 'additionalProperties' => false, 'required' => ['items', 'quality', 'note'], 'properties' => [
 				'quality' => ['type' => 'string', 'enum' => ['good', 'medium', 'poor']], 'note' => ['type' => 'string'],
