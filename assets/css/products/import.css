@@ -55,8 +55,6 @@
 }
 
 /* Instagram: посттар тізімі мен прогресс */
-.mi_cnt{ display: flex; gap: 8px; align-items: center; margin-top: 10px; color: #545a56; }
-.mi_cnt .form_txt{ width: auto; min-width: 170px; }
 .mi_prog{ margin-top: 14px; border: 1px solid #e7e9ee; border-radius: 12px; padding: 12px; }
 .mi_prog_h{ display: flex; justify-content: space-between; gap: 10px; font-weight: 600; margin-bottom: 8px; }
 .mi_tm{ color: #767c78; font-weight: 400; font-variant-numeric: tabular-nums; }

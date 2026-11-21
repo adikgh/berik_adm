@@ -40,15 +40,7 @@
 			</div>
 			<div class="mi_box" data-box="insta" hidden>
 				<div class="form_im"><input type="text" class="form_txt mi_insta" placeholder="@akkaunt не instagram.com/akkaunt"><i class="fab fa-instagram form_icon"></i></div>
-				<label class="mi_cnt">Соңғы
-					<select class="form_txt mi_insta_n">
-						<option value="40">40 пост · ~0.1 $</option>
-						<option value="80" selected>80 пост · ~0.2 $</option>
-						<option value="120">120 пост · ~0.35 $</option>
-						<option value="200">200 пост · ~0.6 $</option>
-					</select>
-				</label>
-				<small class="mi_hint"><?=$apify_on ? 'Посттар мен фотолары оқылады (Apify). Аккаунт ашық болу керек. Бір сет бірнеше рет жарияланса, ең жаңа бағасы алынады.' : 'Apify қосылмаған: config/ai.php ішіне APIFY_TOKEN жазыңыз. Әзірге «Меню» хайлайтсының скриндерін Фото ретінде салыңыз.'?></small>
+				<small class="mi_hint"><?=$apify_on ? 'Соңғы 40 пост пен фотолары оқылады (Apify, шамамен 0.1 $). Аккаунт ашық болу керек. Бір сет бірнеше рет жарияланса, ең жаңа бағасы алынады.' : 'Apify қосылмаған: config/ai.php ішіне APIFY_TOKEN жазыңыз. Әзірге «Меню» хайлайтсының скриндерін Фото ретінде салыңыз.'?></small>
 			</div>
 			<div class="mi_box" data-box="web" hidden>
 				<div class="form_im"><input type="text" class="form_txt mi_web" placeholder="Сайт сілтемесі не «Яки суши Шымкент»"><i class="fal fa-globe form_icon"></i></div>

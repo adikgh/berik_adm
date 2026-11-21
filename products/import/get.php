@@ -58,7 +58,7 @@
 			if (preg_match('~instagram\.com/([A-Za-z0-9._]+)~', $acc, $m)) $acc = $m[1];
 			$acc = preg_replace('/[^A-Za-z0-9._]/', '', ltrim($acc, '@'));
 			if ($acc === '') $out(['ok' => 0, 'error' => 'Instagram аккаунтын жазыңыз']);
-			$n = min(200, max(10, (int)@$_POST['n'] ?: 80));
+			$n = 40; // соңғы 40 пост жеткілікті
 			list($d, $code) = $apify('acts/apify~instagram-scraper/runs?timeout=600', ['directUrls' => ['https://www.instagram.com/'.$acc.'/'], 'resultsType' => 'posts', 'resultsLimit' => $n, 'addParentData' => false]);
 			if ($code >= 300 || empty($d['data']['id'])) $out(['ok' => 0, 'error' => $code == 401 ? 'Apify токені қате' : ($code == 402 ? 'Apify балансы бітті' : 'Instagram-ды ашу мүмкін болмады, сәлден соң қайталаңыз')]);
 			$out(['ok' => 1, 'run' => $d['data']['id'], 'ds' => $d['data']['defaultDatasetId'], 'acc' => $acc, 'n' => $n]);

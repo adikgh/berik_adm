@@ -106,7 +106,7 @@
 	function wait(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
 	function insta(v) {
 		var prog = $('.mi_prog'), list = $('.mi_posts'), hd = $('.mi_prog_h'), bar = $('.mi_pbar_i');
-		var n = +$('.mi_insta_n').value || 80, t = Date.now(), run, ds, acc, LIM = 20;
+		var n = 40, t = Date.now(), run, ds, acc, LIM = 20;
 		var sec = function () { var s = Math.round((Date.now() - t) / 1000); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); };
 		var head = function (txt) { hd.innerHTML = '<span>' + h(txt) + '</span><span class="mi_tm">' + sec() + '</span>'; };
 		var tick = setInterval(function () { var x = hd.querySelector('.mi_tm'); if (x) x.textContent = sec(); }, 1000);
