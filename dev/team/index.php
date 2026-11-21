@@ -35,8 +35,8 @@
 				<label class="mb tm_ref" hidden><?=t::w('Referral code', 'Шақыру коды')?><select name="ref_id" class="bsel_f"><option value="">—</option>
 					<? foreach ($refs as $r): ?><option value="<?=$r['id']?>"><?=dev::h($r['nick'] . ($r['name'] ? ' · ' . $r['name'] : ''))?> · <?=(int)$r['n']?> <?=t::w('companies', 'компания')?><?=$r['n'] >= dev::$top_partner ? ' ★' : ''?></option><? endforeach ?>
 				</select></label>
-				<p class="note" style="margin:0 0 10px"><?=t::w('If the number is new, a new person is created: enter a name and a password.', 'Нөмір базада жоқ болса, жаңа адам ашылады: атын және парольін жазыңыз.')?></p>
-				<div class="f_row">
+				<p class="note tm_who" style="margin:0 0 10px"><?=t::w('Type the phone: we check whether the person is already in the base.', 'Телефонды жазыңыз: адам базада бар-жоғын тексереміз.')?></p>
+				<div class="f_row tm_new" hidden>
 					<label><?=t::w('Name', 'Аты')?><input name="name"></label>
 					<label><?=t::w('Password', 'Пароль')?><input name="password" type="text" autocomplete="new-password" minlength="6"></label>
 				</div>
@@ -51,5 +51,30 @@
 <script>
 // безендірілген тізім (bsel) 'change'-ті jQuery арқылы жібереді
 $('.tm_role').on('change', function () { $('.tm_ref').prop('hidden', this.value !== '4'); });
+// Телефон бойынша базадан тексеру: бар адамның аты көрінеді, аты/пароль сұралмайды
+(function () {
+	var f = document.querySelector('form[data-post="get.php?add"]'), who = f.querySelector('.tm_who'), nw = f.querySelector('.tm_new'), last = '', tm;
+	var W = window.bw || {}, w = function (k, d) { return W[k] || d; };
+	function show(r) {
+		var isNew = r.full && !r.found;
+		nw.hidden = !isNew; f.name.required = isNew; f.password.required = isNew;
+		if (!isNew) { f.name.value = ''; f.password.value = ''; }
+		who.innerHTML = '';
+		if (!r.full) { who.textContent = w('Type the phone: we check whether the person is already in the base.', 'Телефонды жазыңыз: адам базада бар-жоғын тексереміз.'); return; }
+		var b = document.createElement('b');
+		if (r.found) {
+			b.className = 'cl_green'; b.textContent = '✓ ' + (r.name || w('No name', 'Аты жоқ'));
+			who.append(b, ' · ' + (r.role ? w('already in the team: ', 'командада бар: ') + r.role + '. ' + w('Only the role will change.', 'Тек рөлі өзгереді.') : w('in the base. Name and password stay as they are.', 'базада бар. Аты мен паролі өзгермейді.')));
+		} else { b.textContent = w('New person', 'Жаңа адам'); who.append(b, ' · ' + w('enter a name and a password.', 'атын және парольін жазыңыз.')); }
+	}
+	function check() {
+		var d = f.phone.value.replace(/\D/g, '').slice(-10);
+		if (d.length !== 10) { last = ''; show({ full: false }); return; }
+		if (d === last) return; last = d;
+		devPost('get.php?find', { phone: d }).then(function (r) { if (r.ok && last === d) show(r); }).catch(function () {});
+	}
+	f.phone.addEventListener('input', function () { clearTimeout(tm); tm = setTimeout(check, 250); });
+	f.phone.addEventListener('change', check);
+})();
 </script>
 <? include "../block/footer.php"; ?>

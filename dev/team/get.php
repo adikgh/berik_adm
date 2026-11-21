@@ -4,6 +4,16 @@
 	if (!$user_id || !dev::can('team')) out(['ok' => false, 'msg' => t::w('No access', 'Рұқсат жоқ')]);
 	if (!dev_post_ok()) out(['ok' => false, 'msg' => t::w('Refresh the page and try again', 'Бетті жаңартып, қайта көріңіз')]);
 
+	// Телефон бойынша адамды іздеу: бар болса аты, жоқ болса жаңа
+	if (isset($_GET['find'])) {
+		$phone = substr(preg_replace('/\D/', '', (string)@$_POST['phone']), -10);
+		if (strlen($phone) != 10) out(['ok' => true, 'full' => false]);
+		$u = dev::row("select id, name, surname from `user` where phone = '$phone' limit 1");
+		if (!$u) out(['ok' => true, 'full' => true, 'found' => false]);
+		$s = dev::row("select role, arh from dev_staff where user_id = '" . (int)$u['id'] . "'");
+		out(['ok' => true, 'full' => true, 'found' => true, 'name' => trim($u['name'] . ' ' . $u['surname']), 'role' => $s ? (dev::$roles[$s['role']] ?? '') . ($s['arh'] ? ' · ' . t::w('closed', 'жабық') : '') : '']);
+	}
+
 	if (isset($_GET['add'])) {
 		$phone = substr(preg_replace('/\D/', '', (string)@$_POST['phone']), -10);
 		if (strlen($phone) != 10) out(['ok' => false, 'msg' => t::w('Enter the phone in full', 'Телефонды толық жазыңыз')]);
@@ -14,6 +24,7 @@
 		$rid = (int)@$_POST['ref_id'];
 		if ($role == 4 && !$rid) out(['ok' => false, 'msg' => t::w('Choose a referral code for the top partner', 'Топ серіктеске шақыру кодын таңдаңыз')]);
 		$u = dev::row("select * from `user` where phone = '$phone' limit 1");
+		// Бар адамның аты мен паролі ешқашан өзгертілмейді
 		if (!$u) {
 			$name = trim((string)@$_POST['name']); $pass = trim((string)@$_POST['password']);
 			if ($name === '' || mb_strlen($pass) < 6) out(['ok' => false, 'msg' => t::w('This number is new. Enter a name and a password (6+ characters)', 'Нөмір базада жоқ. Аты мен парольді (кемінде 6 таңба) жазыңыз')]);
