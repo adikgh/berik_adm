@@ -174,3 +174,10 @@ td.c2_isplan{ color: #a3a8a5 !important; }
 	.c2_pfw .st_seg_i{ flex: 1 1 0; justify-content: center; }
 	.c2_fauto{ width: 100%; }
 }
+
+/* шикізатқа жайылған дайындаманы жинау; күмәнді (тым қымбат) граммовка жолы */
+.c2_semifix{ height: 38px; padding: 0 14px; border: 1px dashed #e3c47a; border-radius: 10px; background: #fffaf0; color: #8a5a00; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-align: left; }
+.c2_semifix:hover{ background: #fff3d6; }
+.c2_semifix:disabled{ opacity: .6; cursor: wait; }
+.c2_sus td{ background: #fdecec; }
+.c2_sus td:first-child{ box-shadow: inset 3px 0 0 #d64545; }

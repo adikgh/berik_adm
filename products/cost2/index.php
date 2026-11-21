@@ -129,15 +129,19 @@
 		$used_raw = $raw;
 
 		// ескі Себес беттегідей: статистика, граммовкасы жоқтар, шаблон батырмалары
-		$n_bad = 0; $n_low = 0; $sum_p = 0;
-		foreach ($sets as $x) { if ($x['profit'] < 0) $n_bad++; elseif ($x['pct'] < 5) $n_low++; $sum_p += $x['pct']; }
-		$avg = $sets ? round($sum_p / count($sets)) : 0;
+		// бағасы 0, себесі жоқ не толық емес (қызыл заты бар) сеттер статистикаға кірмейді — орташа пайданы бұрмаламасын
+		$n_bad = 0; $n_low = 0; $sum_p = 0; $n_p = 0;
+		foreach ($sets as $x) { if ($x['price'] <= 0 || $x['sum'] <= 0 || $x['miss']) continue; $n_p++; if ($x['profit'] < 0) $n_bad++; elseif ($x['pct'] < 5) $n_low++; $sum_p += $x['pct']; }
+		$avg = $n_p ? round($sum_p / $n_p) : 0;
 		$n_dish = 0; foreach ($dishes as $x) if ($x['rows']) $n_dish++;
-		if (!class_exists('wb')) @include_once __DIR__.'/../../waybill/lib.php';
-		$cc = class_exists('wb') ? wb::comp_check($cmp) : ['dish' => [], 'comp' => []];
-		$n_miss = count($cc['dish']) + count($cc['comp']);
 		@include_once __DIR__.'/../tpl/lib.php';
 		$gt_all = class_exists('gtpl') && gtpl::ready();
+		// «Граммовкасы жоқ» = «Шаблоннан толтыру» терезесімен бір ереже (gtpl::empty_dishes: граммовкасы бос, сет емес, архивте емес позициялар)
+		$miss_ids = []; if (class_exists('gtpl')) foreach (gtpl::empty_dishes($cmp) as $r) $miss_ids[(int)$r['id']] = 1;
+		$n_miss = count($miss_ids);
+		// шикізатқа жайылған дайындамасы бар тағамдар (рис + уксус + … → «Рис для суши»): «Дайындамаға жинау» батырмасы
+		require_once __DIR__.'/semi_fix.php';
+		$semi_cand = class_exists('gtpl') && gtpl::semi_ready() ? c2semi::candidates($cmp) : [];
 		$gt_semi = $gt_all && gtpl::semi_ready();
 		// ЖИ толтыру (products/cost2/ai.php): батырмалар және «ЖИ толтырды» белгілері (cost2_ai кестесі)
 		require_once __DIR__.'/../../config/claude.php';
@@ -275,6 +279,7 @@
 				<div class="c2_pbtn">
 					<? if ($gt_semi): ?><button type="button" class="btn gt_semi_btn c2_gt"><i class="fal fa-magic"></i> <span><?=t::w('pp Semis from templates', 'Дайындамаларды шаблоннан толтыру')?></span></button><? endif ?>
 					<button type="button" class="c2_pnew c2_prep_new"><i class="far fa-plus"></i> <span><?=t::w('c2 Add semi-finished', 'Дайындама қосу')?></span></button>
+					<? if ($semi_cand): ?><button type="button" class="c2_semifix" title="<?=$h(implode(', ', array_slice(array_column($semi_cand, 'name'), 0, 30)))?>"><i class="fal fa-layer-group"></i> <span><?=$h(str_replace('{n}', count($semi_cand), t::w('c2 Semi fix', 'Шикізатқа жайылған {n} тағамды дайындамаға жинау')))?></span></button><? endif ?>
 				</div>
 				<form class="c2_card c2_newp" hidden autocomplete="off">
 					<input class="c2_in" name="name" placeholder="<?=$h(t::w('c2 Name', 'Атауы'))?>" required>
@@ -304,12 +309,12 @@
 			<div class="c2_col" id="c2_col_d">
 				<div class="c2_ch c2_ch3"><b>3</b> <?=t::w('c2 Dishes (grams)', 'Тағамдар (граммовка)')?> <span><?=count($dishes)?></span></div>
 				<? foreach ($dishes as $x): $pr = $x['price'] ? ($x['price'] - $x['sum']) / $x['price'] * 100 : 0; ?>
-					<div class="c2_card c2_blk c2_f<?=$x['rows'] ? '' : ' c2_blk_e'?>"<?=isset($cc['dish'][$x['id']]) ? ' data-miss="1"' : ''?> id="d<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
+					<div class="c2_card c2_blk c2_f<?=$x['rows'] ? '' : ' c2_blk_e'?>"<?=isset($miss_ids[$x['id']]) ? ' data-miss="1"' : ''?> id="d<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
 						<div class="c2_bh"><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><?=isset($aim['p'][$x['id']]) ? ' '.$AIT : ''?><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?></div>
 						<table class="c2_tbl">
 							<tbody>
 							<? foreach ($x['rows'] as $r): ?>
-								<tr><td class="c2_l"><?=$X('pi_del', $r['id'])?><?=$NM($r)?></td><td><span<?=$E(['pi', $r['id'], ''], $r['qv'])?>><?=$h($r['qty'])?></span></td><td class="c2_mut"><span<?=$E($r['pe'], $nv($r['price']))?>><?=$pf($r['price'])?></span></td><td><?=$f($r['sum'])?></td></tr>
+								<tr<?=($x['price'] > 0 && $r['sum'] > $x['price'] * 0.8) || $r['sum'] > 8000 ? ' class="c2_sus" title="'.$h(t::w('c2 Suspicious line', 'Құны тым үлкен: мөлшер не бірлік (г / кг) қате болуы мүмкін')).'"' : ''?>><td class="c2_l"><?=$X('pi_del', $r['id'])?><?=$NM($r)?></td><td><span<?=$E(['pi', $r['id'], ''], $r['qv'])?>><?=$h($r['qty'])?></span></td><td class="c2_mut"><span<?=$E($r['pe'], $nv($r['price']))?>><?=$pf($r['price'])?></span></td><td><?=$f($r['sum'])?></td></tr>
 							<? endforeach ?>
 							<?=$ADD('pi_add', $x['id'], 'rc')?>
 							</tbody>
@@ -543,6 +548,19 @@
 				b.disabled = false;
 				if (t.trim() == 'yes') { mess(T.saved); reload(); } else mess(T.err, 'warn');
 			}).catch(function () { b.disabled = false; mess(T.net, 'err'); });
+		});
+
+		// шикізатқа жайылған дайындаманы жинау (get.php?a=semi_fix): тек қолмен өзгертілмеген тағамдар
+		$(document).on('click', '.c2_semifix', function () {
+			var b = this, go = function () {
+				b.disabled = true;
+				fetch('/products/cost2/get.php?a=semi_fix', { method: 'POST', credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) {
+					b.disabled = false;
+					if (!d || d.error) { mess(T.err, 'warn'); return; }
+					mess(<?=json_encode(t::w('c2 Semi fixed', 'Дайындамаға жиналды: {n} тағам'))?>.replace('{n}', d.n), d.n ? 'ok' : 'warn'); reload();
+				}).catch(function () { b.disabled = false; mess(T.net, 'err'); });
+			};
+			if (window.ask) ask(<?=json_encode(t::w('c2 Semi fix ask', 'Рис, уксус, қант, тұз сияқты жолдар «Рис для суши» т.б. дайындамаға жиналады (қолмен өзгертілген тағамдарға тимейді). Жалғастырамыз ба?'))?>, go); else go();
 		});
 
 		// ЖИ толтыру: сеттегі жоқ / граммовкасыз заттар (get.php?a=ai_set, бір сет — бір ЖИ сұрауы)

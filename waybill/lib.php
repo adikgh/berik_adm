@@ -174,9 +174,32 @@
 			$cmp = (int)$cmp; $n = self::esc($name); $u = self::esc($unit);
 			$q = db::query("select id from product_raw where company_id = '$cmp' and (name_kz = '$n' or name_ru = '$n') limit 1");
 			if ($q && mysqli_num_rows($q)) return (int)mysqli_fetch_assoc($q)['id'];
+			// ЖИ / шаблон ашқан шикізат («Рис Камолино») накладнойда басқаша жазылса («Рис Камолино 25кг»): соған байланады, бағасы накладнойдан жаңарады
+			if ($ai = self::ai_raw_match($cmp, $name)) return $ai;
 			$p = (int)round($price);
 			db::query("insert into product_raw (company_id, name_kz, name_ru, unit, price) values ('$cmp', '$n', '$n', '$u', '$p')");
 			return (int)mysqli_insert_id(db::$connect);
+		}
+
+		// ЖИ / шаблон ашқан, әлі сатып алынбаған шикізат: атауының барлық сөзі (3+ әріп) накладнойдағы атауда бар болса және ондай шикізат біреу ғана болса — соның id-і.
+		// ЖИ шикізаты: оған байланған құрамның price_src = ai / db (products/tpl, cost2 ЖИ) не cost2_ai белгісі; накладнойда бұрын болмаған.
+		public static function ai_raw_match($cmp, $name) {
+			$cmp = (int)$cmp;
+			$words = function ($s) {
+				$s = mb_strtolower(preg_replace('/\d+([.,]\d+)?\s*(кг|гр|г|мл|л|шт|уп|kg|g|ml|l)?(?!\p{L})/u', ' ', (string)$s));
+				return array_values(array_unique(array_filter(preg_split('/[^\p{L}]+/u', $s), function ($w) { return mb_strlen($w) >= 3 && !in_array($w, ['пачка', 'пакет', 'мешок', 'упак', 'упаковка', 'коробка', 'банка', 'бутылка']); })));
+			};
+			$w = $words($name); if (!$w) return 0;
+			$pc = fun::has_col('product_comp', 'price_src') ? "exists (select 1 from product_comp c where c.raw_id = r.id and c.price_src in ('ai', 'db'))" : '0';
+			$t = db::query("show tables like 'cost2_ai'"); $ca = $t && mysqli_num_rows($t) ? " or exists (select 1 from cost2_ai a where a.kind = 'r' and a.ref_id = r.id)" : '';
+			$q = db::query("select r.id, r.name_ru, r.name_kz from product_raw r where r.company_id = '$cmp' and ($pc$ca)
+				and not exists (select 1 from waybill_item i where i.raw_id = r.id)");
+			$hit = [];
+			while ($q && $r = mysqli_fetch_assoc($q)) {
+				$rw = $words($r['name_ru'] ?: $r['name_kz']);
+				if ($rw && !array_diff($rw, $w)) $hit[] = (int)$r['id'];
+			}
+			return count($hit) == 1 ? $hit[0] : 0;
 		}
 
 		// Қалдықты өзгерту (+ немесе -)

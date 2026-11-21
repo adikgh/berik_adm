@@ -31,6 +31,20 @@
 	// r12 / c5 / d7 → [түрі, id]
 	$code = function ($v) { return preg_match('/^([rcd])(\d+)$/', (string)$v, $m) ? [$m[1], (int)$m[2]] : [null, 0]; };
 
+	// ── Шикізатқа жайылған дайындаманы жинау (products/cost2/semi_fix.php): компанияның тағамдары + ЖИ шаблондары (arh = 2)
+	if ($a == 'semi_fix') {
+		@set_time_limit(120);
+		header('Content-Type: application/json; charset=utf-8');
+		try {
+			require_once __DIR__.'/semi_fix.php';
+			$n = 0; $names = [];
+			foreach (c2semi::candidates($cmp) as $pid => $d) if (c2semi::fix_dish($cmp, $pid)) { $n++; $names[] = $d['name']; }
+			$t = c2semi::fix_tpls();
+			cost::recalc($cmp);
+			exit(json_encode(['n' => $n, 'tpls' => $t, 'names' => $names], JSON_UNESCAPED_UNICODE));
+		} catch (Throwable $e) { error_log('cost2 semi_fix: '.$e->getMessage()); exit(json_encode(['error' => 'error'])); }
+	}
+
 	// ── Факт мәндері (қолмен, cost_setting_fact): сақтау және соңғы толық айдың нақты деректері (сақтамайды, JSON)
 	if ($a == 'fact_setting' || $a == 'fact_auto') {
 		include_once __DIR__.'/fact.php';

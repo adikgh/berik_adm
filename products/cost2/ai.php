@@ -143,8 +143,10 @@ class c2ai {
 				."- t=price: только price = средняя оптовая/HoReCa цена закупки в тенге за 1 unit (1 кг, 1 л или 1 шт).\n"
 				."Правила граммовки: единицы ТОЛЬКО \"г\", \"мл\" или \"шт\" (никаких кг/л и дробей). Воду не включай. Если ингредиент есть в наших списках (сырьё или заготовки) — пиши ТОЧНО то же название. "
 				."Готовые заготовки (рис для суши, соусы, кляр) бери из нашего списка заготовок. Для ингредиента, которого нет в наших списках, дай price — закупочная цена за 1 кг / 1 л / 1 шт в тенге; для наших — price 0.\n"
-				."Можешь кратко поискать в интернете (web_search) состав/техкарту блюда, если название необычное.\n"
-				."Ответь в конце ТОЛЬКО одним блоком ```json ... ``` вида {\"items\":[{\"n\":1,\"goods\":false,\"cat\":\"...\",\"menu_price\":0,\"unit\":\"шт\",\"price\":0,\"ingredients\":[{\"name\":\"...\",\"unit\":\"г\",\"q\":0,\"price\":0}]}]}\n\n"
+				."ЗАГОТОВКИ (двухуровневая техкарта): в граммовке блюда заготовки НЕ раскладывай на сырьё. Рис для суши (рис + уксус + сахар + соль), соусы (спайси, унаги, сырный, запечённый), кляр/темпура, тесто, маринад, бульон — всегда ОДНОЙ строкой с \"semi\":true; сырьём остаются только то, что кладут как есть (рыба, нори, авокадо, огурец, сыр, кунжут). "
+				."Если такая заготовка есть в списке наших заготовок — пиши точно её название. Если нет — дай её техкарту в общем списке semis: {name, unit (кг/л), yield (выход в этом unit), ingredients [{name, unit г/мл/шт, q на весь выход, price за 1 кг/л/шт для нового сырья}]}.\n"
+				."Перед ответом кратко поищи в интернете (web_search) состав блюда (2-3 источника).\n"
+				."Ответь в конце ТОЛЬКО одним блоком ```json ... ``` вида {\"items\":[{\"n\":1,\"goods\":false,\"cat\":\"...\",\"menu_price\":0,\"unit\":\"шт\",\"price\":0,\"ingredients\":[{\"name\":\"...\",\"unit\":\"г\",\"q\":0,\"price\":0,\"semi\":false}]}],\"semis\":[{\"name\":\"...\",\"unit\":\"кг\",\"yield\":1,\"ingredients\":[{\"name\":\"...\",\"unit\":\"г\",\"q\":0,\"price\":0}]}]}\n\n"
 				."Категории меню: ".($cats ? implode(', ', $cats) : '(нет)')."\n\nНаше сырьё: ".($raws ? implode(', ', $raws) : '(нет)')."\n\nНаши заготовки: ".($preps ? implode(', ', $preps) : '(нет)');
 			$lines = [];
 			foreach ($ask as $k => $m) $lines[] = ($k + 1).'. '.$m['name'].' — t='.$m['t'].($m['t'] == 'price' ? ' (за 1 '.$m['unit'].')' : '');
@@ -161,10 +163,17 @@ class c2ai {
 			});
 			if (!$d) return ['error' => gtpl_ai::err()] + self::usage($log0);
 			foreach ((array)@$d['items'] as $it) { $k = (int)@$it['n'] - 1; if (isset($ask[$k])) $ans[$k] = $it; }
+			// жаңа дайындамалар: ортақ шаблондарда жоқ болса — шаблон (arh = 2); тағамға қолданғанда компанияда рецептімен ашылады
+			foreach ((array)@$d['semis'] as $sm) {
+				foreach ((array)@$sm['ingredients'] as $i) if ((float)@$i['price'] > 0) $semi_price[gtpl::norm(@$i['name'])] = (int)round($i['price']);
+				$sn = trim((string)@$sm['name']); if ($sn === '' || gtpl::semi_find($sn)) continue;
+				$si = gtpl_ai::items(array_map(function ($i) { $i['q'] = [0, @$i['q'], 0]; return $i; }, (array)@$sm['ingredients']), false);
+				if (gtpl_ai::items_ok($si)) gtpl_ai::store(0, $sn, 'Дайындама', $sn, $si, 2, 'Себес: ЖИ дайындамасы', 'semi', @$sm['unit'] ?: 'кг', @$sm['yield'] ?: 1);
+			}
 		}
 
 		// жаңа шикізат бағасы: ЖИ берген (атауымен)
-		$iprice = [];
+		$iprice = $semi_price ?? [];
 		foreach ($ans as $it) foreach ((array)@$it['ingredients'] as $i) if ((float)@$i['price'] > 0) $iprice[gtpl::norm(@$i['name'])] = (int)round($i['price']);
 
 		$done = 0; $msgs = [];
@@ -197,7 +206,9 @@ class c2ai {
 			$tid = (int)@$m['tpl'];
 			if (!$tid && $it) {
 				$items = gtpl_ai::items(array_map(function ($i) { $i['q'] = [0, @$i['q'], 0]; return $i; }, (array)@$it['ingredients']), true);
-				if (gtpl_ai::items_ok($items)) $tid = gtpl_ai::store(0, $m['name'], trim((string)@$it['cat']), $m['name'], $items, 2, 'Себес: ЖИ (сет «'.trim(strip_tags($set['name_ru'])).'»)', 'dish');
+				// шикізатқа жайылған дайындаманы бір жолға жинау (рис + уксус + … → «Рис для суши»)
+				require_once __DIR__.'/semi_fix.php'; $items = c2semi::group($items);
+				if ($items && (gtpl_ai::items_ok($items) || array_filter($items, function ($i) { return !empty($i['semi']); }))) $tid = gtpl_ai::store(0, $m['name'], trim((string)@$it['cat']), $m['name'], $items, 2, 'Себес: ЖИ (сет «'.trim(strip_tags($set['name_ru'])).'»)', 'dish');
 			}
 			if (!$tid) { $msgs[] = $m['name']; continue; }
 			$pid = (int)@$m['pid'];

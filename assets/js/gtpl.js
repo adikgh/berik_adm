@@ -96,6 +96,8 @@
 				prev.innerHTML = '<span class="gt_spin"></span> Тексерілуде…'; go.disabled = true;
 				post('all', { variant: v(), dry: 1 }).then(function (r) {
 					if (r.error) { prev.innerHTML = 'Қате: ' + esc(r.error); return; }
+					// граммовкасы бос тағам жоқ (Себестегі «Граммовкасы жоқ» санауышымен бір ереже: gtpl::empty_dishes)
+					if (!r.ok.length && !r.none.length) { prev.innerHTML = '<div>' + esc(w('tpl No empty dishes', 'Граммовкасы бос тағам жоқ: барлық позицияның құрамы бар. Шикізатқа жайылған дайындамаларды Себес бетінде «дайындамаға жинау» батырмасымен түзетуге болады.')) + '</div>'; go.disabled = true; return; }
 					prev.innerHTML = '<div><b>' + r.ok.length + '</b> тағамға шаблон табылды' + (r.none.length ? ', <b>' + r.none.length + '</b> тағамға табылмады' : '') + '.</div>' +
 						(r.ok.length ? '<details><summary>Тізім</summary><ul>' + r.ok.map(function (x) { return '<li>' + esc(x.name) + ' → ' + esc(x.tpl) + '</li>'; }).join('') + '</ul></details>' : '') +
 						(r.none.length ? '<details><summary>Шаблоны жоқтар</summary><ul>' + r.none.map(function (x) { return '<li><a href="/products/item/?id=' + x.id + '">' + esc(x.name) + '</a></li>'; }).join('') + '</ul></details>' : '');
