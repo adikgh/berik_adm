@@ -13,3 +13,11 @@ RewriteCond %{HTTP_HOST} ^devb?\. [NC]
 RewriteRule ^(?!(?:dev|assets)/)(.*)$ dev/$1 [L]
 RewriteCond %{HTTP_HOST} !^devb?\. [NC]
 RewriteRule ^dev(/|$) - [R=404,L]
+
+# Ескі (шаблоннан қалған) беттер: мәзірде жоқ, компания сүзгісі мен кіру тексерісі жоқ, кейбірі базаны өзгертеді
+# (md5.php, products/upd-arh.php). Файлдар орнында, бірақ ашылмайды (2026-11-21 аудит).
+# Архив енді /products/ ішінде (#cat=arh).
+RewriteRule ^products/archive(/|$) /products/#cat=arh [R=302,NE,L]
+RewriteRule ^(all|products/(all|add|warehouses|displacement|remains|rent|setting))(/|$) - [R=404,L]
+RewriteRule ^(md5|dev)\.php$ - [R=404,L]
+RewriteRule ^products/(upd-arh|get_arh|warehouses2?|ss|sort-filter)\.php$ - [R=404,L]
