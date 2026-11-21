@@ -116,7 +116,7 @@
 			group by op.product_id");
 		while ($q && $r = mysqli_fetch_assoc($q)) {
 			$nm = trim(strip_tags(html_entity_decode((string)($r['name_kz'] ?: $r['name_ru']))));
-			$items[(int)$r['product_id']] = ['id' => (int)$r['product_id'], 'name' => $nm !== '' ? $nm : '#'.$r['product_id'], 'qty' => (float)$r['qty'], 'rev' => (float)$r['rev'], 'cost' => null, 'mrg' => null, 'zero' => false];
+			$items[(int)$r['product_id']] = ['id' => (int)$r['product_id'], 'name' => $nm !== '' ? $nm : '#'.$r['product_id'], 'nh' => fun::name_html($r['name_kz'] ?: $r['name_ru']), 'qty' => (float)$r['qty'], 'rev' => (float)$r['rev'], 'cost' => null, 'mrg' => null, 'zero' => false];
 		}
 	}
 	$sold_cnt = count($items);
@@ -129,7 +129,7 @@
 			$id = (int)$r['id'];
 			if (isset($items[$id])) continue;
 			$nm = trim(strip_tags(html_entity_decode((string)($r['name_kz'] ?: $r['name_ru']))));
-			$items[$id] = ['id' => $id, 'name' => $nm !== '' ? $nm : '#'.$id, 'qty' => 0.0, 'rev' => 0.0, 'cost' => 0.0, 'mrg' => 0.0, 'zero' => true];
+			$items[$id] = ['id' => $id, 'name' => $nm !== '' ? $nm : '#'.$id, 'nh' => fun::name_html($r['name_kz'] ?: $r['name_ru']), 'qty' => 0.0, 'rev' => 0.0, 'cost' => 0.0, 'mrg' => 0.0, 'zero' => true];
 			$zero_cnt++;
 		}
 	}
@@ -315,7 +315,7 @@
 				<? foreach ($rows as $i => $r): $g = $r['c_'.$by]; ?>
 					<div class="abc_r<?=$r['zero'] ? ' abc_r_zero' : ''?>" data-g="<?=$g?>">
 						<div class="abc_i"><?=$i + 1?></div>
-						<div class="abc_nm"><span class="abc_b abc_b_<?=$g ?: 'x'?>"><?=$g ? $g_lbl($g) : '?'?></span><span class="abc_nm_t"><?=htmlspecialchars($r['name'])?></span></div>
+						<div class="abc_nm"><span class="abc_b abc_b_<?=$g ?: 'x'?>"><?=$g ? $g_lbl($g) : '?'?></span><span class="abc_nm_t"><?=(($r['nh'] ?? '') !== '' ? $r['nh'] : htmlspecialchars($r['name']))?></span></div>
 						<div class="abc_n" data-l="<?=abc_h('Quantity')?>"><?=abc_num($r['qty'])?> <?=htmlspecialchars($pcs)?></div>
 						<div class="abc_n" data-l="<?=abc_h('Revenue')?>"><?=abc_money($r['rev'])?></div>
 						<div class="abc_n <?=$r['mrg'] !== null && $r['mrg'] < 0 ? 'abc_neg' : ''?>" data-l="<?=abc_h('Margin')?>"><?=$r['mrg'] === null ? '<span class="abc_mt" title="'.abc_h('Cost is not filled in').'">'.abc_h('no cost').'</span>' : abc_money($r['mrg']).($r['rev'] ? ' <small>'.round($r['mrg'] / $r['rev'] * 100).'%</small>' : '')?></div>
