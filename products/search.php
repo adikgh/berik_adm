@@ -1,4 +1,4 @@
-<? include "../config/core.php"; ?>
+<? include "../config/core.php"; if (!$user_id) exit; // кірмегенге жабық (2026-11-21 аудит) ?>
 
    <!--  -->
    <? if (isset($_GET['product_search'])): ?>

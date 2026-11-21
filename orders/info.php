@@ -1,8 +1,10 @@
 <? include "../config/core.php"; ?>
 
-    <? $id = strip_tags($_POST['id']); ?>
-	<? $orders = db::query("select * from retail_orders where id = '$id'"); ?>
-    <? $buy_d = mysqli_fetch_assoc($orders); ?>
+    <? if (!$user_id) exit; // кірмеген адам тапсырысты көрмейді (2026-11-21 аудит)
+       $id = (int)@$_POST['id'];
+       $o_cw = @$user_right['positions_id'] == 1 ? '' : " and company_id = '".(int)$company."'"; ?>
+	<? $orders = db::query("select * from retail_orders where id = '$id'$o_cw"); ?>
+    <? $buy_d = mysqli_fetch_assoc($orders); if (!$buy_d) exit; ?>
     <? // Предоплата: pay_prepay (кез келген түрмен), ескі тапсырыстарда — pay_qr
        $pre_sum = (int)@$buy_d['pay_prepay'] > 0 ? (int)$buy_d['pay_prepay'] : (int)$buy_d['pay_qr']; ?>
 

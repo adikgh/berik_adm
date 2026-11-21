@@ -1,4 +1,4 @@
-<? include "apcore.php";
+<? include "apcore.php"; if (!$user_id) exit; // кірмегенге жабық (2026-11-21 аудит)
 
    // 
 	$pod_menu_name = 'main';

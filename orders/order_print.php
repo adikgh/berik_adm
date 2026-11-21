@@ -1,9 +1,11 @@
 <? include "../config/core.php"; 
 
+    if (!$user_id) exit; // кірмеген адам чекті ашпайды (2026-11-21 аудит)
     if (@$_GET['orderID']) {
-        $orderID = $_GET['orderID'];
+        $orderID = (int)$_GET['orderID'];
+        $o_cw = @$user_right['positions_id'] == 1 ? '' : " and company_id = '".(int)$company."'";
 
-        $cashbox = db::query("select * from retail_orders where id = '$orderID'");
+        $cashbox = db::query("select * from retail_orders where id = '$orderID'$o_cw");
         if (mysqli_num_rows($cashbox)) {
             $cashbox_d = mysqli_fetch_assoc($cashbox);
         }
