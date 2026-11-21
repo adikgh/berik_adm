@@ -10,6 +10,10 @@ class claude {
 
 	public static function ready() { return defined('ANTHROPIC_API_KEY') && ANTHROPIC_API_KEY !== ''; }
 
+	// Ұзақ HTTP алдында сессия файлын босатамыз: әйтпесе сол браузердің басқа вкладкалары жауап біткенше күтіп тұрады (2026-11-21).
+	// Осыдан кейін $_SESSION-ға жазу сақталмайды (оқу жұмыс істейді).
+	public static function unlock() { if (session_status() === PHP_SESSION_ACTIVE) session_write_close(); }
+
 	// $content — user хабарламасының блоктары (сурет, PDF, мәтін). $schema — жауаптың JSON құрылымы.
 	// CLAUDE_MODEL = 'auto' (әдепкі): алдымен арзан модель, сапасы нашар болса қымбатына ауысады (waybill/ai.php)
 	const CHEAP = 'claude-haiku-5-5', MID = 'claude-sonnet-5-5', TOP = 'claude-opus-5-5';
@@ -67,6 +71,7 @@ class claude {
 		// сүзгі бас тартса, Anthropic өзі басқа модельмен қайталайды (Haiku-да бұл жоқ)
 		$fb = (bool)preg_match('~^claude-(opus|sonnet|fable)-~', $model);
 		if ($fb) $body['fallbacks'] = 'default';
+		self::unlock();
 		$ch = curl_init('https://api.anthropic.com/v1/messages');
 		curl_setopt_array($ch, [
 			CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 240, CURLOPT_CONNECTTIMEOUT => 20,
@@ -119,6 +124,7 @@ class claude {
 			$fb = (bool)preg_match('~^claude-(opus|sonnet|fable)-~', $model); // сервер fallback-і Haiku-да жоқ
 			if ($fb) $body['fallbacks'] = 'default';
 			if ($searches > 0) $body['tools'] = [['type' => 'web_search_20260209', 'name' => 'web_search', 'max_uses' => (int)$searches]];
+			self::unlock();
 			$ch = curl_init(defined('CLAUDE_WEB_URL') ? CLAUDE_WEB_URL : 'https://api.anthropic.com/v1/messages'); // CLAUDE_WEB_URL тек тест үшін
 			curl_setopt_array($ch, [
 				CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 200, CURLOPT_CONNECTTIMEOUT => 20,

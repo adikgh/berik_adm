@@ -10,6 +10,7 @@
 	$out = function ($a) { exit(json_encode($a, JSON_UNESCAPED_UNICODE)); };
 	if (!$user_id || !$company) $out(['ok' => 0, 'error' => 'Кіру керек']);
 	require_once __DIR__.'/../../config/claude.php';
+	claude::unlock(); // Apify/ЖИ ұзақ: сессияны босатамыз, басқа вкладкалар күтпесін (бұл файл $_SESSION-ға жазбайды)
 	$cmp = (int)$company;
 	$e = function ($s) { return mysqli_real_escape_string(db::$connect, (string)$s); };
 	$txt = function ($s) { return trim(preg_replace('/\s+/u', ' ', strip_tags(str_replace(['<br>', '<br/>', '<br />'], ' ', (string)$s)))); };
