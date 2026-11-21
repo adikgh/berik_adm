@@ -7,6 +7,28 @@
 		$q = db::query("update product set recommend = '$on' where id = '$id' and company_id = '$cmp'");
 		exit($q ? 'yes' : 'error');
 	}
+	// Атаудағы «+ кола / сок / компот…» бөлігін бас әріппен қызыл ету (fun::addon_hl), бүкіл компания бір басуда.
+	// dry=1 — тек санап, мысал қайтарады. Өзгертпес бұрын ескі атаулар product_name_bak кестесіне сақталады.
+	if (isset($_GET['addon_hl'])) {
+		header('Content-Type: application/json; charset=utf-8');
+		if (!$user_id || !$company) exit('{"ok":0}');
+		$cmp = (int)$company; $dry = !empty($_POST['dry']); $ch = [];
+		$q = db::query("select id, name_kz, name_ru from product where company_id = '$cmp'");
+		while ($q && $r = mysqli_fetch_assoc($q)) {
+			$kz = fun::addon_hl($r['name_kz']); $ru = fun::addon_hl($r['name_ru']);
+			if ($kz !== (string)$r['name_kz'] || $ru !== (string)$r['name_ru']) $ch[] = $r + ['kz' => $kz, 'ru' => $ru];
+		}
+		if ($dry || !$ch) exit(json_encode(['ok' => 1, 'n' => count($ch), 'ex' => array_map(function ($r) { return fun::name_text($r['name_kz'] ?: $r['name_ru']); }, array_slice($ch, 0, 5))], JSON_UNESCAPED_UNICODE));
+		db::query("create table if not exists product_name_bak (id int unsigned not null auto_increment primary key, product_id int not null, name_kz varchar(255) null, name_ru varchar(255) null, ins_dt datetime not null default current_timestamp, key (product_id)) default charset = utf8mb4");
+		$e = function ($s) { return $s === null ? 'NULL' : "'".mysqli_real_escape_string(db::$connect, $s)."'"; };
+		$n = 0;
+		foreach ($ch as $r) {
+			$id = (int)$r['id'];
+			db::query("insert into product_name_bak (product_id, name_kz, name_ru) values ('$id', ".$e($r['name_kz']).", ".$e($r['name_ru']).")");
+			if (db::query("update product set name_kz = ".$e($r['name_kz'] === null ? null : $r['kz']).", name_ru = ".$e($r['name_ru'] === null ? null : $r['ru'])." where id = '$id' and company_id = '$cmp'")) $n++;
+		}
+		exit(json_encode(['ok' => 1, 'n' => $n], JSON_UNESCAPED_UNICODE));
+	}
 	// Сет / Позиция белгісі (product.is_set): v = 1 сет, 0 позиция, бос = құрамына қарап
 	if (isset($_GET['kind'])) {
 		if (!$user_id || !$company || !fun::has_col('product', 'is_set')) exit('error');

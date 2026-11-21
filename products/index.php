@@ -96,6 +96,7 @@
 							<? if ($kind_on && $pr_unk_n): ?><button type="button" class="pr_ai_b pr_ai_kind" title="Атауы, каталогы мен сипаттамасына қарап, түрі белгісіз тағамдарды Сет не Позиция деп белгілейді"><span>Түрін анықтау (<?=$pr_unk_n?>)</span></button><? endif ?>
 							<? if ($kind_on): ?><button type="button" class="pr_ai_b pr_ai_all" title="Құрамы жазылмаған сеттердің фотосы мен сипаттамасына қарап, ішіндегі позицияларды жазады"><span>Сет құрамын фотодан жазу</span></button><? endif ?>
 						</div>
+						<button type="button" class="pr_ai_b pr_addon_b" title="<?=htmlspecialchars(t::w('Drink addon hint', 'Атаудағы «+ кола», «+ сок», «+ компот» бөлігін БАС ӘРІППЕН қызыл етеді (базада бір рет)'))?>"><i class="fal fa-tint"></i> <span><?=t::w('Highlight drinks', 'Сусынды ерекшелеу')?></span></button>
 						<div class="btn btn_cl product_add_pop pr_add_b"><i class="fal fa-plus"></i><span><?=t::w('Add dish', 'Тағам қосу')?></span></div>
 					</div>
 					<!-- 2-қатар: сүзгілер (түрі | граммовка) -->
@@ -323,6 +324,7 @@
 		.pr_ai_lbl{ padding: 0 8px 0 6px; font-size: 13px; font-weight:600; color: #6b4ce6; white-space: nowrap; }
 		.pr_ai_b{ height: 38px; padding: 0 12px; border: 0; border-radius: 9px; background: #fff; color: #4a32b8; font: inherit; font-size: 13px; font-weight:600; cursor: pointer; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
 		.pr_ai_b:hover{ background: #ece6ff; } .pr_ai_b[disabled]{ opacity: .6; cursor: wait; } .pr_ai_b[hidden]{ display: none; }
+		.pr_addon_b{ color: #B90000; border: 1px solid #f1d4d4; } .pr_addon_b:hover{ background: #fdeeee; }
 		.pr_tr_flt{ gap: 10px 28px; }
 		.pr_fg{ display: inline-flex; align-items: center; gap: 8px; }
 		.pr_arh_chip{ margin-left: auto; height: 40px; padding: 0 12px; border: 1px solid var(--bp-line, #e6e9ef); border-radius: 10px; background: #fff; display: inline-flex; align-items: center; gap: 6px; }
@@ -367,6 +369,10 @@
 				'name' => t::w('Enter name', 'Атауын жазыңыз'),
 				'saved' => t::w('Saved', 'Сақталды'),
 				'err' => t::w('Error, try again', 'Қате, қайта көріңіз'),
+				'ad_none' => t::w('Drink addon none', '«+ сусын» бөлігі бар, әлі белгіленбеген тағам жоқ'),
+				'ad_ask' => t::w('Drink addon ask', '%n тағамның атауындағы «+ сусын» бөлігі БАС ӘРІППЕН қызыл болады. Мысалы: %ex. Ескі атаулар сақталады. Бастау керек пе?'),
+				'ad_ok' => t::w('Drink addon done', 'Дайын: %n тағам белгіленді'),
+				'ad_go' => t::w('Start', 'Бастау'),
 			], JSON_UNESCAPED_UNICODE)?>;
 			var msg = function (t) { if (window.mess) mess(t); else alert(t); };
 
@@ -489,6 +495,19 @@
 					if (t.trim() != 'yes') { msg(T.err); return; }
 					msg('Архивтен шығарылды'); ajx('.pr_page');
 				}).catch(function () { b.classList.remove('pr_kt_busy'); msg(T.err); });
+			});
+
+			// «+ кола / сок…» бөлігін бас әріппен қызыл ету (products/get.php?addon_hl): алдымен санап сұрайды, сосын бір сұраумен
+			document.addEventListener('click', function (e) {
+				var b = e.target.closest('.pr_addon_b'); if (!b || b.disabled) return;
+				var go = function (dry) { var fd = new FormData(); if (dry) fd.append('dry', 1); b.disabled = true; return fetch('/products/get.php?addon_hl', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.json(); }).finally(function () { b.disabled = false; }); };
+				go(1).then(function (d) {
+					if (!d.ok) { msg(T.err); return; }
+					if (!d.n) { msg(T.ad_none); return; }
+					ask(T.ad_ask.replace('%n', d.n).replace('%ex', d.ex.join(', ')), function () {
+						go(0).then(function (x) { if (!x.ok) { msg(T.err); return; } msg(T.ad_ok.replace('%n', x.n)); ajx('.pr_page'); }).catch(function () { msg(T.err); });
+					}, { ok: T.ad_go });
+				}).catch(function () { msg(T.err); });
 			});
 
 			// ЖИ: түрі белгісіз тағамдарды Сет / Позиция деп анықтау (item/kind_ai.php), бәрі бір сұраумен

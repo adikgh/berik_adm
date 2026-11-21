@@ -44,6 +44,18 @@
 			return preg_replace('~&lt;/(b|i|span)&gt;~', '</$1>', $s);
 		}
 
+		// «+ кола», «+ 2л сок» сияқты сусын қосымшасын бас әріппен қызыл ету: «Хан + <b class="cl_red">КОЛА</b>».
+		// Белгісі бар атау өзгермейді. Сусын емес бөлік («+ маргарита») сол күйінде қалады.
+		public static $addon_rx = '~(?<!\p{L})(кол[аыуе]|cola|coca|кока|пепси|pepsi|фант[аы]|fanta|спрайт|sprite|миринд\p{L}*|mirinda|сок|сока|соки|компот\p{L}*|каркаде|лимонад\p{L}*|морс|мохито|mojito|чай|айран\p{L}*|напит\p{L}*|сусын\p{L}*|газировк\p{L}*|вода|воды|кофе|juice|tea)(?!\p{L})~iu';
+		public static function addon_hl($s) {
+			$s = (string)$s;
+			if ($s === '' || strpos($s, '+') === false || strpos($s, '<') !== false) return $s;
+			return preg_replace_callback('~\+(\s*)([^+]+?)(\s*)(?=\+|$)~u', function ($m) {
+				if (!preg_match(self::$addon_rx, $m[2])) return $m[0];
+				return '+'.$m[1].'<b class="cl_red">'.htmlspecialchars(mb_strtoupper($m[2]), ENT_NOQUOTES, 'UTF-8').'</b>'.$m[3];
+			}, $s);
+		}
+
 		// іздеу/сұрыптау үшін таза мәтін
 		public static function name_text($s) {
 			return trim(strip_tags(html_entity_decode((string)$s, ENT_QUOTES, 'UTF-8')));
