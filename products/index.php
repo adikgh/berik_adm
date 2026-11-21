@@ -12,29 +12,25 @@
 	$no_catalog = ['id' => 0, 'name_kz' => 'Каталогсыз', 'name_ru' => 'Каталогсыз', 'color' => '#b3bac7', 'items' => []];
 	$product = db::query("select * from product where company_id = '$company' and arh = 0 order by COALESCE(NULLIF(TRIM(name_kz), ''), name_ru) asc, id asc");
 	$page_result = mysqli_num_rows($product);
-	// граммовкасы жоқ тағамдарға белгі (Закуп бөлімінің тексеруі)
-	if (!class_exists('wb')) @include_once "../waybill/lib.php";
-	$nocomp = class_exists('wb') ? wb::comp_check($company)['dish'] : [];
-	// сет пе, жеке позиция ма: product_set_item-та құрамы бар тағам = сет
+	// түрі (products/cost2/kind.php) мен граммовка анализі (products/cost2/gram.php) — Себес бетімен бір ереже, бір функция
+	require_once __DIR__.'/cost2/kind.php'; require_once __DIR__.'/cost2/gram.php';
+	$kind_on = pkind::ready(); $kn_name = pkind::names();
+	$gs = c2gram::status($company);
+	// сет құрамы бар ма (ЖИ «Сет құрамын фотодан жазу» үшін)
 	$pr_sets = [];
 	if (($tq = db::query("show tables like 'product_set_item'")) && mysqli_num_rows($tq)) { $sq = db::query("select distinct si.set_id from product_set_item si join product p on p.id = si.set_id where p.company_id = '$company' and p.arh = 0"); while ($x = mysqli_fetch_assoc($sq)) $pr_sets[$x['set_id']] = 1; }
-	// қолмен белгі (product.is_set): 1 = сет, 0 = позиция, NULL = құрамына қарап (product_set_item бар болса сет)
-	$kind_on = fun::has_col('product', 'is_set');
-	$pr_set_n = 0; $pr_unk_n = 0;
-	// граммовкасы бар тағамдар (белгісі жоқ болса позиция деп саналады)
-	$pr_ci = [];
-	$cq = db::query("select distinct i.product_id from product_item i join product p on p.id = i.product_id where p.company_id = '$company' and i.comp_id > 0");
-	while ($cq && $x = mysqli_fetch_assoc($cq)) $pr_ci[$x['product_id']] = 1;
+	$kn = [0 => 0, 1 => 0, 2 => 0, 3 => 0, 4 => 0]; $gn = ['all' => 0, 'ok' => 0, 'part' => 0, 'none' => 0];
 	while ($pr_d = mysqli_fetch_assoc($product)) {
-		$pr_d['_set'] = ($kind_on && $pr_d['is_set'] !== null) ? (int)$pr_d['is_set'] === 1 : isset($pr_sets[$pr_d['id']]);
+		$g = $gs[(int)$pr_d['id']] ?? ['k' => 0, 'st' => 'none', 'why' => 'unk', 'a' => 'd'.$pr_d['id']];
+		$pr_d['_k'] = $kind_on ? ($pr_d['kind'] === null ? 0 : (int)$pr_d['kind']) : (int)$g['k'];
+		$pr_d['_g'] = $g;
 		$pr_d['_has'] = isset($pr_sets[$pr_d['id']]);
-		// түрі белгісіз: қолмен белгі жоқ, сет құрамы да, граммовка да жоқ
-		$pr_d['_unk'] = $kind_on && $pr_d['is_set'] === null && !$pr_d['_has'] && !isset($pr_ci[$pr_d['id']]);
-		if ($pr_d['_set']) $pr_set_n++;
-		if ($pr_d['_unk']) $pr_unk_n++;
+		$kn[$pr_d['_k']] = ($kn[$pr_d['_k']] ?? 0) + 1;
+		if ($g['st'] != 'skip') { $gn['all']++; $gn[$g['st']]++; }
 		if ($pr_d['catalog_id'] && isset($catalogs[$pr_d['catalog_id']])) $catalogs[$pr_d['catalog_id']]['items'][] = $pr_d;
 		else $no_catalog['items'][] = $pr_d;
 	}
+	$pr_unk_n = $kn[0];
 	if ($no_catalog['items']) $catalogs[0] = $no_catalog;
 	// архивтегі тағамдар бөлек «Архив» санатында (жалпы тізімде көрінбейді)
 	$arh_items = [];
@@ -43,7 +39,7 @@
 	// QR мәзірдегі «Ұсыныс» (★): тағам өзі не бүкіл санаты белгіленеді
 	$rec_on = fun::has_col('product', 'recommend') && fun::has_col('product_catalog', 'recommend');
 	$rec_n = 0; $rec_k = 0;
-	foreach ($catalogs as $cat) { if (!empty($cat['recommend'])) $rec_k++; foreach ($cat['items'] as $x) if (!empty($x['recommend'])) $rec_n++; }
+	foreach ($catalogs as $cat) { if (!$cat['id']) continue; if (!empty($cat['recommend'])) $rec_k++; foreach ($cat['items'] as $x) if (!empty($x['recommend'])) $rec_n++; }
 	$coll = class_exists('Collator') ? new Collator('kk_KZ') : null;
 	foreach ($catalogs as &$cat) usort($cat['items'], function ($a, $b) use ($coll) {
 		$x = mb_strtolower(fun::name_text($a['name_kz'] ?: $a['name_ru'])); $y = mb_strtolower(fun::name_text($b['name_kz'] ?: $b['name_ru']));
@@ -93,7 +89,7 @@
 						<div class="pr_ai_grp" title="ЖИ көмекші">
 							<span class="pr_ai_lbl"><i class="fal fa-magic"></i> ЖИ</span>
 							<a class="pr_ai_b pr_imp_b" href="/products/import/" title="Мәзір фотосы, PDF, Instagram не сайт: жоқ тағамдарды қосып, сегмент бойынша граммовка мен сет құрамын толтырады"><span><?=t::w('imp Import menu', 'Мәзірді импорттау')?></span></a>
-							<? if ($kind_on && $pr_unk_n): ?><button type="button" class="pr_ai_b pr_ai_kind" title="Атауы, каталогы мен сипаттамасына қарап, түрі белгісіз тағамдарды Сет не Позиция деп белгілейді"><span>Түрін анықтау (<?=$pr_unk_n?>)</span></button><? endif ?>
+							<? if ($kind_on && $pr_unk_n): ?><button type="button" class="pr_ai_b pr_ai_kind" title="Атауы, каталогы мен сипаттамасына қарап, түрі белгісіз тағамдарды Сет не Позиция деп белгілейді"><span><?=t::w('pl Detect kind', 'Түрін анықтау')?> (<?=$pr_unk_n?>)</span></button><? endif ?>
 							<? if ($kind_on): ?><button type="button" class="pr_ai_b pr_ai_all" title="Құрамы жазылмаған сеттердің фотосы мен сипаттамасына қарап, ішіндегі позицияларды жазады"><span>Сет құрамын фотодан жазу</span></button><? endif ?>
 						</div>
 						<button type="button" class="pr_ai_b pr_addon_b" title="<?=htmlspecialchars(t::w('Drink addon hint', 'Атаудағы «+ кола», «+ сок», «+ компот» бөлігін БАС ӘРІППЕН қызыл етеді (базада бір рет)'))?>"><i class="fal fa-tint"></i> <span><?=t::w('Highlight drinks', 'Сусынды ерекшелеу')?></span></button>
@@ -102,47 +98,48 @@
 					<!-- 2-қатар: сүзгілер (түрі | граммовка) -->
 					<div class="pr_tr pr_tr_flt">
 						<div class="pr_fg">
-							<span class="pr_lbl">Түрі:</span>
+							<span class="pr_lbl"><?=t::w('pl Kind', 'Түрі')?>:</span>
 							<div class="pr_seg pr_kind">
-								<button type="button" class="pr_kind_b pr_seg_b pr_seg_on" data-k="">Барлығы <small><?=$page_result?></small></button>
-								<button type="button" class="pr_kind_b pr_seg_b" data-k="set" title="Сеттер, жинақтар, комбо"><i class="fal fa-box-full"></i> Сеттер <small class="pr_kind_n1"><?=$pr_set_n?></small></button>
-								<button type="button" class="pr_kind_b pr_seg_b" data-k="one" title="Жеке тағамдар"><i class="fal fa-hamburger"></i> Позициялар <small class="pr_kind_n0"><?=max(0, $page_result - $pr_set_n - $pr_unk_n)?></small></button>
-								<? if ($kind_on): ?><button type="button" class="pr_kind_b pr_seg_b pr_seg_red" data-k="unk"<?=(!$pr_unk_n ? ' hidden' : '')?>><i class="fal fa-question-circle"></i> Белгісіз <small class="pr_kind_nu"><?=$pr_unk_n?></small></button><? endif ?>
+								<button type="button" class="pr_kind_b pr_seg_b pr_seg_on" data-k=""><?=t::w('All', 'Барлығы')?> <small><?=$page_result?></small></button>
+								<? foreach ([1 => 'fa-box-full', 2 => 'fa-hamburger', 3 => 'fa-wine-bottle', 4 => 'fa-ban'] as $kk => $ico): ?>
+								<button type="button" class="pr_kind_b pr_seg_b" data-k="<?=$kk?>"<?=(!$kn[$kk] && $kk > 2 ? ' hidden' : '')?>><i class="fal <?=$ico?>"></i> <?=htmlspecialchars($kk == 1 ? t::w('pl Sets', 'Сеттер') : ($kk == 2 ? t::w('pl Dishes', 'Тағамдар') : $kn_name[$kk]))?> <small class="pr_kn" data-k="<?=$kk?>"><?=$kn[$kk]?></small></button>
+								<? endforeach ?>
+								<button type="button" class="pr_kind_b pr_seg_b pr_seg_red" data-k="0"<?=(!$kn[0] ? ' hidden' : '')?>><i class="fal fa-question-circle"></i> <?=t::w('pl Kind unknown', 'Түрі белгісіз')?> <small class="pr_kn" data-k="0"><?=$kn[0]?></small></button>
 							</div>
 						</div>
-						<? if ($nocomp): ?>
 						<div class="pr_fg">
-							<span class="pr_lbl">Граммовка:</span>
-							<div class="pr_seg" title="Граммовкасы толтырылмаған тағамдарды ғана көрсету">
-								<button type="button" class="pr_seg_b pr_seg_on" data-nc="">Барлығы <small><?=$page_result?></small></button>
-								<button type="button" class="pr_seg_b pr_seg_red" data-nc="1"><i class="fal fa-exclamation-circle"></i> Жоқ <small><?=count($nocomp)?></small></button>
+							<span class="pr_lbl"><?=t::w('pl Grammovka', 'Граммовка')?>:</span>
+							<div class="pr_seg pr_gseg" title="<?=htmlspecialchars(t::w('pl Gram hint', 'Себес бетімен бір ереже: «Қатысы жоқ» санауға кірмейді'))?>">
+								<button type="button" class="pr_seg_b pr_gs_b pr_seg_on" data-g=""><?=t::w('All', 'Барлығы')?> <small><?=$gn['all']?></small></button>
+								<button type="button" class="pr_seg_b pr_gs_b" data-g="ok"><i class="fal fa-check-circle"></i> <?=t::w('pl Gram ok', 'Толық')?> <small><?=$gn['ok']?></small></button>
+								<button type="button" class="pr_seg_b pr_gs_b pr_seg_yel" data-g="part"><i class="fal fa-adjust"></i> <?=t::w('pl Gram part', 'Толық емес')?> <small><?=$gn['part']?></small></button>
+								<button type="button" class="pr_seg_b pr_gs_b pr_seg_red" data-g="none"><i class="fal fa-exclamation-circle"></i> <?=t::w('pl Gram none', 'Жоқ')?> <small><?=$gn['none']?></small></button>
 							</div>
 							<div class="pr_info" tabindex="0">
 								<i class="fal fa-info"></i>
 								<div class="pr_info_c">
-									<div><span class="pr_lg pr_lg_r">Граммовка жоқ</span> құрамы мүлде жазылмаған</div>
-									<div><span class="pr_lg pr_lg_y">Граммовка толық емес</span> құрамындағы бір өнімнің бағасы не рецепті жоқ</div>
-									<div><i class="fal fa-layer-group"></i> Түзеу үшін тағамның «Құрамы» кнопкасын не белгінің өзін басыңыз</div>
+									<div><span class="pr_lg pr_lg_r"><?=t::w('pl Gram none', 'Жоқ')?></span> <?=t::w('pl Info none', 'сеттің құрамы, тағамның граммовкасы жоқ не тікелей шикізат байланбаған')?></div>
+									<div><span class="pr_lg pr_lg_y"><?=t::w('pl Gram part', 'Толық емес')?></span> <?=t::w('pl Info part', 'бір заты шикізатқа байланбаған, ішінде позиция емес зат бар не себесі 0')?></div>
+									<div><i class="fal fa-calculator"></i> <?=t::w('pl Info click', 'Белгіні басса, Себес бетінің сол жеріне апарады. «Қатысы жоқ» санауға кірмейді.')?></div>
 								</div>
 							</div>
 						</div>
-						<? endif ?>
 					</div>
 					<!-- 3-қатар: каталог + архив -->
 					<div class="pr_tr">
-						<span class="pr_lbl">Каталог:</span>
+						<span class="pr_lbl"><?=t::w('Catalog', 'Каталог')?>:</span>
 						<div class="k_br pr_cat_chips">
 							<a class="k_br_i k_br_act" href="#" data-cat=""><span><?=t::w('All', 'Барлығы')?></span></a>
 							<? foreach ($catalogs as $cat): if (!$cat['items']) continue; ?>
 								<a class="k_br_i" href="#cat=<?=$cat['id']?>" data-cat="<?=$cat['id']?>"><span><?=htmlspecialchars($cat['name_'.$lang] ?: $cat['name_ru'])?></span><small class="pr_cat_cnt"><?=count($cat['items'])?></small></a>
 							<? endforeach ?>
 						</div>
-						<a class="k_br_i pr_arh_chip" href="#cat=arh" data-cat="arh"><i class="fal fa-archive"></i> <span>Архив</span><small class="pr_cat_cnt"><?=count($arh_items)?></small></a>
+						<a class="k_br_i pr_arh_chip" href="#cat=arh" data-cat="arh"><i class="fal fa-archive"></i> <span><?=t::w('pl Archive', 'Архив')?></span><small class="pr_cat_cnt"><?=count($arh_items)?></small></a>
 					</div>
 					<? if ($rec_on): ?>
 						<div class="pr_tr pr_rec_info">
 							<i class="fas fa-star"></i>
-							<span>QR мәзірде тек ★ белгіленген тағамдар көрінеді (тағамның өзі не бүкіл санаты): қазір <b class="pr_rec_cn"><?=$rec_n?></b> тағам, <b class="pr_rec_ck"><?=$rec_k?></b> санат. Олар «Тағы қосасыз ба?» ұсынысына да шығады (12-ге дейін). Ештеңе белгіленбесе, мәзірде барлық тағам көрінеді.</span>
+							<span><?=str_replace(['{n}', '{k}'], ['<b class="pr_rec_cn">'.$rec_n.'</b>', '<b class="pr_rec_ck">'.$rec_k.'</b>'], htmlspecialchars(t::w('pl QR info', 'QR мәзірде тек ★ белгіленген тағамдар көрінеді (тағамның өзі не бүкіл санаты): қазір {n} тағам, {k} санат. Олар «Тағы қосасыз ба?» ұсынысына да шығады (12-ге дейін). Ештеңе белгіленбесе, мәзірде барлық тағам көрінеді. Каталогсыз тағам QR мәзірге шықпайды.')))?></span>
 						</div>
 					<? endif ?>
 				</div>
@@ -160,19 +157,19 @@
 								data-name="<?=htmlspecialchars(mb_strtolower(fun::name_text($pr_d['name_kz']).' '.fun::name_text($pr_d['name_ru'])))?>"
 								data-name-kz="<?=htmlspecialchars(fun::name_save($pr_d['name_kz']))?>"
 								data-name-ru="<?=htmlspecialchars(fun::name_save($pr_d['name_ru']))?>"
-								data-catalog="<?=(int)$pr_d['catalog_id']?>"<?=($pr_d['_set'] ? ' data-set="1"' : '')?><?=($pr_d['_has'] ? ' data-has="1"' : '')?><?=($pr_d['_unk'] ? ' data-unk="1"' : '')?><?=(!empty($pr_d['img']) || trim((string)@$pr_d['description']) !== '' ? ' data-pic="1"' : '')?><?=(isset($nocomp[$pr_d['id']]) ? ' data-nocomp="1"' : '')?>
+								data-catalog="<?=(int)$pr_d['catalog_id']?>" data-k="<?=$pr_d['_k']?>" data-g="<?=$pr_d['_g']['st']?>"<?=($pr_d['_k'] == 1 ? ' data-set="1"' : '')?><?=($pr_d['_has'] ? ' data-has="1"' : '')?><?=(!$pr_d['_k'] ? ' data-unk="1"' : '')?><?=(!empty($pr_d['img']) || trim((string)@$pr_d['description']) !== '' ? ' data-pic="1"' : '')?>
 								data-price="<?=(int)$pr_d['price']?>"
 								data-desc="<?=htmlspecialchars((string)@$pr_d['description'])?>">
 								<div class="ctg_num"><?=$number?></div>
 								<div class="ctg_clr pph<?=(!empty($pr_d['img']) ? ' pph_on' : '')?>" data-id="<?=$pr_d['id']?>" title="<?=t::w('Click to add photo', 'Басып фото қосыңыз')?>" style="background:<?=htmlspecialchars($clr)?>"><? if (!empty($pr_d['img'])): ?><img class="pph_img" src="<?=(preg_match('~^https?://~', $pr_d['img']) ? htmlspecialchars($pr_d['img']) : '/assets/uploads/products/'.rawurlencode($pr_d['img']))?>" alt="" loading="lazy" onerror="this.parentNode.classList.remove('pph_on');this.remove()"><? endif ?><i class="fal fa-camera pph_def"></i><span class="pph_ic"><i class="fal fa-camera"></i></span></div>
 								<a class="ctg_name" href="item/?id=<?=$pr_d['id']?>">
-									<div class="ctg_name_kz pr_nm_kz"><?=fun::name_html($pr_d['name_kz'] ?: $pr_d['name_ru'])?><?=(isset($nocomp[$pr_d['id']]) ? wb::comp_badge($nocomp[$pr_d['id']]) : '')?></div>
+									<div class="ctg_name_kz pr_nm_kz"><?=fun::name_html($pr_d['name_kz'] ?: $pr_d['name_ru'])?><? $g = $pr_d['_g']; if ($g['st'] == 'none' || $g['st'] == 'part'): ?> <span class="pr_gb pr_gb_<?=$g['st']?>" data-href="/products/cost2/<?=$g['a'] ? '#'.$g['a'] : ''?>" title="<?=htmlspecialchars(t::w('pl Open cost', 'Себес бетінде ашу'))?>"><?=htmlspecialchars(c2gram::why_text($g['why']))?></span><? endif ?></div>
 									<div class="ctg_name_ru pr_nm_ru"><?=($pr_d['name_ru'] && fun::name_text($pr_d['name_ru']) != fun::name_text($pr_d['name_kz']) ? fun::name_html($pr_d['name_ru']) : '')?></div>
 								</a>
 								<div class="ctg_cnt pr_pr"><?=((int)$pr_d['price'] ? number_format((int)$pr_d['price'], 0, '', ' ').' тг' : '<m>'.t::w('No price', 'Бағасы жоқ').'</m>')?></div>
 								<div class="ctg_btns">
-									<? if ($kind_on): ?><div class="ctg_b pr_kt<?=($pr_d['_set'] ? ' pr_kt_set' : '')?><?=($pr_d['_unk'] ? ' pr_kt_unk' : ($pr_d['is_set'] === null ? ' pr_kt_auto' : ''))?>" data-id="<?=$pr_d['id']?>" title="Басып ауыстыру: Сет (жинақ, комбо) не Позиция (жеке тағам)"><i class="fal fa-<?=($pr_d['_unk'] ? 'question' : ($pr_d['_set'] ? 'box-full' : 'hamburger'))?>"></i><span><?=($pr_d['_unk'] ? 'Түрі?' : ($pr_d['_set'] ? 'Сет' : 'Позиция'))?></span></div><? endif ?>
-									<? if ($rec_on): ?><div class="ctg_b pr_rec pr_rec_p<?=(!empty($pr_d['recommend']) ? ' pr_rec_on' : '')?>" data-id="<?=$pr_d['id']?>" title="QR мәзірде көрсету (★)"><i class="fa<?=(!empty($pr_d['recommend']) ? 's' : 'l')?> fa-star"></i></div><? endif ?>
+									<? if ($kind_on): $kk = $pr_d['_k']; ?><div class="ctg_b pr_kt pr_kt<?=$kk?>" data-id="<?=$pr_d['id']?>" data-k="<?=$kk?>" title="<?=htmlspecialchars(t::w('pl Kind change', 'Түрін ауыстыру'))?>"><i class="fal <?=[0 => 'fa-question', 1 => 'fa-box-full', 2 => 'fa-hamburger', 3 => 'fa-wine-bottle', 4 => 'fa-ban'][$kk]?>"></i><span><?=htmlspecialchars($kk ? $kn_name[$kk] : t::w('pl Kind q', 'Түрі?'))?></span></div><? endif ?>
+									<? if ($rec_on && $cat['id']): ?><div class="ctg_b pr_rec pr_rec_p<?=(!empty($pr_d['recommend']) ? ' pr_rec_on' : '')?>" data-id="<?=$pr_d['id']?>" title="QR мәзірде көрсету (★)"><i class="fa<?=(!empty($pr_d['recommend']) ? 's' : 'l')?> fa-star"></i></div><? endif ?>
 									<a class="ctg_b cpp_open" href="item/?id=<?=$pr_d['id']?>" data-id="<?=$pr_d['id']?>" title="<?=t::w('Ingredients', 'Құрамы (граммовка)')?>"><i class="fal fa-layer-group"></i></a>
 									<div class="ctg_b product2_add_pop" data-id="<?=$pr_d['id']?>" title="<?=t::w('Make copy', 'Көшірме жасау')?>"><i class="fal fa-clone"></i></div>
 									<div class="ctg_b pr_edit" title="<?=t::w('Edit', 'Өзгерту')?>"><i class="fal fa-pen"></i></div>
@@ -182,13 +179,13 @@
 						<? endforeach ?>
 					</div>
 				<? endforeach ?>
-				<? if (!$arh_items): ?><div class="pr_row pr_row_arh pr_arh_empty" data-cat="arh" data-name="" style="display:none"><div class="ds_nr" style="width:100%"><i class="fal fa-archive"></i><p>Архив бос. Тағамның 🗄 кнопкасын басса, ол осында түседі.</p></div></div><? endif ?>
+				<? if (!$arh_items): ?><div class="pr_row pr_row_arh pr_arh_empty" data-cat="arh" data-name="" style="display:none"><div class="ds_nr" style="width:100%"><i class="fal fa-archive"></i><p><?=t::w('pl Archive empty', 'Архив бос. Тағамның 🗄 кнопкасын басса, ол осында түседі.')?></p></div></div><? endif ?>
 				<? if ($arh_items): ?>
 					<div class="pr_grp pr_grp_arh" data-cat="arh">
 						<span class="pr_grp_clr" style="background:#9aa1ab"></span>
-						<span class="pr_grp_name">Архив</span>
+						<span class="pr_grp_name"><?=t::w('pl Archive', 'Архив')?></span>
 						<span class="pr_grp_cnt"><?=count($arh_items)?></span>
-						<span class="pr_arh_note">Бұл тағамдар кассада, мәзірде сатылмайды. Қайтару үшін «Архивтен шығару» басыңыз.</span>
+						<span class="pr_arh_note"><?=t::w('pl Archive note', 'Бұл тағамдар кассада, мәзірде сатылмайды. Қайтару үшін «Архивтен шығару» басыңыз.')?></span>
 					</div>
 					<div class="ctg_list">
 						<? $an = 0; foreach ($arh_items as $pr_d): $an++; ?>
@@ -201,7 +198,7 @@
 								</a>
 								<div class="ctg_cnt pr_pr"><?=((int)$pr_d['price'] ? number_format((int)$pr_d['price'], 0, '', ' ').' тг' : '—')?></div>
 								<div class="ctg_btns">
-									<div class="ctg_b pr_unarh" data-id="<?=$pr_d['id']?>" title="Архивтен шығарып, қайта сатуға қою"><i class="fal fa-box-open"></i><span>Архивтен шығару</span></div>
+									<div class="ctg_b pr_unarh" data-id="<?=$pr_d['id']?>" title="Архивтен шығарып, қайта сатуға қою"><i class="fal fa-box-open"></i><span><?=t::w('pl Unarchive', 'Архивтен шығару')?></span></div>
 								</div>
 							</div>
 						<? endforeach ?>
@@ -301,16 +298,24 @@
 		@media (max-width: 768px){ .pr_info_c{ left: auto; right: 0; transform: none; width: 280px; } }
 		.pr_lg{ display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight:600; white-space: nowrap; }
 		.pr_lg_r{ background: #fdecec; color: #dc2626; } .pr_lg_y{ background: #fff3d6; color: #b07800; }
-		.pr_row .wbm_b{ cursor: pointer; }
 		.pr_rec_info{ flex-wrap: nowrap; align-items: flex-start; gap: 8px; font-size: 13px; color: #5d6470; line-height: 1.45; padding: 8px 12px; background: #fff8e1; border-radius: 10px; }
 		.pr_rec_info > i{ color: #f5a700; margin-top: 3px; }
 		.pr_rec{ cursor: pointer; }
 		.ctg_btns .pr_kt{ width: auto; min-width: 92px; padding: 0 10px; gap: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight:600; cursor: pointer; color: #5d6470; background: #f1f3f5; }
 		.ctg_btns .pr_kt i{ color: #5d6470; }
-		.ctg_btns .pr_kt.pr_kt_set{ background: #e8f0ff; color: #2f5bd3; } .ctg_btns .pr_kt.pr_kt_set i{ color: #2f5bd3; }
-		.ctg_btns .pr_kt.pr_kt_auto{ opacity: .6; border: 1px dashed #c3c8d0; }
-		.ctg_btns .pr_kt:hover{ opacity: 1; filter: brightness(.96); }
-		.ctg_btns .pr_kt.pr_kt_unk{ background: #fff3d6; color: #8a6100; } .ctg_btns .pr_kt.pr_kt_unk i{ color: #b07800; }
+		.ctg_btns .pr_kt{ min-width: 128px; } .ctg_btns .pr_kt:hover{ filter: brightness(.96); }
+		.ctg_btns .pr_kt.pr_kt1{ background: #e8f0ff; color: #2f5bd3; } .ctg_btns .pr_kt.pr_kt1 i{ color: #2f5bd3; }
+		.ctg_btns .pr_kt.pr_kt3{ background: #e3f5ec; color: #08794b; } .ctg_btns .pr_kt.pr_kt3 i{ color: #0EA768; }
+		.ctg_btns .pr_kt.pr_kt4{ background: #f3f4f3; color: #767c78; } .ctg_btns .pr_kt.pr_kt4 i{ color: #a3a8a5; }
+		.ctg_btns .pr_kt.pr_kt0{ background: #fff3d6; color: #8a6100; } .ctg_btns .pr_kt.pr_kt0 i{ color: #b07800; }
+		.pr_km{ position: absolute; z-index: 7000; background: #fff; border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,.16); padding: 6px; display: flex; flex-direction: column; min-width: 210px; }
+		.pr_km button{ height: 40px; border: 0; border-radius: 8px; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: #3d424a; text-align: left; padding: 0 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+		.pr_km button:hover{ background: #f3f5f4; } .pr_km button.pr_km_on{ color: var(--bp-green, #0EA768); background: #eefaf4; }
+		.pr_km i{ width: 18px; text-align: center; }
+		.pr_gb{ display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; vertical-align: middle; cursor: pointer; }
+		.pr_gb_none{ background: #fdecec; color: #c0392b; } .pr_gb_part{ background: #fff3d6; color: #b07800; }
+		.pr_gb:hover{ text-decoration: underline; }
+		.pr_seg_yel.pr_seg_on{ color: #b07800; }
 		.pr_seg_b[hidden]{ display: none; }
 		.pr_arh_chip i{ font-size: 13px; opacity: .7; }
 		.pr_arh_note{ margin-left: 12px; font-size: 13px; color: var(--bp-muted, #767c78); }
@@ -330,7 +335,7 @@
 		.pr_arh_chip{ margin-left: auto; height: 40px; padding: 0 12px; border: 1px solid var(--bp-line, #e6e9ef); border-radius: 10px; background: #fff; display: inline-flex; align-items: center; gap: 6px; }
 		.pr_arh_chip.k_br_act{ background: #eef0f3; border-color: #cfd4db; }
 		@media (max-width: 900px){ .pr_ai_grp{ order: 3; width: 100%; height: auto; flex-wrap: wrap; } .pr_ai_b{ flex: 1 1 auto; } .pr_arh_chip{ margin-left: 0; } }
-		@media (max-width: 768px){ .pr_fg{ width: 100%; } .pr_kind{ flex-wrap: wrap; } .pr_kind .pr_seg_b{ flex: 1 1 40%; } }
+		@media (max-width: 768px){ .pr_fg{ width: 100%; } .pr_kind, .pr_gseg{ flex-wrap: wrap; } .pr_kind .pr_seg_b, .pr_gseg .pr_seg_b{ flex: 1 1 40%; } .pr_gseg{ width: auto; flex: 1 1 auto; min-width: 0; } }
 		@media (max-width: 700px){ .ctg_btns .pr_kt{ min-width: 0; padding: 0; width: 40px; } .ctg_btns .pr_kt span{ display: none; } }
 		.pr_rec_p i, .pr_rec_k i{ color: #e0a100; }
 		.pr_rec_p.pr_rec_on{ background: #fff3c4; }
@@ -380,7 +385,7 @@
 			var chips, inp, q0 = '';
 			function grab() { chips = document.querySelectorAll('.pr_cat_chips .k_br_i, .pr_arh_chip'); inp = document.querySelector('.pr_search'); }
 			grab();
-			var onlyNc = false;
+			var gf = (location.hash.match(/g=(ok|part|none)/) || [])[1] || ''; // граммовка сүзгісі: '' | ok | part | none (Себестен #g=part)
 			// Сеттер | Позициялар
 			var kind = '';
 			function kindShow() { document.querySelectorAll('.pr_kind_b').forEach(function (x) { x.classList.toggle('pr_seg_on', x.dataset.k === kind); }); }
@@ -394,7 +399,7 @@
 				var q = inp ? inp.value.trim().toLowerCase() : '', shown = {}, any = false;
 				chips.forEach(function (c) { c.classList.toggle('k_br_act', c.dataset.cat === cur); });
 				document.querySelectorAll('.pr_row').forEach(function (r) {
-					var ok = (cur ? r.dataset.cat === cur : r.dataset.cat !== 'arh') &&  (!q || r.dataset.name.indexOf(q) > -1) && (!onlyNc || cur === 'arh' || r.dataset.nocomp) && (!kind || cur === 'arh' || (kind == 'unk' ? !!r.dataset.unk : !r.dataset.unk && (kind == 'set') == !!r.dataset.set));
+					var ok = (cur ? r.dataset.cat === cur : r.dataset.cat !== 'arh') && (!q || r.dataset.name.indexOf(q) > -1) && (!gf || cur === 'arh' || r.dataset.g === gf) && (kind === '' || cur === 'arh' || r.dataset.k === kind);
 					r.style.display = ok ? '' : 'none';
 					if (ok) { shown[r.dataset.cat] = 1; any = true; }
 				});
@@ -410,26 +415,27 @@
 				apply();
 			});
 			document.addEventListener('input', function (e) { if (e.target.closest('.pr_search')) { q0 = e.target.value; apply(); } });
-			// «Граммовкасы жоқ» сүзгісі
-			function segShow() { document.querySelectorAll('.pr_seg_b:not(.pr_kind_b)').forEach(function (x) { x.classList.toggle('pr_seg_on', !!x.dataset.nc === onlyNc); }); }
+			// граммовка сүзгісі: Барлығы | Толық | Толық емес | Жоқ
+			function segShow() { document.querySelectorAll('.pr_gs_b').forEach(function (x) { x.classList.toggle('pr_seg_on', x.dataset.g === gf); }); }
 			document.addEventListener('click', function (e) {
-				var b = e.target.closest('.pr_seg_b:not(.pr_kind_b)'); if (!b) return;
-				onlyNc = !!b.dataset.nc; segShow(); apply();
+				var b = e.target.closest('.pr_gs_b'); if (!b) return;
+				gf = b.dataset.g; segShow(); apply();
 			});
 			// тізім AJAX-пен жаңарғанда (fun.js ajx): іздеу, каталог, граммовка сүзгісі орнында қалады
 			$(document).on('ajx:done', function () {
 				grab(); if (inp) inp.value = q0;
 				if (cur && !document.querySelector('.pr_cat_chips [data-cat="' + cur + '"], .pr_arh_chip[data-cat="' + cur + '"]')) cur = '';
-				if (!document.querySelector('.pr_seg_b')) onlyNc = false;
+				if (!document.querySelector('.pr_gs_b')) gf = '';
 				segShow(); kindShow(); if (chips.length) apply();
 			});
-			// белгіні басса, құрамы попапы ашылады
+			// белгіні басса — Себес бетінің сол жері (#d123 тағам, #s123 сет)
 			document.addEventListener('click', function (e) {
-				var w = e.target.closest('.pr_row .wbm_b'); if (!w) return;
-				e.preventDefault();
-				var o = w.closest('.pr_row').querySelector('.cpp_open'); if (o) o.click();
+				var w = e.target.closest('.pr_row .pr_gb'); if (!w) return;
+				e.preventDefault(); e.stopPropagation();
+				location.href = w.dataset.href;
 			});
-			if (chips.length) apply();
+			segShow(); if (chips.length) apply();
+			window.addEventListener('hashchange', function () { var g = (location.hash.match(/g=(ok|part|none)/) || [])[1]; if (g) { gf = g; segShow(); apply(); } });
 
 			// ★ Ұсыныс: тағам (products/get.php?rec) не бүкіл санат (catalog/get.php?rec), бет жаңармайды
 			function recCnt() {
@@ -456,34 +462,38 @@
 					.catch(function () { b.classList.remove('pr_rec_busy'); msg(T.err); });
 			});
 
-			// Сет / Позиция белгісі (products/get.php?kind): басқанда ауысады, бет жаңармайды
-			function kindCnt() {
-				var a = document.querySelectorAll('.pr_row:not(.pr_row_arh)').length, n = document.querySelectorAll('.pr_row[data-set]').length, u = document.querySelectorAll('.pr_row[data-unk]').length;
-				var x = document.querySelector('.pr_kind_n1'), y = document.querySelector('.pr_kind_n0'), z = document.querySelector('.pr_kind_nu');
-				if (x) x.textContent = n; if (y) y.textContent = a - n - u; if (z) { z.textContent = u; z.parentNode.hidden = !u; }
-				var ak = document.querySelector('.pr_ai_kind span'); if (ak) { ak.textContent = 'Түрін анықтау (' + u + ')'; ak.parentNode.hidden = !u; }
-			}
+			// түр таңдағыш (products/get.php?kind, k = 1..4): басқанда мәзір ашылады, таңдаса тізім AJAX-пен жаңарады (санауыш, белгі серверден)
+			var KN = <?=json_encode([1 => ['fa-box-full', $kn_name[1]], 2 => ['fa-hamburger', $kn_name[2]], 3 => ['fa-wine-bottle', $kn_name[3]], 4 => ['fa-ban', $kn_name[4]]], JSON_UNESCAPED_UNICODE)?>;
+			var km = null;
+			function kmClose() { if (km) { km.remove(); km = null; } }
+			function kindCnt() { ajx('.pr_page'); }
 			document.addEventListener('click', function (e) {
-				var b = e.target.closest('.pr_kt'); if (!b) return;
-				e.preventDefault(); e.stopPropagation();
-				var r = b.closest('.pr_row'), on = !r.dataset.set;
-				var fd = new FormData(); fd.append('id', b.dataset.id); fd.append('v', on ? 1 : 0);
-				b.classList.add('pr_kt_busy');
-				fetch('/products/get.php?kind', { method: 'POST', body: fd, credentials: 'same-origin' })
-					.then(function (x) { return x.text(); })
-					.then(function (t) {
+				var o = e.target.closest('.pr_km button');
+				if (o) {
+					var b = km._b, fd = new FormData(); fd.append('id', b.dataset.id); fd.append('k', o.dataset.k);
+					kmClose(); b.classList.add('pr_kt_busy');
+					fetch('/products/get.php?kind', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (x) { return x.text(); }).then(function (t) {
 						b.classList.remove('pr_kt_busy');
 						if (t.trim() != 'yes') { msg(T.err); return; }
-						if (on) r.dataset.set = '1'; else delete r.dataset.set;
-						delete r.dataset.unk;
-						b.classList.toggle('pr_kt_set', on); b.classList.remove('pr_kt_auto', 'pr_kt_unk');
-						b.innerHTML = '<i class="fal fa-' + (on ? 'box-full' : 'hamburger') + '"></i><span>' + (on ? 'Сет' : 'Позиция') + '</span>';
-						kindCnt(); if (kind) apply();
-					})
-					.catch(function () { b.classList.remove('pr_kt_busy'); msg(T.err); });
+						msg(T.saved); ajx('.pr_page');
+					}).catch(function () { b.classList.remove('pr_kt_busy'); msg(T.err); });
+					return;
+				}
+				var b = e.target.closest('.pr_kt');
+				if (!b) { if (km && !e.target.closest('.pr_km')) kmClose(); return; }
+				e.preventDefault(); e.stopPropagation();
+				if (km && km._b === b) { kmClose(); return; }
+				kmClose();
+				km = document.createElement('div'); km.className = 'pr_km'; km._b = b;
+				km.innerHTML = [1, 2, 3, 4].map(function (k) { return '<button type="button" data-k="' + k + '"' + (b.dataset.k == k ? ' class="pr_km_on"' : '') + '><i class="fal ' + KN[k][0] + '"></i>' + KN[k][1] + '</button>'; }).join('');
+				document.body.appendChild(km);
+				var r = b.getBoundingClientRect(), w = km.offsetWidth;
+				km.style.top = (r.bottom + window.scrollY + 6) + 'px';
+				km.style.left = Math.max(8, Math.min(r.right - w, document.documentElement.clientWidth - w - 8) + window.scrollX) + 'px';
 			});
+			document.addEventListener('keydown', function (e) { if (e.key == 'Escape') kmClose(); });
 
-			document.addEventListener('pr:kind', function () { kindCnt(); if (kind) apply(); }); // «Құрамы» терезесінде түрі ауысса
+			document.addEventListener('pr:kind', function () { kindCnt(); }); // «Құрамы» терезесінде түрі ауысса
 			// архивтен шығару (products/get.php?product_restore), тізім бет жаңартпай жаңарады
 			document.addEventListener('click', function (e) {
 				var b = e.target.closest('.pr_unarh'); if (!b || b.classList.contains('pr_kt_busy')) return;
@@ -493,7 +503,7 @@
 				fetch('/products/get.php?product_restore', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {
 					b.classList.remove('pr_kt_busy');
 					if (t.trim() != 'yes') { msg(T.err); return; }
-					msg('Архивтен шығарылды'); ajx('.pr_page');
+					msg(<?=json_encode(t::w('pl Unarchived', 'Архивтен шығарылды'), JSON_UNESCAPED_UNICODE)?>); ajx('.pr_page');
 				}).catch(function () { b.classList.remove('pr_kt_busy'); msg(T.err); });
 			});
 

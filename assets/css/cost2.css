@@ -231,3 +231,8 @@ td.c2_isplan{ color: #a3a8a5 !important; }
 .c2_bh{ align-items: center; }
 .c2_bh input.c2_ksel{ -webkit-appearance: checkbox; appearance: auto; width: 16px; height: 16px; min-width: 16px; padding: 0; margin: 0 4px 0 0; position: static; opacity: 1; flex: none; }
 .c2_kbar .st_seg_i{ height: 36px; padding: 0 12px; }
+
+/* граммовка санауыштары (products/cost2/gram.php) — Тағамдар тізімімен бірдей */
+.c2_gram{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -4px 0 16px; font-size: 13px; color: var(--bp-muted, #767c78); }
+.c2_gram_i{ display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 9px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.06); color: #3d424a; text-decoration: none; font-weight: 600; }
+.c2_gram_i b{ font-weight: 700; } .c2_gram_ok b{ color: var(--bp-green-ink, #08794b); } .c2_gram_part b{ color: #b07800; } .c2_gram_none b{ color: #c0392b; }

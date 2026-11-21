@@ -146,6 +146,8 @@
 		// «Граммовкасы жоқ» = «Шаблоннан толтыру» терезесімен бір ереже (gtpl::empty_dishes: граммовкасы бос, сет емес, архивте емес позициялар)
 		$miss_ids = []; if (class_exists('gtpl')) foreach (gtpl::empty_dishes($cmp) as $r) $miss_ids[(int)$r['id']] = 1;
 		$n_miss = count($miss_ids);
+		// граммовка анализі: Тағамдар тізімімен бір функция (products/cost2/gram.php), «Қатысы жоқ» кірмейді
+		require_once __DIR__.'/gram.php'; $gcnt = c2gram::counts($cmp);
 		// шикізатқа жайылған дайындамасы бар тағамдар (рис + уксус + … → «Рис для суши»): «Дайындамаға жинау» батырмасы
 		require_once __DIR__.'/semi_fix.php';
 		$semi_cand = class_exists('gtpl') && gtpl::semi_ready() ? c2semi::candidates($cmp) : [];
@@ -206,6 +208,15 @@
 			<div class="c2_stat c2_stat_warn"><span><?=t::w('c2 Profit under 5%', 'Пайдасы 5%-дан аз')?></span><b><?=$n_low?></b></div>
 			<div class="c2_stat"><span><?=t::w('c2 Average profit', 'Орташа пайда')?></span><b><?=$avg?>%</b></div>
 			<div class="c2_stat"><span><?=t::w('c2 Cost per order', 'Бір заказға шығын')?></span><b><?=$f($over_u)?> ₸</b></div>
+		</div>
+
+		<!-- граммовка: Тағамдар тізіміндегі сүзгімен бірдей сандар (products/cost2/gram.php) -->
+		<div class="c2_gram">
+			<span><?=t::w('pl Grammovka', 'Граммовка')?>:</span>
+			<a href="/products/" class="c2_gram_i"><?=t::w('All', 'Барлығы')?> <b><?=$gcnt['all']?></b></a>
+			<a href="/products/#g=ok" class="c2_gram_i c2_gram_ok"><?=t::w('pl Gram ok', 'Толық')?> <b><?=$gcnt['ok']?></b></a>
+			<a href="/products/#g=part" class="c2_gram_i c2_gram_part"><?=t::w('pl Gram part', 'Толық емес')?> <b><?=$gcnt['part']?></b></a>
+			<a href="/products/#g=none" class="c2_gram_i c2_gram_none"><?=t::w('pl Gram none', 'Жоқ')?> <b><?=$gcnt['none']?></b></a>
 		</div>
 
 		<!-- баға стандарттары: /products/cost/get.php?setting -->
@@ -453,6 +464,8 @@
 			if (m) { if (typeof window.openPrep == 'function') window.openPrep(+m[1]); else { var b = document.getElementById('p' + m[1]); if (b) b.scrollIntoView({ block: 'center' }); } }
 			else if (h == 'missing') { var t = document.querySelector('.c2_tab_miss'); if (t) t.click(); }
 			else if (h == 'prep') { var c = document.getElementById('c2_col_p'); if (c) c.scrollIntoView({ block: 'start' }); }
+			// Тағамдар тізіміндегі белгіден: #d123 тағам, #s123 сет — сол блокқа апарып, жарқ етеді
+			else if (/^[ds]\d+$/.test(h)) { var t = document.getElementById(h); if (t) { t.hidden = false; t.scrollIntoView({ block: 'center' }); t.classList.remove('c2_flash'); void t.offsetWidth; t.classList.add('c2_flash'); } }
 		});
 		function send(a, data, ok) {
 			var fd = new FormData(); for (var k in data) fd.append(k, data[k]);
