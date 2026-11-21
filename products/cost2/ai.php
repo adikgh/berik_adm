@@ -43,11 +43,13 @@ class c2ai {
 		while ($q && $r = mysqli_fetch_assoc($q)) {
 			if ($r['product_id']) {
 				$pid = (int)$r['product_id'];
-				$p = mysqli_fetch_assoc(db::query("select id, name_ru, name_kz from product where id = '$pid' and company_id = '$cmp'"));
+				$p = mysqli_fetch_assoc(db::query("select id, name_ru, name_kz".(gtpl::col('product', 'kind') ? ", kind" : "")." from product where id = '$pid' and company_id = '$cmp'"));
 				if (!$p) continue;
+				$pk = isset($p['kind']) ? (int)$p['kind'] : 0;
+				if ($pk == 4) continue; // қатысы жоқ (доплата, пакет): себеске кірмейді
 				$its = []; $iq = db::query("select comp_id, quantity from product_item where product_id = '$pid' and comp_id > 0");
 				while ($i = mysqli_fetch_assoc($iq)) $its[] = $i;
-				if (!$its) { if (!isset($seen['p'.$pid])) $res[] = ['t' => 'dish', 'si' => (int)$r['id'], 'pid' => $pid, 'name' => trim(strip_tags($p['name_ru'] ?: $p['name_kz']))]; $seen['p'.$pid] = 1; continue; }
+				if (!$its) { if (!isset($seen['p'.$pid])) $res[] = ['t' => $pk == 3 ? 'goods' : 'dish', 'si' => (int)$r['id'], 'pid' => $pid, 'name' => trim(strip_tags($p['name_ru'] ?: $p['name_kz']))]; $seen['p'.$pid] = 1; continue; }
 				$sum = 0; foreach ($its as $i) $sum += isset($comps[$i['comp_id']]) ? $i['quantity'] * $comps[$i['comp_id']]['cost'] / cost::div($comps[$i['comp_id']]['unit']) : 0;
 				if ($sum > 0) continue;
 				// граммовкасы бар, бірақ себесі 0: бағасыз заттарына баға
@@ -102,6 +104,15 @@ class c2ai {
 		$new = 1;
 		return $id;
 	}
+	// тікелей шикізат (3-түр) позициясы: граммовкасы — өзі (бір шикізат-құрам, 1 шт; атауы кілтпен бар затқа сәйкеседі, бағасы кейін gtpl_ai::prices)
+	public static function goods_item($cmp, $pid, $name) {
+		$cmp = (int)$cmp; $pid = (int)$pid; $cr = 0;
+		if (mysqli_num_rows(db::query("select id from product_item where product_id = '$pid' and comp_id > 0 limit 1"))) return 0;
+		$cid = gtpl::comp_id($cmp, $name, 'шт', $cr, 2, -1);
+		if (!$cid) return 0;
+		return db::query("insert into product_item (product_id, comp_id, quantity) values ('$pid', '$cid', '1')") ? $cid : 0;
+	}
+
 	// тауар: шикізат (дана) + бағасы
 	public static function goods_comp($cmp, $name, $unit, $price) {
 		$u = gtpl::unit($unit ?: 'шт'); $p0 = 0; $src = ''; $newr = 0;
@@ -121,8 +132,9 @@ class c2ai {
 		$raw0 = (int)mysqli_fetch_row(db::query("select ifnull(max(id), 0) from product_raw"))[0];
 		$log0 = (int)@mysqli_fetch_row(db::query("select ifnull(max(id), 0) from company_ai_log"))[0];
 
-		// бар шаблоны бар тағамдар ЖИ-сіз
-		$ask = [];
+		// бар шаблоны бар тағамдар ЖИ-сіз; тікелей шикізат (3-түр) — өзі 1 шт, ЖИ-сіз
+		$ask = []; $gdone = 0;
+		foreach ($miss as $k => $m) if ($m['t'] == 'goods') { if (self::goods_item($cmp, $m['pid'], $m['name'])) { self::mark($cmp, 'p', $m['pid'], $sid); $gdone++; } unset($miss[$k]); }
 		foreach ($miss as $k => $m) {
 			if ($m['t'] == 'dish' && ($tid = self::tpl_exact($m['name']))) $miss[$k]['tpl'] = $tid;
 			else $ask[$k] = $m;
@@ -176,7 +188,7 @@ class c2ai {
 		$iprice = $semi_price ?? [];
 		foreach ($ans as $it) foreach ((array)@$it['ingredients'] as $i) if ((float)@$i['price'] > 0) $iprice[gtpl::norm(@$i['name'])] = (int)round($i['price']);
 
-		$done = 0; $msgs = [];
+		$done = $gdone; $msgs = [];
 		foreach ($miss as $k => $m) {
 			$it = $ans[$k] ?? null;
 			if ($m['t'] == 'price') {

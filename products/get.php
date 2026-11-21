@@ -29,13 +29,15 @@
 		}
 		exit(json_encode(['ok' => 1, 'n' => $n], JSON_UNESCAPED_UNICODE));
 	}
-	// Сет / Позиция белгісі (product.is_set): v = 1 сет, 0 позиция, бос = құрамына қарап
+	// Тағам түрі (products/cost2/kind.php): k = 1 сет, 2 тағам, 3 тікелей шикізат, 4 қатысы жоқ, бос = белгісіз; ids = JSON (жаппай).
+	// Ескі v: 1 = сет, 0 = позиция (тағам). product.is_set синхрон қалады. Қолмен қойылған — ЖИ қайта өзгертпейді.
 	if (isset($_GET['kind'])) {
 		if (!$user_id || !$company || !fun::has_col('product', 'is_set')) exit('error');
-		$id = (int)@$_POST['id']; $v = (string)@$_POST['v']; $cmp = (int)$company;
-		$val = $v === '' ? 'NULL' : "'".((int)$v ? 1 : 0)."'";
-		$q = db::query("update product set is_set = $val where id = '$id' and company_id = '$cmp'");
-		exit($q ? 'yes' : 'error');
+		require_once __DIR__.'/cost2/kind.php';
+		$cmp = (int)$company; $ids = json_decode((string)@$_POST['ids'], true); if (!is_array($ids)) $ids = [(int)@$_POST['id']];
+		if (isset($_POST['k'])) $k = (string)$_POST['k']; else { $v = (string)@$_POST['v']; $k = $v === '' ? '' : ((int)$v ? 1 : 2); }
+		pkind::set($cmp, $ids, $k === '' ? null : (int)$k, 'user');
+		exit('yes');
 	}
 	// Құрам (product_comp) / шикізат (product_raw): қосу және өзгерту
 	$cr_act = null;

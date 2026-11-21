@@ -54,11 +54,11 @@
 			$k = (string)@$_POST['k']; $id = (int)@$_POST['id'];
 			if ($a == 'cont_list') {
 				$st = c2cont::steps($cmp);
-				if ($k !== '') $st = array_values(array_filter($st, function ($x) use ($k, $id) { return $x['k'] == $k && (!$id || $x['id'] == $id || in_array($k, ['link', 'price'])); }));
+				if ($k !== '') $st = array_values(array_filter($st, function ($x) use ($k, $id) { return $x['k'] == $k && (!$id || $x['id'] == $id || in_array($k, ['kind', 'link', 'price'])); }));
 				exit(json_encode(['steps' => $st, 'ai' => claude::ready() ? 1 : 0], JSON_UNESCAPED_UNICODE));
 			}
 			if (!in_array($k, c2cont::$order, true) || $k == 'set') exit(json_encode(['error' => 'error']));
-			if (!in_array($k, ['link', 'flat']) && !claude::ready()) exit(json_encode(['error' => gtpl_ai::err()], JSON_UNESCAPED_UNICODE));
+			if (!in_array($k, ['link', 'flat', 'goods']) && !claude::ready()) exit(json_encode(['error' => gtpl_ai::err()], JSON_UNESCAPED_UNICODE));
 			exit(json_encode(c2cont::run($cmp, $k, $id), JSON_UNESCAPED_UNICODE));
 		} catch (Throwable $e) { error_log('cost2 cont: '.$e->getMessage()); exit(json_encode(['error' => 'error'])); }
 	}

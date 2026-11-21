@@ -7,13 +7,21 @@
 // set — құрамы жоқ сет (products/item/set_ai.php фотодан/сипаттамадан, сосын item). ЖИ шығыны company_ai_log-та feature = cost2_cont.
 require_once __DIR__.'/ai.php';
 require_once __DIR__.'/semi_fix.php';
+require_once __DIR__.'/kind.php';
 
 class c2cont {
-	public static $order = ['link', 'price', 'semi', 'flat', 'dish', 'item', 'set'];
+	// kind — түрі белгісіз тағамдар (ЖИ, бәрі бір сұрау), goods — тікелей шикізат (3-түр) граммовкасы: өзі 1 шт. Қатысы жоқ (4-түр) мүлде өткізіледі
+	public static $order = ['kind', 'link', 'price', 'semi', 'flat', 'goods', 'dish', 'item', 'set'];
 
 	// [түрі => [[id, name], ...]]
 	public static function breaks($cmp) {
 		$cmp = (int)$cmp; $b = array_fill_keys(self::$order, []);
+		foreach (pkind::unknown($cmp) as $x) $b['kind'][] = $x;
+		if (pkind::ready()) {
+			$q = db::query("select id, name_ru, name_kz from product p where company_id = '$cmp' and (arh is null or arh = 0) and kind = 3
+				and not exists (select 1 from product_item i where i.product_id = p.id and i.comp_id > 0) order by id");
+			while ($q && $r = mysqli_fetch_row($q)) $b['goods'][] = [(int)$r[0], trim(strip_tags($r[1] ?: $r[2]))];
+		}
 		$pc = gtpl::col('product_comp', 'price_src');
 		// 6) закупқа байланбаған шикізат-құрам (рецептсіз, kind = raw)
 		$q = db::query("select id, name_ru from product_comp c where company_id = '$cmp' and kind = 'raw' and (raw_id is null or raw_id = 0)
@@ -47,7 +55,7 @@ class c2cont {
 		$s = [];
 		foreach (self::breaks($cmp) as $k => $list) {
 			if (!$list) continue;
-			if (in_array($k, ['link', 'price'])) $s[] = ['k' => $k, 'id' => 0, 'n' => count($list), 'name' => implode(', ', array_slice(array_column($list, 1), 0, 5))];
+			if (in_array($k, ['kind', 'link', 'price'])) $s[] = ['k' => $k, 'id' => 0, 'n' => count($list), 'name' => implode(', ', array_slice(array_column($list, 1), 0, 5))];
 			else foreach ($list as $x) $s[] = ['k' => $k, 'id' => $x[0], 'n' => 1, 'name' => $x[1]];
 		}
 		return $s;
@@ -60,7 +68,9 @@ class c2cont {
 		$br = self::breaks($cmp);
 		$has = function ($id) use ($br, $k) { foreach ($br[$k] ?? [] as $x) if ($x[0] == $id) return $x; return null; };
 		$err = '';
-		if ($k == 'link') { foreach ($br['link'] as $x) if ((!$id || $x[0] == $id) && gtpl::link_raw($x[0])) $n++; }
+		if ($k == 'kind') { $r = pkind::ai($cmp); if (!empty($r['error'])) $err = $r['error'] == 'no_key' ? gtpl_ai::err() : t::w('tpl AI bad answer', 'ЖИ жауабы оқылмады, қайталаңыз'); else $n = (int)$r['n']; }
+		elseif ($k == 'goods' && ($x = $has($id))) $n = c2ai::goods_item($cmp, $id, $x[1]) ? 1 : 0;
+		elseif ($k == 'link') { foreach ($br['link'] as $x) if ((!$id || $x[0] == $id) && gtpl::link_raw($x[0])) $n++; }
 		elseif ($k == 'price') {
 			$ids = array_column($br['price'], 0); if ($id) $ids = array_values(array_intersect($ids, [$id]));
 			// закупқа байланған, құрамда бағасы бар, шикізатта жоқ: ЖИ-сіз көшіріледі

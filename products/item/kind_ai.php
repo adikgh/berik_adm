@@ -11,6 +11,13 @@
 	$cmp = (int)$company;
 	$txt = function ($s) { return trim(preg_replace('/\s+/u', ' ', strip_tags(str_replace(['<br>', '<br/>', '<br />'], ' ', (string)$s)))); };
 
+	// 4 түр (сет / тағам / тікелей шикізат / қатысы жоқ) бағаны бар болса — products/cost2/kind.php (pkind::ai)
+	require_once __DIR__.'/../cost2/kind.php';
+	if (pkind::ready()) {
+		$r = pkind::ai($cmp);
+		if (!empty($r['error'])) $out(['ok' => 0, 'error' => $r['error'] == 'no_key' ? 'ЖИ қосылмаған' : (claude::$err ?: 'ЖИ жауабы оқылмады, қайталаңыз')]);
+		$out(['ok' => 1, 'set' => (int)@$r['by'][1], 'one' => (int)@$r['by'][2] + (int)@$r['by'][3] + (int)@$r['by'][4], 'by' => @$r['by'], 'left' => count(pkind::unknown($cmp))]);
+	}
 	try {
 		$where = "p.company_id = '$cmp' and p.arh = 0 and p.is_set is null
 			and not exists (select 1 from product_set_item si where si.set_id = p.id)

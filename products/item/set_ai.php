@@ -33,7 +33,9 @@
 				if (strpos((string)$mime, 'image/') === 0) $img = claude::image_block($bytes, $mime);
 			}
 		}
-		if (!$img && $desc === '') $out(['ok' => 0, 'error' => 'Сеттің фотосы да, сипаттамасы да жоқ: алдымен фото қосыңыз']);
+		// фото де, сипаттама да жоқ: guess = 1 болса атауы мен бағасынан болжайды (Себес «ЖИ-мен жалғастыру»), әйтпесе түсінікті қате
+		$guess = !$img && $desc === '' && !empty($_POST['guess']);
+		if (!$img && $desc === '' && !$guess) $out(['ok' => 0, 'nophoto' => 1, 'error' => 'Фотосы да, сипаттамасы да жоқ: фото қосыңыз не «Атауынан болжау» белгісімен қайталаңыз']);
 
 		// сеттер (қолмен белгі не құрамы бар) позиция тізіміне кірмейді
 		$is_set = [];
@@ -71,7 +73,7 @@
 		$content = [];
 		if ($img) $content[] = $img;
 		$content[] = ['type' => 'text', 'text' => "Сет: «".$name."»".($set['cat_ru'] ? " (категория: ".$set['cat_ru'].")" : '').", цена ".(int)$set['price']." тг."
-			.($desc !== '' ? "\nОписание: ".$desc : "\nОписания нет.").($img ? "\nФото сета приложено." : "\nФото нет, только описание.")];
+			.($desc !== '' ? "\nОписание: ".$desc : "\nОписания нет.").($img ? "\nФото сета приложено." : ($guess ? "\nФото и описания нет: предположи типичный состав по названию и цене (например «777» или «BIG» — набор популярных позиций этого меню на эту сумму), sure = low." : "\nФото нет, только описание."))];
 		$schema = ['type' => 'object', 'additionalProperties' => false, 'required' => ['items', 'note', 'sure'], 'properties' => [
 			'items' => ['type' => 'array', 'items' => ['type' => 'object', 'additionalProperties' => false, 'required' => ['ref', 'name', 'qty'], 'properties' => [
 				'ref' => ['type' => 'string'], 'name' => ['type' => 'string'], 'qty' => ['type' => 'number']]]],

@@ -50,6 +50,9 @@
 			elseif ($is_set) $kind = 1;
 			elseif ($has_ci || !$kind_on) $kind = 0;
 			else $kind = null;
+			// 4 түр (products/cost2/kind.php): 1 сет, 2 тағам, 3 тікелей шикізат (граммовкасы — өзі 1 шт), 4 қатысы жоқ (құрамы жоқ)
+			$kind4 = isset($product_d['kind']) && $product_d['kind'] !== null ? (int)$product_d['kind'] : ($kind === null ? null : ($kind === 1 ? 1 : 2));
+			if ($kind4 === 4) $kind = 4; elseif ($kind4 === 2 || $kind4 === 3) $kind = 0;
 			$is_set = $kind === 1;
 		?>
 		<? // граммовкасы жоқ болса — ескерту (толтырылғанда өзі жоғалады)
@@ -161,13 +164,17 @@
 			<div class="item_c pk_c">
 				<div class="item_is">Бұл не?</div>
 				<div class="pk_seg">
-					<button type="button" class="pk_b<?=($kind === 0 ? ' pk_on' : '')?>" data-v="0"><i class="fal fa-hamburger"></i><b>Позиция</b><small>Жеке тағам (ролл, пицца, бургер, сусын). Граммовкасы жазылады: қандай өнім, қанша грамм.</small></button>
-					<button type="button" class="pk_b pk_set<?=($kind === 1 ? ' pk_on' : '')?>" data-v="1"><i class="fal fa-box-full"></i><b>Сет</b><small>Жинақ, комбо: бірнеше позицияның жиынтығы. Ішіне қандай тағам қанша дана кіретіні жазылады.</small></button>
+					<button type="button" class="pk_b<?=($kind4 === 2 ? ' pk_on' : '')?>" data-v="2"><i class="fal fa-hamburger"></i><b>Позиция</b><small>Жеке тағам (ролл, пицца, бургер, сусын). Граммовкасы жазылады: қандай өнім, қанша грамм.</small></button>
+					<button type="button" class="pk_b pk_set<?=($kind4 === 1 ? ' pk_on' : '')?>" data-v="1"><i class="fal fa-box-full"></i><b>Сет</b><small>Жинақ, комбо: бірнеше позицияның жиынтығы. Ішіне қандай тағам қанша дана кіретіні жазылады.</small></button>
+					<button type="button" class="pk_b<?=($kind4 === 3 ? ' pk_on' : '')?>" data-v="3"><i class="fal fa-wine-bottle"></i><b><?=t::w('c2 Kind goods', 'Тікелей шикізат')?></b><small><?=t::w('c2 Kind goods hint', 'Дайын сатылады (кола, су, шырын). Граммовкасы — өзі, 1 дана: бағасы закуптан.')?></small></button>
+					<button type="button" class="pk_b pk_none<?=($kind4 === 4 ? ' pk_on' : '')?>" data-v="4"><i class="fal fa-ban"></i><b><?=t::w('c2 Kind none', 'Қатысы жоқ')?></b><small><?=t::w('c2 Kind none hint', 'Тағам емес: доплата, пакет, сервис ақысы. Себеске кірмейді, құрамы жоқ.')?></small></button>
 				</div>
 				<? if ($kind === null): ?><div class="pk_q"><i class="fal fa-info-circle"></i> Алдымен түрін таңдаңыз: сосын соған сай құрамы ашылады.</div><? endif ?>
 			</div>
 			<style>
-				.pk_seg{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+				.pk_seg{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+				@media (max-width: 1100px){ .pk_seg{ grid-template-columns: 1fr 1fr; } }
+				.pk_b.pk_none.pk_on{ border-color: #a3a8a5; background: #f3f4f3; } .pk_b.pk_none.pk_on i{ color: #767c78; }
 				.pk_b{ text-align: left; padding: 14px 16px; border: 2px solid var(--bp-line, #e7e7e7); border-radius: 14px; background: #fff; font: inherit; cursor: pointer; display: grid; grid-template-columns: 34px 1fr; column-gap: 8px; align-items: center; color: #1b1f27; }
 				.pk_b i{ grid-row: 1 / 3; font-size: 22px; color: #767c78; }
 				.pk_b b{ font-size: 16px; } .pk_b small{ font-size: 12px; color: #6b717c; line-height: 1.4; margin-top: 2px; }
@@ -184,7 +191,7 @@
 					document.addEventListener('click', function (e) {
 						var b = e.target.closest('.pk_b'); if (!b || b.classList.contains('pk_on')) return;
 						var box = b.closest('.pk_c'), pid = document.querySelector('.pcard') ? document.querySelector('.pcard').dataset.id : 0;
-						var fd = new FormData(); fd.append('id', pid); fd.append('v', b.dataset.v);
+						var fd = new FormData(); fd.append('id', pid); fd.append('k', b.dataset.v);
 						box.classList.add('pk_busy');
 						fetch('/products/get.php?kind', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) {
 							box.classList.remove('pk_busy');

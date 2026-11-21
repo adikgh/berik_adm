@@ -355,6 +355,8 @@ class gtpl {
 		if ($t && mysqli_num_rows($t)) $set = " and not exists (select 1 from product_set_item s where s.set_id = p.id)";
 		// позиция / сет белгісі (бағаны болса): сеттің құрамы бөлек толтырылады
 		if (self::col('product', 'is_set')) $set .= " and coalesce(p.is_set, 0) = 0";
+		// тікелей шикізат (3) пен қатысы жоқ (4) граммовка шаблонын қажет етпейді (products/cost2/kind.php)
+		if (self::col('product', 'kind')) $set .= " and coalesce(p.kind, 0) not in (3, 4)";
 		foreach (['ptype', 'type', 'kind'] as $c) if (self::col('product', $c)) { $set .= " and coalesce(p.$c, '') <> 'set'"; break; }
 		$q = db::query("select p.id, p.name_ru, p.name_kz, c.name_ru cat".(self::col('product', 'is_set') ? ", p.is_set" : "")." from product p left join product_catalog c on c.id = p.catalog_id
 			where p.company_id = '$cmp' and (p.arh is null or p.arh = 0)
