@@ -32,11 +32,13 @@
 	$code = function ($v) { return preg_match('/^([rcd])(\d+)$/', (string)$v, $m) ? [$m[1], (int)$m[2]] : [null, 0]; };
 
 	// ── Қайталанған шикізат (products/cost2/rawdup.php): dup_list — топтар, dup_merge — бір топты біріктіру (транзакция)
-	if ($a == 'dup_list' || $a == 'dup_merge') {
+	if ($a == 'dup_list' || $a == 'dup_merge' || $a == 'type_group') {
 		header('Content-Type: application/json; charset=utf-8');
 		try {
 			include_once __DIR__.'/../tpl/lib.php'; require_once __DIR__.'/rawdup.php';
-			if ($a == 'dup_list') exit(json_encode(['groups' => c2raw::groups($cmp)], JSON_UNESCAPED_UNICODE));
+			require_once __DIR__.'/rawtype.php';
+			if ($a == 'dup_list') exit(json_encode(['groups' => c2raw::groups($cmp), 'types' => c2type::candidates($cmp)], JSON_UNESCAPED_UNICODE));
+			if ($a == 'type_group') { $ids = array_filter(array_map('intval', (array)json_decode((string)@$_POST['ids'], true))); $n = c2type::group($cmp, (string)@$_POST['first'], $ids ?: null); if ($n) cost::recalc($cmp); exit(json_encode($n ? ['ok' => 1, 'n' => $n] : ['error' => 'error'])); }
 			$n = c2raw::merge($cmp, (string)@$_POST['key']);
 			if ($n) cost::recalc($cmp);
 			exit(json_encode($n ? ['ok' => 1, 'n' => $n] : ['error' => 'error']));
@@ -92,6 +94,12 @@
 			if (!claude::ready()) exit(json_encode(['error' => gtpl_ai::err()], JSON_UNESCAPED_UNICODE));
 			exit(json_encode(c2ai::fill($cmp, (int)@$_POST['id']), JSON_UNESCAPED_UNICODE));
 		} catch (Throwable $e) { error_log('cost2 ai: '.$e->getMessage()); exit(json_encode(['error' => 'error'])); }
+	}
+
+	// ── Шикізат түрі (products/cost2/rawtype.php): атауы, қолдану аймағы, баға режимі (last | avg), таратып жіберу
+	if ($a == 'rtype') {
+		require_once __DIR__.'/rawtype.php';
+		$done(c2type::ready() && c2type::set($cmp, (int)@$_POST['id'], $P('f'), $P('v')));
 	}
 
 	// ── Шикізат

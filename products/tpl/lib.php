@@ -241,6 +241,8 @@ class gtpl {
 		if ($r) { $price = (int)$r['price']; return (int)$r['id']; }
 		// аты сәл басқа, бірақ сол зат («Coca-Cola 1л» = «Кола 1 л» = «Кола»): қалыпты кілт бойынша бар шикізат (products/cost2/rawdup.php)
 		if (is_file(__DIR__.'/../cost2/rawdup.php')) { require_once __DIR__.'/../cost2/rawdup.php'; if ($k = c2raw::find($cmp, $name)) { $price = (int)@mysqli_fetch_row(db::query("select price from product_raw where id = '$k'"))[0]; return $k; } }
+		// атауы бар түрге сай болса («Ун» түрі бар, ЖИ «Мука» сұрайды) — түрдің нұсқасы
+		if (is_file(__DIR__.'/../cost2/rawtype.php')) { require_once __DIR__.'/../cost2/rawtype.php'; if (($t = c2type::find($cmp, $name)) && ($k = c2type::variant($t))) { $price = (int)@mysqli_fetch_row(db::query("select price from product_raw where id = '$k'"))[0]; return $k; } }
 		$u = self::unit($unit);
 		list($price, $src) = self::price_guess($cmp, $name, $u);
 		if (!db::query("insert into product_raw (company_id, name_kz, name_ru, unit, price) values ('$cmp', '$e', '$e', '$u', '".(int)$price."')")) return 0;

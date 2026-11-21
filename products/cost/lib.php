@@ -28,6 +28,8 @@
 			$raw = [];
 			$q = db::query("select id, price from product_raw where company_id = '$cmp'");
 			while ($r = mysqli_fetch_assoc($q)) $raw[$r['id']] = (float)$r['price'];
+			// шикізат түрге байланса (Ун ▸ нұсқалар) — түр бағасы (соңғы накладной не орташа): products/cost2/rawtype.php
+			if (is_file(__DIR__.'/../cost2/rawtype.php')) { require_once __DIR__.'/../cost2/rawtype.php'; foreach (c2type::raw_prices($cmp) as $k => $p) $raw[$k] = $p; }
 			$comps = [];
 			$q = db::query("select * from product_comp where company_id = '$cmp' order by name_ru, id");
 			while ($r = mysqli_fetch_assoc($q)) { $r['parts'] = []; $comps[$r['id']] = $r; }

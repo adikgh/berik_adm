@@ -180,7 +180,10 @@
 			if ($ai = self::ai_raw_match($cmp, $name)) return $ai;
 			$p = (int)round($price);
 			db::query("insert into product_raw (company_id, name_kz, name_ru, unit, price) values ('$cmp', '$n', '$n', '$u', '$p')");
-			return (int)mysqli_insert_id(db::$connect);
+			$id = (int)mysqli_insert_id(db::$connect);
+			// накладнойдан келген жаңа нұсқа (басқа бренд) атауы сай түрге өзі қосылады: products/cost2/rawtype.php
+			if ($id && is_file(__DIR__.'/../products/cost2/rawtype.php')) { require_once __DIR__.'/../products/cost2/rawtype.php'; c2type::attach($cmp, $id, $name); }
+			return $id;
 		}
 
 		// ЖИ / шаблон ашқан, әлі сатып алынбаған шикізат: атауының барлық сөзі (3+ әріп) накладнойдағы атауда бар болса және ондай шикізат біреу ғана болса — соның id-і.

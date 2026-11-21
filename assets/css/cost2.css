@@ -199,3 +199,15 @@ td.c2_isplan{ color: #a3a8a5 !important; }
 .c2_dup_l li{ cursor: default; }
 .c2_dup_l input{ margin: 0 2px 0 0; flex: none; }
 .c2_dup_m{ color: var(--bp-green-ink, #08794b); font-weight: 600; }
+
+/* шикізат түрлері: түр жолы (ашылады), нұсқалар, қолдану аймағы, баға режимі */
+.c2_rt td{ background: #f6f8f6; }
+.c2_rt_tg{ width: 22px; height: 22px; margin-right: 4px; border: 0; border-radius: 6px; background: transparent; cursor: pointer; color: #767c78; transition: transform .15s; }
+.c2_rt_on .c2_rt_tg{ transform: rotate(90deg); }
+.c2_rt_n{ color: #767c78; margin-left: 4px; }
+.c2_rt_a{ display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 6px; background: #e3f5ec; color: var(--bp-green-ink, #08794b); font-size: 11px; font-weight: 600; }
+.c2_rt_m{ margin-left: 6px; height: 20px; padding: 0 6px; border: 1px solid #dfe3df; border-radius: 6px; background: #fff; font: inherit; font-size: 11px; color: #767c78; cursor: pointer; }
+.c2_raw tr.c2_rv td.c2_l{ padding-left: 32px; }
+.c2_rv_off{ display: none; }
+.c2_typ{ margin-top: 14px; }
+.c2_typ_v{ display: inline-flex; align-items: center; gap: 3px; margin: 2px 6px 2px 0; font-size: 12px; color: #4a4f4c; }

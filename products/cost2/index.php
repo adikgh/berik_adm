@@ -26,8 +26,11 @@
 
 		// Шикізат + соңғы закуп (накладной болса)
 		$raw = [];
-		$q = db::query("select id, name_ru, name_kz, unit, price from product_raw where company_id = '$cmp' order by name_ru, name_kz");
-		while ($q && $r = mysqli_fetch_assoc($q)) $raw[(int)$r['id']] = ['id' => (int)$r['id'], 'name' => trim($r['name_ru'] ?: $r['name_kz']), 'unit' => (string)$r['unit'], 'price' => (float)$r['price'], 'last_d' => null, 'lastp' => null, 'sup' => '', 'prev' => null, 'used' => 0];
+		require_once __DIR__.'/rawtype.php';
+		$tcol = c2type::ready() ? ', type_id' : '';
+		$q = db::query("select id, name_ru, name_kz, unit, price$tcol from product_raw where company_id = '$cmp' order by name_ru, name_kz");
+		while ($q && $r = mysqli_fetch_assoc($q)) $raw[(int)$r['id']] = ['id' => (int)$r['id'], 'name' => trim($r['name_ru'] ?: $r['name_kz']), 'unit' => (string)$r['unit'], 'price' => (float)$r['price'], 'last_d' => null, 'lastp' => null, 'sup' => '', 'prev' => null, 'used' => 0, 'type' => (int)@$r['type_id']];
+		$rtypes = c2type::all($cmp); // шикізат түрлері (Ун ▸ нұсқалар)
 		$t = db::query("show tables like 'waybill_item'");
 		if ($t && mysqli_num_rows($t)) {
 			$hasf = mysqli_num_rows(db::query("show columns from waybill_item like 'factor'")) > 0;
@@ -150,6 +153,7 @@
 		// қайталанған шикізат (көлемі әртүрлі болса да бір зат: products/cost2/rawdup.php)
 		require_once __DIR__.'/rawdup.php';
 		$n_dup = 0; foreach (c2raw::groups($cmp) as $g) $n_dup += count($g['items']) - 1;
+		$n_tc = count(c2type::candidates($cmp)); // «Бір түрге жинау» ұсыныстары
 		$gt_semi = $gt_all && gtpl::semi_ready();
 		// ЖИ толтыру (products/cost2/ai.php): батырмалар және «ЖИ толтырды» белгілері (cost2_ai кестесі)
 		require_once __DIR__.'/../../config/claude.php';
@@ -269,13 +273,26 @@
 			<div class="c2_col">
 				<div class="c2_ch c2_ch1"><b>1</b> <?=t::w('c2 Raw materials (purchase)', 'Шикізат (закуп)')?> <span><?=count($used_raw)?></span></div>
 				<?=($brk['price'] ?? []) || ($brk['link'] ?? []) ? '<div class="c2_pbtn">'.$CB('price', count($brk['price'] ?? []), t::w('c2 Cont price', 'Бағасы жоқ {n} шикізатқа ЖИ бағасы'), 'fa-tags').$CB('link', count($brk['link'] ?? []), t::w('c2 Cont link', 'Закупқа байланбаған {n} шикізатты байлау'), 'fa-link').'</div>' : ''?>
-				<? if ($n_dup): ?><div class="c2_pbtn"><button type="button" class="c2_semifix c2_rawdup"><i class="fal fa-clone"></i> <span><?=$h(str_replace('{n}', $n_dup, t::w('c2 Dup btn', 'Қайталанған {n} шикізатты біріктіру')))?></span></button></div><? endif ?>
+				<? if ($n_dup || $n_tc): ?><div class="c2_pbtn">
+					<? if ($n_dup): ?><button type="button" class="c2_semifix c2_rawdup"><i class="fal fa-clone"></i> <span><?=$h(str_replace('{n}', $n_dup, t::w('c2 Dup btn', 'Қайталанған {n} шикізатты біріктіру')))?></span></button><? endif ?>
+					<? if ($n_tc): ?><button type="button" class="c2_semifix c2_rawdup" data-sec="type"><i class="fal fa-folder-tree"></i> <span><?=$h(str_replace('{n}', $n_tc, t::w('c2 Type btn', 'Ұқсас шикізатты {n} түрге жинау')))?></span></button><? endif ?>
+				</div><? endif ?>
 				<div class="c2_card c2_blk">
 					<table class="c2_tbl c2_raw">
 						<thead><tr><th class="c2_l"><?=t::w('c2 Name', 'Атауы')?></th><th><?=t::w('c2 Unit', 'Өлш.')?></th><th><?=t::w('c2 Price', 'Бағасы')?></th></tr></thead>
 						<tbody>
+						<? foreach ($rtypes as $tp): $vs = array_filter($used_raw, function ($r) use ($tp) { return $r['type'] == $tp['id']; }); ?>
+							<tr class="c2_rt c2_f" data-t="<?=$tp['id']?>" data-q="<?=$h(mb_strtolower($tp['name'].' '.implode(' ', array_column($vs, 'name'))))?>">
+								<td class="c2_l"><button type="button" class="c2_rt_tg" aria-label="▸"><i class="far fa-angle-right"></i></button><b<?=$E(['rtype', $tp['id'], 'name'], $tp['name'])?>><?=$h($tp['name'])?></b>
+									<small class="c2_rt_n"><?=$h(str_replace('{n}', count($vs), t::w('c2 Type variants', '{n} нұсқа')))?></small>
+									<span class="c2_rt_a"><span<?=$E(['rtype', $tp['id'], 'area'], $tp['area'])?>><?=$tp['area'] !== '' ? $h($tp['area']) : '+ '.t::w('c2 Type area', 'аймақ')?></span></span></td>
+								<td><?=$h($tp['unit'] ?: 'кг')?></td>
+								<td><b><?=$pf($tp['price'])?></b><button type="button" class="c2_rt_m" data-id="<?=$tp['id']?>" data-m="<?=$tp['mode'] == 'avg' ? 'last' : 'avg'?>" title="<?=$h(t::w('c2 Type mode hint', 'Түр бағасы: соңғы накладной не нұсқалардың орташасы'))?>"><?=$tp['mode'] == 'avg' ? t::w('c2 Type avg', 'орташа') : t::w('c2 Type last', 'соңғы')?></button></td>
+							</tr>
+						<? endforeach ?>
+						<? uasort($used_raw, function ($a, $b) { return [$a['type'] ? 0 : 1, $a['type'], $a['name']] <=> [$b['type'] ? 0 : 1, $b['type'], $b['name']]; }); ?>
 						<? foreach ($used_raw as $r): $d = $r['prev'] ? ($r['lastp'] - $r['prev']) / $r['prev'] * 100 : null; ?>
-							<tr class="c2_f" id="r<?=$r['id']?>" data-q="<?=$h(mb_strtolower($r['name']))?>">
+							<tr class="c2_f<?=$r['type'] ? ' c2_rv c2_rv_off' : ''?>"<?=$r['type'] ? ' data-t="'.$r['type'].'"' : ''?> id="r<?=$r['id']?>" data-q="<?=$h(mb_strtolower($r['name']))?>">
 								<td class="c2_l c2_nm"><span<?=$E(['raw', $r['id'], 'name'], $r['name'])?>><?=$h($r['name'])?></span><?=isset($aim['r'][$r['id']]) ? ' '.$AIT : ''?>
 									<? if ($r['last_d']): ?><a class="c2_sub c2_sub_a" href="/waybill/raw.php?id=<?=$r['id']?>"><?=date('d.m', strtotime($r['last_d']))?><?=$r['sup'] !== '' ? ' · '.$h($r['sup']) : ''?></a><? endif ?></td>
 								<td><span<?=$E(['raw', $r['id'], 'unit'], $r['unit'] ?: 'шт')?>><?=$h($r['unit'] ?: 'шт')?></span></td>
@@ -644,11 +661,15 @@
 		// Қайталанған шикізатты біріктіру (get.php?a=dup_list / dup_merge): топтар құсбелгімен, әр топ бөлек сұраумен (транзакция), прогресс сол поп-апта
 		var DL = <?=json_encode(['title' => t::w('c2 Dup title', 'Қайталанған шикізатты біріктіру'), 'go' => t::w('c2 Dup go', 'Біріктіру'), 'main' => t::w('c2 Dup main', 'негізгі'),
 			'hint' => t::w('c2 Dup hint', 'Көлемі не салмағы әртүрлі болса да бір шикізат болады. Барлық рецепт, накладной, қалдық негізгіге көшеді, қалғаны өшеді. Керек емес топтың белгісін алыңыз.'),
-			'done' => t::w('c2 Dup done', 'Біріктірілді: {n} шикізат'), 'none' => t::w('c2 Dup none', 'Қайталанған шикізат жоқ.')], JSON_UNESCAPED_UNICODE)?>;
+			'done' => t::w('c2 Dup done', 'Біріктірілді: {n} шикізат'), 'none' => t::w('c2 Dup none', 'Қайталанған шикізат жоқ.'),
+			'tt' => t::w('c2 Type title', 'Бір түрге жинау'), 'tgo' => t::w('c2 Type go', 'Түрге жинау'), 'thint' => t::w('c2 Type hint', 'Әртүрлі бренд / нұсқа бөлек қалады, бірақ бір түр болып көрінеді (Ун ▸ 3 нұсқа). Рецептте түр бағасы (соңғы накладной не орташа) қолданылады.'),
+			'tdone' => t::w('c2 Type done', 'Түрге жиналды: {n} шикізат')], JSON_UNESCAPED_UNICODE)?>;
 		$(document).on('click', '.c2_rawdup', function () {
 			if (contBusy) return; contBusy = true;
 			var m = document.createElement('div'); m.className = 'gt_modal c2_cmod';
+			var sec = this.dataset.sec || '';
 			m.innerHTML = '<div class="gt_mbox"><h4>' + esc(DL.title) + '</h4><p class="c2_dup_h">' + esc(DL.hint) + '</p><div class="mi_prog"><div class="mi_prog_h"></div><div class="mi_pbar"><div class="mi_pbar_i"></div></div><ol class="mi_posts c2_dup_l"></ol></div>'
+				+ '<div class="c2_typ" hidden><h4>' + esc(DL.tt) + '</h4><p class="c2_dup_h">' + esc(DL.thint) + '</p><ol class="mi_posts c2_typ_l"></ol><div class="gt_mb"><button type="button" class="btn c2_typ_go" disabled>' + esc(DL.tgo) + '</button></div></div>'
 				+ '<div class="c2_cm_err"></div><div class="c2_cm_sum"></div><div class="gt_mb"><button type="button" class="btn c2_dup_go" disabled>' + esc(DL.go) + '</button><button type="button" class="btn c2_cm_close">' + esc(CL.close) + '</button></div></div>';
 			document.body.appendChild(m);
 			var hd = m.querySelector('.mi_prog_h'), bar = m.querySelector('.mi_pbar_i'), list = m.querySelector('.c2_dup_l'), go = m.querySelector('.c2_dup_go'), cl = m.querySelector('.c2_cm_close'), sum = m.querySelector('.c2_cm_sum'), errb = m.querySelector('.c2_cm_err');
@@ -657,8 +678,33 @@
 			var cnt = function () { var n = list.querySelectorAll('input:checked').length; go.disabled = !n; go.textContent = DL.go + ' (' + n + ')'; };
 			hd.innerHTML = '<span>…</span>';
 			contPost('/products/cost2/get.php?a=dup_list', {}).then(function (d) {
-				var gs = (d && d.groups) || [];
-				if (!gs.length) { hd.innerHTML = '<span>' + esc(DL.none) + '</span>'; return; }
+				var gs = (d && d.groups) || [], ts = (d && d.types) || [];
+				// «Бір түрге жинау»: әр топ құсбелгімен (әдепкі белгіленбеген, ал түр батырмасынан ашылса — белгіленген), ішіндегі нұсқалар да құсбелгімен
+				if (ts.length) {
+					var tb = m.querySelector('.c2_typ'), tl = m.querySelector('.c2_typ_l'), tg = m.querySelector('.c2_typ_go'); tb.hidden = false;
+					tl.innerHTML = ts.map(function (g, i) {
+						return '<li data-first="' + esc(g.first) + '"><input type="checkbox" class="c2_typ_c"' + (sec == 'type' ? ' checked' : '') + '><span class="mi_pn">' + (i + 1) + '.</span><span class="mi_pt"><b>' + esc(g.name) + '</b> ▸ '
+							+ g.items.map(function (x) { return '<label class="c2_typ_v"><input type="checkbox" value="' + x.id + '" checked> ' + esc(x.name) + '</label>'; }).join(' ') + '</span><i class="mi_ps fal"></i></li>';
+					}).join('');
+					var tcnt = function () { var n = tl.querySelectorAll('.c2_typ_c:checked').length; tg.disabled = !n; tg.textContent = DL.tgo + ' (' + n + ')'; };
+					tl.addEventListener('change', tcnt); tcnt();
+					if (sec == 'type') tb.scrollIntoView({ block: 'start' });
+					tg.onclick = function () {
+						var lis = [].slice.call(tl.querySelectorAll('li')).filter(function (l) { return l.querySelector('.c2_typ_c').checked; });
+						tg.disabled = true; cl.disabled = true; tl.querySelectorAll('input').forEach(function (x) { x.disabled = true; });
+						var i = 0, n = 0;
+						(function next() {
+							if (i >= lis.length) { changed = true; cl.disabled = false; tg.hidden = true; sum.textContent = DL.tdone.replace('{n}', n); return; }
+							var li = lis[i++], ids = [].slice.call(li.querySelectorAll('.c2_typ_v input:checked')).map(function (x) { return +x.value; });
+							li.classList.add('mi_p_on');
+							contPost('/products/cost2/get.php?a=type_group', { first: li.dataset.first, ids: JSON.stringify(ids) }).then(function (r) {
+								li.classList.remove('mi_p_on'); li.classList.add(r && r.ok ? 'mi_p_ok' : 'mi_p_err'); if (r && r.ok) n += r.n || 0;
+								next();
+							});
+						})();
+					};
+				}
+				if (!gs.length) { hd.innerHTML = '<span>' + esc(DL.none) + '</span>'; go.hidden = true; return; }
 				hd.innerHTML = '<span>' + esc(DL.title) + ': ' + gs.length + '</span><span class="mi_tm"></span>';
 				list.innerHTML = gs.map(function (g, i) {
 					return '<li data-key="' + esc(g.key) + '"><input type="checkbox" checked><span class="mi_pn">' + (i + 1) + '.</span><span class="mi_pt"><b>' + esc(g.name) + '</b> ← '
@@ -684,6 +730,20 @@
 				})();
 			};
 		});
+		// шикізат түрлері: нұсқаларды түр жолының астына қою, ашу/жабу, баға режимі (rtype)
+		function rtPlace() {
+			document.querySelectorAll('.c2_raw .c2_rt').forEach(function (t) {
+				var after = t;
+				document.querySelectorAll('.c2_raw .c2_rv[data-t="' + t.dataset.t + '"]').forEach(function (v) { after.after(v); after = v; });
+			});
+		}
+		rtPlace(); $(document).on('ajx:done', rtPlace);
+		$(document).on('click', '.c2_rt_tg', function () {
+			var t = this.closest('.c2_rt'), on = !t.classList.contains('c2_rt_on'); t.classList.toggle('c2_rt_on', on);
+			document.querySelectorAll('.c2_raw .c2_rv[data-t="' + t.dataset.t + '"]').forEach(function (v) { v.classList.toggle('c2_rv_off', !on); });
+		});
+		$(document).on('click', '.c2_rt_m', function () { send('rtype', { id: this.dataset.id, f: 'mode', v: this.dataset.m }); });
+
 		$(document).on('click', '.c2_cont', function (e) {
 			e.preventDefault();
 			var t = this.querySelector('span') ? this.querySelector('span').textContent : this.textContent;
