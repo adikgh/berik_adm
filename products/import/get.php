@@ -24,13 +24,14 @@
 
 	// компанияның бар тағамдары (архивтегілері де): нормаланған атау → id
 	$existing = function () use ($cmp, $nk) {
-		$m = []; $list = [];
-		$q = db::query("select id, name_kz, name_ru, arh from product where company_id = '$cmp'");
+		$m = []; $list = []; $pimg = [];
+		$q = db::query("select id, name_kz, name_ru, arh, img from product where company_id = '$cmp'");
 		while ($r = mysqli_fetch_assoc($q)) {
 			foreach ([$r['name_ru'], $r['name_kz']] as $n) { $k = $nk($n); if ($k !== '' && !isset($m[$k])) $m[$k] = (int)$r['id']; }
 			if (!$r['arh']) $list[(int)$r['id']] = $r['name_ru'] ?: $r['name_kz'];
+			$pimg[(int)$r['id']] = (string)$r['img']; // компанияның барлық тағамы: id -> фото (бос = фотосы жоқ)
 		}
-		return [$m, $list];
+		return [$m, $list, $pimg];
 	};
 
 	// ---------------- 0. Instagram: Apify-да посттарды жинау (фонда), JS әр 3 секунд сайын санын сұрайды ----------------
@@ -155,7 +156,7 @@
 			if (!$imgs) $out(['ok' => 0, 'error' => 'Мәзір фотосын не PDF файлын таңдаңыз']);
 		}
 
-		list($ex, $list) = $existing();
+		list($ex, $list, $pimg) = $existing();
 		if ($src != 'web') {
 			// суреттер уақытша сақталады (тағам фотосын қию үшін), Claude-қа сурет/PDF блоктары
 			$content = [];
@@ -216,7 +217,7 @@
 			$res[] = ['name' => $name, 'name_kz' => mb_substr($txt(@$it['name_kz']), 0, 200), 'price' => max(0, (int)@$it['price']), 'cat' => mb_substr($txt(@$it['cat']), 0, 100),
 				'set' => !empty($it['set']) ? 1 : 0, 'set_items' => array_values(array_filter(array_map($txt, (array)@$it['set_items']))), 'desc' => mb_substr($txt(@$it['desc']), 0, 800),
 				'img' => isset($it['img']) ? (int)$it['img'] : -1, 'box' => $box, 'img_url' => (string)@$it['img_url'],
-				'same' => $same, 'same_name' => $same ? (string)@$list[$same] : ''];
+				'same' => $same, 'same_name' => $same ? (string)@$list[$same] : '', 'same_img' => $same && @$pimg[$same] !== '' ? 1 : 0];
 		}
 		$out(['ok' => 1, 'token' => $tok, 'items' => $res, 'note' => $note_src, 'model' => (string)@$used, 'imgs' => count($imgs), 'total' => (int)@$total]);
 	}
@@ -228,7 +229,7 @@
 		if (!is_array($items) || !$items) $out(['ok' => 0, 'error' => 'Тізім бос']);
 		$tok = preg_replace('/[^a-f0-9]/', '', (string)@$_POST['token']); $photo = !empty($_POST['photo']);
 		$kind_col = fun::has_col('product', 'is_set');
-		list($ex) = $existing();
+		list($ex, , $pimg) = $existing();
 		// каталогтар
 		$cats = [];
 		$q = db::query("select id, name_kz, name_ru from product_catalog where company_id = '$cmp' and (arh is null or arh = 0)");
@@ -265,10 +266,26 @@
 			imagedestroy($src); imagedestroy($dst);
 			return $ok ? $name : '';
 		};
-		$res = []; $skip = 0; $ph = 0;
+		// тағамға фото: мәзір суретінен қию не сілтемеден
+		$put_photo = function ($id, $it) use ($tok, $dir, $cmp, $save_img, $e) {
+			$img = ''; $k = (int)@$it['img'];
+			if ($tok && $k >= 0 && is_file($f = $dir.$cmp.'_'.$tok.'_'.$k.'.img')) $img = $save_img($id, file_get_contents($f), array_map('floatval', (array)@$it['box']));
+			elseif (preg_match('~^https://~', (string)@$it['img_url'])) {
+				$b = @file_get_contents($it['img_url'], false, stream_context_create(['http' => ['timeout' => 10, 'header' => "User-Agent: Mozilla/5.0\r\n"]]));
+				if ($b && strlen($b) < 6e6 && @getimagesizefromstring($b)) $img = $save_img($id, $b);
+			}
+			if ($img) db::query("update product set img = '".$e($img)."' where id = '".(int)$id."'");
+			return $img;
+		};
+		$res = []; $skip = 0; $ph = 0; $ph_ex = 0;
 		foreach ($items as $it) {
 			$name = mb_substr($txt(@$it['name']), 0, 200); if ($name === '') continue;
-			if (isset($ex[$nk($name)]) || (int)@$it['same']) { $skip++; continue; } // бар тағамға тимейміз
+			$sid = $ex[$nk($name)] ?? (int)@$it['same'];
+			if ($sid) { // бар тағамды қайта қоспаймыз; белгіленсе тек фотосын қоямыз, басқасына тимейміз
+				$skip++;
+				if ($photo && !empty($it['photo_only']) && isset($pimg[$sid]) && $put_photo($sid, $it)) $ph_ex++;
+				continue;
+			}
 			$kz = mb_substr($txt(@$it['name_kz']), 0, 200) ?: $name;
 			$set = !empty($it['set']) ? 1 : 0;
 			$desc = mb_substr($txt(@$it['desc']), 0, 800);
@@ -280,19 +297,11 @@
 				values ('$id', '$cmp', '".$e($kz)."', '".$e($name)."', ".($cid ? "'$cid'" : "NULL").", '".max(0, (int)@$it['price'])."', '".$e($desc)."', 0".($kind_col ? ", '$set'" : "").")");
 			if (!$ok) { error_log('menu import insert: '.mysqli_error(db::$connect)); continue; }
 			$ex[$nk($name)] = $id;
-			$img = '';
-			if ($photo) {
-				$k = (int)@$it['img'];
-				if ($tok && $k >= 0 && is_file($f = $dir.$cmp.'_'.$tok.'_'.$k.'.img')) $img = $save_img($id, file_get_contents($f), array_map('floatval', (array)@$it['box']));
-				elseif (preg_match('~^https://~', (string)@$it['img_url'])) {
-					$b = @file_get_contents($it['img_url'], false, stream_context_create(['http' => ['timeout' => 10, 'header' => "User-Agent: Mozilla/5.0\r\n"]]));
-					if ($b && strlen($b) < 6e6 && @getimagesizefromstring($b)) $img = $save_img($id, $b);
-				}
-				if ($img) { db::query("update product set img = '".$e($img)."' where id = '$id'"); $ph++; }
-			}
+			$img = $photo ? $put_photo($id, $it) : '';
+			if ($img) $ph++;
 			$res[] = ['id' => $id, 'name' => $name, 'set' => $set, 'cat' => (string)@$it['cat'], 'img' => $img ? 1 : 0];
 		}
-		$out(['ok' => 1, 'added' => $res, 'skip' => $skip, 'cats' => $new_cat, 'photos' => $ph]);
+		$out(['ok' => 1, 'added' => $res, 'skip' => $skip, 'cats' => $new_cat, 'photos' => $ph, 'photos_ex' => $ph_ex]);
 	}
 
 	// ---------------- 3. тізбек: позиция граммовкасы ----------------

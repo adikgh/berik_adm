@@ -173,21 +173,26 @@
 		$('.mi_sum').textContent = items.length + ' тағам: ' + nw + ' жаңа, ' + (items.length - nw) + ' бұрыннан бар';
 		$('.mi_note').textContent = d.note || '';
 		$('.mi_tbl tbody').innerHTML = items.map(function (it, i) {
-			var ex = !!it.same;
+			var ex = !!it.same, pic = it.img >= 0 || !!it.img_url;
+			// бар тағам қайта қосылмайды; фотосы табылса, белгілеп тек фотосын қоюға болады (өз фотосы жоқ болса әдепкі белгіленген)
 			return '<tr class="' + (ex ? 'mi_ex' : '') + '" data-i="' + i + '">'
-				+ '<td><input type="checkbox" class="mi_on_i"' + (ex ? ' disabled' : ' checked') + '></td>'
+				+ '<td><input type="checkbox" class="mi_on_i' + (ex ? ' mi_ph_i' : '') + '"' + (ex ? (pic ? (it.same_img ? '' : ' checked') + ' title="Тек фотосын қою"' : ' disabled') : ' checked') + '></td>'
 				+ '<td><input type="text" class="mi_in mi_nm" value="' + h(it.name) + '"' + (ex ? ' disabled' : '') + '>' + (it.set && it.set_items.length ? '<small>' + h(it.set_items.join(', ')) + '</small>' : (it.desc ? '<small>' + h(it.desc) + '</small>' : '')) + '</td>'
 				+ '<td><input type="text" class="mi_in mi_ct" value="' + h(it.cat) + '"' + (ex ? ' disabled' : '') + '></td>'
 				+ '<td><input type="text" class="mi_in mi_pr" inputmode="numeric" value="' + (it.price || '') + '"' + (ex ? ' disabled' : '') + '></td>'
 				+ '<td><button type="button" class="mi_kind' + (it.set ? ' mi_kind_set' : '') + '" data-i="' + i + '"' + (ex ? ' disabled' : '') + '>' + (it.set ? 'Сет' : 'Позиция') + '</button></td>'
-				+ '<td>' + (ex ? '<span class="mi_tag mi_tag_ex">Бар' + (it.same_name && it.same_name != it.name ? ': ' + h(it.same_name) : '') + '</span>' : '<span class="mi_tag">Жаңа</span>') + (it.img >= 0 || it.img_url ? ' <i class="fal fa-image" title="Фотосы бар"></i>' : '') + '</td></tr>';
+				+ '<td>' + (ex ? '<span class="mi_tag mi_tag_ex">Бар' + (it.same_name && it.same_name != it.name ? ': ' + h(it.same_name) : '') + '</span>' : '<span class="mi_tag">Жаңа</span>') + (pic ? ' <i class="fal fa-image" title="Фотосы бар"></i>' : '')
+				+ (ex && pic ? '<small class="mi_phn">' + (it.same_img ? 'өз фотосы бар, белгілесеңіз ауысады' : 'фотосы жоқ, тек фотосы қойылады') + '</small>' : '') + '</td></tr>';
 		}).join('');
 		page.querySelector('.mi_step3').hidden = false; cnt();
 		page.querySelector('.mi_step3').scrollIntoView({ behavior: 'smooth' });
 	}
-	function cnt() { var n = page.querySelectorAll('.mi_on_i:checked').length; $('.mi_add span').textContent = 'Мәзірге қосу (' + n + ')'; $('.mi_add').disabled = !n; }
+	function cnt() {
+		var n = page.querySelectorAll('.mi_on_i:checked:not(.mi_ph_i)').length, p = page.querySelectorAll('.mi_ph_i:checked').length;
+		$('.mi_add span').textContent = 'Мәзірге қосу (' + n + ')' + (p ? ' + ' + p + ' фото' : ''); $('.mi_add').disabled = !n && !p;
+	}
 	page.addEventListener('change', function (e) {
-		if (e.target.classList.contains('mi_all')) page.querySelectorAll('.mi_on_i:not(:disabled)').forEach(function (c) { c.checked = e.target.checked; });
+		if (e.target.classList.contains('mi_all')) page.querySelectorAll('.mi_on_i:not(:disabled):not(.mi_ph_i)').forEach(function (c) { c.checked = e.target.checked; });
 		if (e.target.classList.contains('mi_on_i') || e.target.classList.contains('mi_all')) cnt();
 	});
 	page.addEventListener('input', function (e) { if (e.target.classList.contains('mi_pr')) e.target.value = e.target.value.replace(/\D+/g, ''); });
@@ -198,6 +203,7 @@
 		page.querySelectorAll('.mi_tbl tbody tr').forEach(function (tr) {
 			if (!tr.querySelector('.mi_on_i:checked')) return;
 			var it = Object.assign({}, items[+tr.dataset.i]);
+			if (it.same) { it.photo_only = 1; sel.push(it); return; } // бар тағам: тек фотосы
 			it.name = tr.querySelector('.mi_nm').value.trim(); it.cat = tr.querySelector('.mi_ct').value.trim(); it.price = +tr.querySelector('.mi_pr').value || 0;
 			if (it.name) sel.push(it);
 		});
@@ -207,7 +213,7 @@
 			if (!d.ok) { b.disabled = false; cnt(); return say(d.error || 'Қате'); }
 			page.querySelector('.mi_step3').hidden = true;
 			var s4 = page.querySelector('.mi_step4'); s4.hidden = false; s4.scrollIntoView({ behavior: 'smooth' });
-			log('ok', d.added.length + ' тағам қосылды' + (d.cats ? ', ' + d.cats + ' жаңа каталог' : '') + (d.photos ? ', ' + d.photos + ' фото' : '') + (d.skip ? ', ' + d.skip + ' бұрыннан бар (тимедік)' : ''));
+			log('ok', d.added.length + ' тағам қосылды' + (d.cats ? ', ' + d.cats + ' жаңа каталог' : '') + (d.photos ? ', ' + d.photos + ' фото' : '') + (d.photos_ex ? ', бар ' + d.photos_ex + ' тағамға фото қойылды' : ''));
 			if ($('.mi_fill').checked && d.added.length) chain(d.added); else finish();
 		}).catch(function () { b.disabled = false; cnt(); say('Байланыс қатесі, қайталаңыз'); });
 	});

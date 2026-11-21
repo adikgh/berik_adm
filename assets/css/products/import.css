@@ -72,3 +72,4 @@
 .mi_posts .mi_p_err{ background: #fff1f0; }
 @keyframes mi_in{ from{ opacity: 0; transform: translateY(4px); } }
 @keyframes mi_spin{ to{ transform: rotate(360deg); } }
+.mi_phn{ display: block; color: #767c78; font-size: 12px; margin-top: 2px; }
