@@ -78,8 +78,9 @@
 						<label><?=t::w('Payment date', 'Төленген күні')?><input type="date" name="paid_dt" value="<?=date('Y-m-d')?>"></label>
 					</div>
 					<? if ($own_refs): ?>
-					<div class="f_row pay_ref" hidden>
-						<label><?=t::w('Whose bonus', 'Кімнің бонусынан')?><select name="ref_pay">
+					<div class="f_row pay_ref">
+						<label><?=t::w('Pay from bonus', 'Бонустан төлеу')?><select name="ref_pay">
+							<option value="">— <?=t::w('no bonus (money only)', 'бонуссыз (тек ақша)')?> —</option>
 							<? foreach ($own_refs as $r): $bl = dev::ref_balance($r['id']); ?><option value="<?=$r['id']?>"><?=dev::h($r['nick'])?> · <?=t::w('balance', 'қалдығы')?> <?=dev::money($bl['left'])?></option><? endforeach ?>
 						</select></label>
 					</div>
@@ -181,9 +182,12 @@
 		if (paidUntil && paidUntil >= pd) { var x = new Date(paidUntil + 'T00:00:00'); x.setDate(x.getDate() + 1); from = iso(x); }
 		var to = addMonths(from, m + b);
 		f.querySelector('.pay_hint').textContent = m + ' ' + mo + (b ? ' + ' + b + ' ' + mo + ' ' + w('gift', 'сыйлық') : '') + ' · ' + money(+f.amount.value || 0) + ' · ' + fmt(new Date(from + 'T00:00:00')) + ' – ' + fmt(to);
-		var pr = f.querySelector('.pay_ref'); if (pr) pr.hidden = f.method.value !== 'bonus';
 	}
-	f.addEventListener('change', function (e) { if (e.target.name === 'tariff_id' || e.target.name === 'months') touched = false; calc(); });
+	f.addEventListener('change', function (e) {
+		// Бонус пен төлем түрі бір-бірімен үйлессін: бонуссыз = тек ақша
+		if (f.ref_pay && e.target === f.ref_pay) { if (f.ref_pay.value) f.method.value = 'bonus'; else if (f.method.value === 'bonus') f.method.value = 'kaspi'; }
+		if (f.ref_pay && e.target === f.method) { if (f.method.value !== 'bonus') f.ref_pay.value = ''; else if (!f.ref_pay.value) f.ref_pay.selectedIndex = 1; }
+		if (e.target.name === 'tariff_id' || e.target.name === 'months') touched = false; calc(); });
 	calc();
 })();
 </script>
