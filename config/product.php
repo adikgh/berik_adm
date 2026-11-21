@@ -11,7 +11,7 @@
 		}
 		public static function product_img($id) {
 			$sql = db::query("select * from product_item where product_id = '$id' and img is not null order by price asc limit 1");
-			if (mysqli_num_rows($sql)) return (mysqli_fetch_array($sql))['img']; else return 0;
+			if ($sql && mysqli_num_rows($sql)) return (mysqli_fetch_array($sql))['img']; else return 0;
 		}
 		public static function product_article($id) {
 			$sql = db::query("select * from product_item where product_id = '$id'");

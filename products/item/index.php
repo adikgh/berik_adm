@@ -643,7 +643,7 @@
                   <i class="fal fa-caret-down form_icon_sel"></i>
                   <div class="form_im_sel sel_clc_i">
                      <? $warehouses = db::query("select * from product_warehouses"); ?>
-                     <? while ($warehouses_d = mysqli_fetch_assoc($warehouses)): ?>
+                     <? while ($warehouses && $warehouses_d = mysqli_fetch_assoc($warehouses)): // product_warehouses кестесі жоқ базада бос ?>
                         <div class="form_im_seli" data-val="<?=$warehouses_d['id']?>"><?=$warehouses_d['name']?></div>
                      <? endwhile ?>
                   </div>
