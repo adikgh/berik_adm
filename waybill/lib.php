@@ -175,6 +175,8 @@
 			$q = db::query("select id from product_raw where company_id = '$cmp' and (name_kz = '$n' or name_ru = '$n') limit 1");
 			if ($q && mysqli_num_rows($q)) return (int)mysqli_fetch_assoc($q)['id'];
 			// ЖИ / шаблон ашқан шикізат («Рис Камолино») накладнойда басқаша жазылса («Рис Камолино 25кг»): соған байланады, бағасы накладнойдан жаңарады
+			// аты сәл басқа, бірақ сол зат («Кола 1л» = «Coca-Cola 1 л» = «Кола»): қалыпты кілт (products/cost2/rawdup.php)
+			if (is_file(__DIR__.'/../products/cost2/rawdup.php')) { require_once __DIR__.'/../products/cost2/rawdup.php'; if ($k = c2raw::find($cmp, $name)) return $k; }
 			if ($ai = self::ai_raw_match($cmp, $name)) return $ai;
 			$p = (int)round($price);
 			db::query("insert into product_raw (company_id, name_kz, name_ru, unit, price) values ('$cmp', '$n', '$n', '$u', '$p')");

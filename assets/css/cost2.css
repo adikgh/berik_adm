@@ -181,3 +181,21 @@ td.c2_isplan{ color: #a3a8a5 !important; }
 .c2_semifix:disabled{ opacity: .6; cursor: wait; }
 .c2_sus td{ background: #fdecec; }
 .c2_sus td:first-child{ box-shadow: inset 3px 0 0 #d64545; }
+
+/* ЖИ-мен жалғастыру: поп-ап (gtpl.css .gt_modal + import.css .mi_prog тізімі), бос сет блогы */
+.c2_cmod{ z-index: 7000; }
+.c2_cmod .gt_mbox{ max-width: 560px; }
+.c2_cmod h4{ margin: 0 0 4px; font-size: 17px; }
+.c2_cmod .mi_posts{ max-height: 340px; }
+.c2_cmod .mi_posts li{ align-items: baseline; }
+.c2_cmod .mi_pt{ white-space: normal; }
+.c2_cm_it{ color: #767c78; font-size: 12px; }
+.c2_cm_err{ margin-top: 10px; font-size: 12px; color: #c0392b; max-height: 120px; overflow: auto; }
+.c2_cm_err ul{ margin: 4px 0 0; padding-left: 4px; list-style: none; }
+.c2_cm_sum{ margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--bp-text, #1c1f1d); }
+.c2_es_n{ padding: 10px 12px; font-size: 13px; color: #a3a8a5; }
+.c2_top .c2_cont_all{ height: 46px; }
+.c2_dup_h{ margin: 0 0 10px; font-size: 13px; color: #767c78; line-height: 1.45; }
+.c2_dup_l li{ cursor: default; }
+.c2_dup_l input{ margin: 0 2px 0 0; flex: none; }
+.c2_dup_m{ color: var(--bp-green-ink, #08794b); font-weight: 600; }

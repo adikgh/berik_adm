@@ -31,6 +31,36 @@
 	// r12 / c5 / d7 → [түрі, id]
 	$code = function ($v) { return preg_match('/^([rcd])(\d+)$/', (string)$v, $m) ? [$m[1], (int)$m[2]] : [null, 0]; };
 
+	// ── Қайталанған шикізат (products/cost2/rawdup.php): dup_list — топтар, dup_merge — бір топты біріктіру (транзакция)
+	if ($a == 'dup_list' || $a == 'dup_merge') {
+		header('Content-Type: application/json; charset=utf-8');
+		try {
+			include_once __DIR__.'/../tpl/lib.php'; require_once __DIR__.'/rawdup.php';
+			if ($a == 'dup_list') exit(json_encode(['groups' => c2raw::groups($cmp)], JSON_UNESCAPED_UNICODE));
+			$n = c2raw::merge($cmp, (string)@$_POST['key']);
+			if ($n) cost::recalc($cmp);
+			exit(json_encode($n ? ['ok' => 1, 'n' => $n] : ['error' => 'error']));
+		} catch (Throwable $e) { error_log('cost2 dup: '.$e->getMessage()); exit(json_encode(['error' => 'error'])); }
+	}
+
+	// ── ЖИ-мен жалғастыру (products/cost2/cont.php): cont_list — қадамдар ([k], [id] сүзгісі), cont_do — бір қадам. Жауап JSON
+	if ($a == 'cont_list' || $a == 'cont_do') {
+		@set_time_limit(300);
+		header('Content-Type: application/json; charset=utf-8');
+		try {
+			require_once __DIR__.'/cont.php';
+			$k = (string)@$_POST['k']; $id = (int)@$_POST['id'];
+			if ($a == 'cont_list') {
+				$st = c2cont::steps($cmp);
+				if ($k !== '') $st = array_values(array_filter($st, function ($x) use ($k, $id) { return $x['k'] == $k && (!$id || $x['id'] == $id || in_array($k, ['link', 'price'])); }));
+				exit(json_encode(['steps' => $st, 'ai' => claude::ready() ? 1 : 0], JSON_UNESCAPED_UNICODE));
+			}
+			if (!in_array($k, c2cont::$order, true) || $k == 'set') exit(json_encode(['error' => 'error']));
+			if (!in_array($k, ['link', 'flat']) && !claude::ready()) exit(json_encode(['error' => gtpl_ai::err()], JSON_UNESCAPED_UNICODE));
+			exit(json_encode(c2cont::run($cmp, $k, $id), JSON_UNESCAPED_UNICODE));
+		} catch (Throwable $e) { error_log('cost2 cont: '.$e->getMessage()); exit(json_encode(['error' => 'error'])); }
+	}
+
 	// ── Шикізатқа жайылған дайындаманы жинау (products/cost2/semi_fix.php): компанияның тағамдары + ЖИ шаблондары (arh = 2)
 	if ($a == 'semi_fix') {
 		@set_time_limit(120);

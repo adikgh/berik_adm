@@ -213,6 +213,8 @@ class gtpl {
 			}
 			return $id;
 		}
+		// шикізат-құрам аты сәл басқа, бірақ сол зат (қалыпты кілт): бары қолданылады
+		if (!$semi && is_file(__DIR__.'/../cost2/rawdup.php')) { require_once __DIR__.'/../cost2/rawdup.php'; if ($k = c2raw::find_comp($cmp, $name)) return $k; }
 		// дайындама: шаблонынан құрамымен
 		if ($semi && $depth < 5 && ($t = self::tpl($semi))) {
 			$y = (float)$t['yield_qty'] > 0 ? (float)$t['yield_qty'] : 1; $u = self::unit($t['unit'] ?: $unit);
@@ -237,6 +239,8 @@ class gtpl {
 		$cmp = (int)$cmp; $e = self::e(trim((string)$name)); $new = 0; $src = '';
 		$r = mysqli_fetch_assoc(db::query("select id, price from product_raw where company_id = '$cmp' and (lower(name_ru) = lower('$e') or lower(name_kz) = lower('$e')) order by id limit 1"));
 		if ($r) { $price = (int)$r['price']; return (int)$r['id']; }
+		// аты сәл басқа, бірақ сол зат («Coca-Cola 1л» = «Кола 1 л» = «Кола»): қалыпты кілт бойынша бар шикізат (products/cost2/rawdup.php)
+		if (is_file(__DIR__.'/../cost2/rawdup.php')) { require_once __DIR__.'/../cost2/rawdup.php'; if ($k = c2raw::find($cmp, $name)) { $price = (int)@mysqli_fetch_row(db::query("select price from product_raw where id = '$k'"))[0]; return $k; } }
 		$u = self::unit($unit);
 		list($price, $src) = self::price_guess($cmp, $name, $u);
 		if (!db::query("insert into product_raw (company_id, name_kz, name_ru, unit, price) values ('$cmp', '$e', '$e', '$u', '".(int)$price."')")) return 0;

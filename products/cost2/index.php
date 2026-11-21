@@ -142,6 +142,14 @@
 		// шикізатқа жайылған дайындамасы бар тағамдар (рис + уксус + … → «Рис для суши»): «Дайындамаға жинау» батырмасы
 		require_once __DIR__.'/semi_fix.php';
 		$semi_cand = class_exists('gtpl') && gtpl::semi_ready() ? c2semi::candidates($cmp) : [];
+		// «ЖИ-мен жалғастыру»: тізбек үзілген жерлер (products/cost2/cont.php). $brk[түрі] = [[id, атауы]], $bk[түрі][id] = 1
+		$brk = []; $bk = [];
+		if (!empty($gt_all) && gtpl::semi_ready()) { require_once __DIR__.'/cont.php'; $brk = c2cont::breaks($cmp); foreach ($brk as $k => $l) foreach ($l as $x) $bk[$k][$x[0]] = 1; }
+		$n_steps = 0; foreach ($brk as $k => $l) $n_steps += in_array($k, ['link', 'price']) ? ($l ? 1 : 0) : count($l);
+		$empty_sets = $brk['set'] ?? [];
+		// қайталанған шикізат (көлемі әртүрлі болса да бір зат: products/cost2/rawdup.php)
+		require_once __DIR__.'/rawdup.php';
+		$n_dup = 0; foreach (c2raw::groups($cmp) as $g) $n_dup += count($g['items']) - 1;
 		$gt_semi = $gt_all && gtpl::semi_ready();
 		// ЖИ толтыру (products/cost2/ai.php): батырмалар және «ЖИ толтырды» белгілері (cost2_ai кестесі)
 		require_once __DIR__.'/../../config/claude.php';
@@ -157,7 +165,7 @@
 	$pm = 'cost2';
 	$page_name = t::w('Cost sheet', 'Себес');
 	$page_key = 'Cost sheet';
-	$css = ['stats', 'cost2']; // stats: админдегі стандарт сегмент (.st_seg) — План | Факт
+	$css = ['stats', 'cost2', 'products/import']; // products/import: прогресс тізімі (mi_prog, mi_posts) — ЖИ поп-апы // stats: админдегі стандарт сегмент (.st_seg) — План | Факт
 	$js = [];
 	if (!empty($gt_all)) { $css[] = 'gtpl'; $js[] = 'gtpl'; }
 	if (!empty($has_pp)) $js[] = 'prep_pop';
@@ -178,6 +186,7 @@
 				<button type="button" class="c2_tab" data-go="c2_col_p"><?=t::w('c2 Semi-finished', 'Дайындамалар')?> <span><?=count($preps)?></span></button>
 				<? if ($n_miss): ?><button type="button" class="c2_tab c2_tab_miss" data-go="c2_col_d" data-miss="1"><?=t::w('c2 No grammovka', 'Граммовкасы жоқ')?> <span><?=$n_miss?></span></button><? endif ?>
 			</div>
+			<? if (!empty($ai_ok) && $n_steps): ?><button type="button" class="c2_semifix c2_cont c2_cont_all" data-k=""><i class="fal fa-sparkles"></i> <span><?=$h(str_replace('{n}', $n_steps, t::w('c2 AI continue all', 'ЖИ-мен жалғастыру ({n})')))?></span></button><? endif ?>
 			<label class="c2_srch"><i class="fal fa-search"></i><input type="search" class="c2_q" placeholder="<?=$h(t::w('c2 Search', 'Іздеу'))?>"></label>
 		</div>
 
@@ -245,6 +254,9 @@
 			$E = function ($e, $v) use ($h) { return $e ? ' class="c2_e" data-a="'.$e[0].'" data-id="'.$e[1].'" data-f="'.$e[2].'" data-v="'.$h($v).'"' : ''; };
 			$X = function ($a, $id) use ($h) { return '<button type="button" class="c2_x" data-a="'.$a.'" data-id="'.$id.'" title="'.$h(t::w('c2 Delete', 'Өшіру')).'"><i class="fal fa-times"></i></button>'; };
 			$ADD = function ($a, $to, $kind) { return '<tr class="c2_add" data-a="'.$a.'" data-to="'.$to.'" data-k="'.$kind.'"><td colspan="4"><button type="button" class="c2_add_b"><i class="far fa-plus"></i> '.t::w('c2 Add item', 'Зат қосу').'</button></td></tr>'; };
+			// ЖИ жалғастыру батырмасы (бағандағы, санымен) және жолдағы кішкене ✨
+			$CB = function ($k, $n, $txt, $ico = 'fa-sparkles') use ($h, $ai_ok) { return $ai_ok && $n ? '<button type="button" class="c2_semifix c2_cont" data-k="'.$k.'"><i class="fal '.$ico.'"></i> <span>'.$h(str_replace('{n}', $n, $txt)).'</span></button>' : ''; };
+			$CS = function ($k, $id) use ($h, $ai_ok) { return $ai_ok ? '<button type="button" class="c2_ai_set c2_cont" data-k="'.$k.'" data-id="'.(int)$id.'" title="'.$h(t::w('c2 AI continue hint', 'ЖИ осы жерден жалғастырады: барын өзгертпейді, жетпегенін толтырады')).'"><i class="fal fa-sparkles"></i> '.t::w('c2 AI continue', 'ЖИ жалғастыру').'</button>' : ''; };
 			$AIT = '<span class="c2_aitag" title="'.$h(t::w('c2 AI filled, check', 'ЖИ толтырды, тексеріңіз')).'">ЖИ</span>';
 			$NM = function ($r) use ($h, $aim, $AIT) {
 				$t = $r['lnk'] ? '<a href="#'.$r['lnk'].'" class="c2_go">'.$h($r['name']).'</a>' : $h($r['name']);
@@ -256,6 +268,8 @@
 
 			<div class="c2_col">
 				<div class="c2_ch c2_ch1"><b>1</b> <?=t::w('c2 Raw materials (purchase)', 'Шикізат (закуп)')?> <span><?=count($used_raw)?></span></div>
+				<?=($brk['price'] ?? []) || ($brk['link'] ?? []) ? '<div class="c2_pbtn">'.$CB('price', count($brk['price'] ?? []), t::w('c2 Cont price', 'Бағасы жоқ {n} шикізатқа ЖИ бағасы'), 'fa-tags').$CB('link', count($brk['link'] ?? []), t::w('c2 Cont link', 'Закупқа байланбаған {n} шикізатты байлау'), 'fa-link').'</div>' : ''?>
+				<? if ($n_dup): ?><div class="c2_pbtn"><button type="button" class="c2_semifix c2_rawdup"><i class="fal fa-clone"></i> <span><?=$h(str_replace('{n}', $n_dup, t::w('c2 Dup btn', 'Қайталанған {n} шикізатты біріктіру')))?></span></button></div><? endif ?>
 				<div class="c2_card c2_blk">
 					<table class="c2_tbl c2_raw">
 						<thead><tr><th class="c2_l"><?=t::w('c2 Name', 'Атауы')?></th><th><?=t::w('c2 Unit', 'Өлш.')?></th><th><?=t::w('c2 Price', 'Бағасы')?></th></tr></thead>
@@ -279,7 +293,8 @@
 				<div class="c2_pbtn">
 					<? if ($gt_semi): ?><button type="button" class="btn gt_semi_btn c2_gt"><i class="fal fa-magic"></i> <span><?=t::w('pp Semis from templates', 'Дайындамаларды шаблоннан толтыру')?></span></button><? endif ?>
 					<button type="button" class="c2_pnew c2_prep_new"><i class="far fa-plus"></i> <span><?=t::w('c2 Add semi-finished', 'Дайындама қосу')?></span></button>
-					<? if ($semi_cand): ?><button type="button" class="c2_semifix" title="<?=$h(implode(', ', array_slice(array_column($semi_cand, 'name'), 0, 30)))?>"><i class="fal fa-layer-group"></i> <span><?=$h(str_replace('{n}', count($semi_cand), t::w('c2 Semi fix', 'Шикізатқа жайылған {n} тағамды дайындамаға жинау')))?></span></button><? endif ?>
+					<?=$CB('semi', count($brk['semi'] ?? []), t::w('c2 Cont semi', 'Құрамы жоқ {n} дайындаманы ЖИ-мен толтыру'), 'fa-layer-group')?>
+					<? if ($semi_cand): ?><button type="button" class="c2_semifix c2_cont" data-k="flat" title="<?=$h(implode(', ', array_slice(array_column($semi_cand, 'name'), 0, 30)))?>"><i class="fal fa-layer-group"></i> <span><?=$h(str_replace('{n}', count($semi_cand), t::w('c2 Semi fix', 'Шикізатқа жайылған {n} тағамды дайындамаға жинау')))?></span></button><? endif ?>
 				</div>
 				<form class="c2_card c2_newp" hidden autocomplete="off">
 					<input class="c2_in" name="name" placeholder="<?=$h(t::w('c2 Name', 'Атауы'))?>" required>
@@ -308,9 +323,10 @@
 
 			<div class="c2_col" id="c2_col_d">
 				<div class="c2_ch c2_ch3"><b>3</b> <?=t::w('c2 Dishes (grams)', 'Тағамдар (граммовка)')?> <span><?=count($dishes)?></span></div>
+				<?=($brk['dish'] ?? []) ? '<div class="c2_pbtn">'.$CB('dish', count($brk['dish']), t::w('c2 Cont dish', 'Граммовкасы жоқ {n} позицияны ЖИ-мен толтыру'), 'fa-utensils').'</div>' : ''?>
 				<? foreach ($dishes as $x): $pr = $x['price'] ? ($x['price'] - $x['sum']) / $x['price'] * 100 : 0; ?>
 					<div class="c2_card c2_blk c2_f<?=$x['rows'] ? '' : ' c2_blk_e'?>"<?=isset($miss_ids[$x['id']]) ? ' data-miss="1"' : ''?> id="d<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
-						<div class="c2_bh"><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><?=isset($aim['p'][$x['id']]) ? ' '.$AIT : ''?><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?></div>
+						<div class="c2_bh"><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><?=isset($aim['p'][$x['id']]) ? ' '.$AIT : ''?><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?><?=isset($bk['dish'][$x['id']]) ? $CS('dish', $x['id']) : (isset($bk['flat'][$x['id']]) ? $CS('flat', $x['id']) : '')?></div>
 						<table class="c2_tbl">
 							<tbody>
 							<? foreach ($x['rows'] as $r): ?>
@@ -326,7 +342,7 @@
 
 			<div class="c2_col">
 				<div class="c2_ch c2_ch4"><b>4</b> <?=t::w('c2 Sets', 'Сеттер')?> <span><?=count($sets)?></span><button type="button" class="c2_ch_b c2_set_new" title="<?=$h(t::w('c2 Add set', 'Сет қосу'))?>"><i class="far fa-plus"></i></button></div>
-				<? if ($ai_ok && $n_aiset): ?><button type="button" class="c2_ai_all"><i class="fal fa-sparkles"></i> <span><?=t::w('c2 AI fill all missing', 'Барлық жоқтарын ЖИ-мен толтыру')?></span> <b><?=$n_aiset?></b></button><? endif ?>
+				<?=($brk['set'] ?? []) || ($brk['item'] ?? []) ? '<div class="c2_pbtn">'.$CB('set', count($brk['set'] ?? []), t::w('c2 Cont set', 'Құрамы жоқ {n} сетті ЖИ-мен толтыру'), 'fa-images').$CB('item', count($brk['item'] ?? []), t::w('c2 Cont item', 'Позиция емес заты бар {n} сетті ЖИ-мен толтыру'), 'fa-sparkles').'</div>' : ''?>
 				<form class="c2_card c2_newp c2_news" hidden autocomplete="off">
 					<input class="c2_in" name="set" list="c2_sdl" placeholder="<?=$h(t::w('c2 Menu dish', 'Мәзірдегі тағам'))?>" required><datalist id="c2_sdl"></datalist>
 					<div class="c2_newp_r">
@@ -335,10 +351,16 @@
 						<button class="c2_ok" type="submit"><i class="far fa-check"></i></button>
 					</div>
 				</form>
-				<? if (!$sets): ?><button type="button" class="c2_card c2_empty c2_set_new"><i class="far fa-plus"></i> <?=t::w('c2 Add set', 'Сет қосу')?></button><? endif ?>
+				<? foreach ($empty_sets as $es): ?>
+					<div class="c2_card c2_blk c2_f c2_blk_e" id="s<?=$es[0]?>" data-q="<?=$h(mb_strtolower($es[1]))?>">
+						<div class="c2_bh"><a href="/products/item/?id=<?=$es[0]?>"><?=$h($es[1])?></a><?=$CS('set', $es[0])?></div>
+						<div class="c2_es_n"><?=t::w('c2 Set has no items', 'Сеттің құрамы жоқ')?></div>
+					</div>
+				<? endforeach ?>
+				<? if (!$sets && !$empty_sets): ?><button type="button" class="c2_card c2_empty c2_set_new"><i class="far fa-plus"></i> <?=t::w('c2 Add set', 'Сет қосу')?></button><? endif ?>
 				<? foreach ($sets as $x): ?>
 					<div class="c2_card c2_blk c2_f" id="s<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
-						<div class="c2_bh"><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?><? if ($ai_ok && $x['miss']): ?><button type="button" class="c2_ai_set" data-id="<?=$x['id']?>" title="<?=$h(t::w('c2 AI fill hint', 'Жоқ / граммовкасыз заттарды ЖИ толтырады'))?>"><i class="fal fa-sparkles"></i> <?=t::w('c2 AI fill', 'ЖИ толтыру')?></button><? endif ?></div>
+						<div class="c2_bh"><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?><? if (isset($bk['item'][$x['id']])): ?><?=$CS('item', $x['id'])?><? endif ?></div>
 						<table class="c2_tbl">
 							<tbody>
 							<? foreach ($x['rows'] as $r): ?>
@@ -550,50 +572,122 @@
 			}).catch(function () { b.disabled = false; mess(T.net, 'err'); });
 		});
 
-		// шикізатқа жайылған дайындаманы жинау (get.php?a=semi_fix): тек қолмен өзгертілмеген тағамдар
-		$(document).on('click', '.c2_semifix', function () {
-			var b = this, go = function () {
-				b.disabled = true;
-				fetch('/products/cost2/get.php?a=semi_fix', { method: 'POST', credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) {
-					b.disabled = false;
-					if (!d || d.error) { mess(T.err, 'warn'); return; }
-					mess(<?=json_encode(t::w('c2 Semi fixed', 'Дайындамаға жиналды: {n} тағам'))?>.replace('{n}', d.n), d.n ? 'ok' : 'warn'); reload();
-				}).catch(function () { b.disabled = false; mess(T.net, 'err'); });
+		// «ЖИ-мен жалғастыру»: кез келген ЖИ батырмасы (.c2_cont: data-k түрі, data-id заты; бос k — бәрі) поп-ап ашады.
+		// Қадамдар get.php?a=cont_list-тен келеді (төменнен жоғары), әрқайсысы бөлек кішкене сұрау: cont_do (сет құрамы — products/item/set_ai.php, сосын item).
+		// Прогресс: мәзір импортындағы тізім стилі (mi_prog, mi_posts, mi_pbar, mi_tm). «Тоқтату» — ағымдағы сұрау біткен соң; келесі жолы қалғаны жалғасады.
+		var CL = <?=json_encode([
+			'title' => t::w('c2 Cont title', 'ЖИ-мен жалғастыру'), 'stop' => t::w('c2 Cont stop', 'Тоқтату'), 'close' => t::w('c2 Cont close', 'Жабу'),
+			'stopping' => t::w('c2 Cont stopping', 'Ағымдағы қадам біткен соң тоқтайды…'), 'none' => t::w('c2 Cont none', 'Жалғастыратын үзіліс жоқ: тізбек толық.'),
+			'done' => t::w('c2 Cont done', 'Толтырылды: {n}'), 'errs' => t::w('c2 Cont errors', 'Қате'), 'stopped' => t::w('c2 Cont stopped', 'Тоқтатылды: келесі жолы қалған жерінен жалғасады.'),
+			'g' => ['link' => t::w('c2 Cont g link', 'Шикізатты закупқа байлау'), 'price' => t::w('c2 Cont g price', 'Шикізат бағасы (интернет)'), 'semi' => t::w('c2 Cont g semi', 'Дайындама рецепттері'),
+				'flat' => t::w('c2 Cont g flat', 'Дайындамаға жинау'), 'dish' => t::w('c2 Cont g dish', 'Позиция граммовкасы'), 'item' => t::w('c2 Cont g item', 'Сеттегі позициялар'), 'set' => t::w('c2 Cont g set', 'Сет құрамы (фотодан)')],
+		], JSON_UNESCAPED_UNICODE)?>;
+		var contBusy = false;
+		function contPost(url, data) {
+			var fd = new FormData(); for (var k in data) fd.append(k, data[k]);
+			return fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.json(); }).catch(function () { return { error: T.net }; });
+		}
+		function contRun(k, id, title) {
+			if (contBusy) return; contBusy = true;
+			var m = document.createElement('div'); m.className = 'gt_modal c2_cmod';
+			m.innerHTML = '<div class="gt_mbox"><h4>' + esc(title || CL.title) + '</h4><div class="mi_prog"><div class="mi_prog_h"></div><div class="mi_pbar"><div class="mi_pbar_i"></div></div><ol class="mi_posts"></ol></div>'
+				+ '<div class="c2_cm_err"></div><div class="c2_cm_sum"></div><div class="gt_mb"><button type="button" class="btn c2_cm_stop">' + esc(CL.stop) + '</button><button type="button" class="btn c2_cm_close" hidden>' + esc(CL.close) + '</button></div></div>';
+			document.body.appendChild(m);
+			var hd = m.querySelector('.mi_prog_h'), bar = m.querySelector('.mi_pbar_i'), list = m.querySelector('.mi_posts'), errb = m.querySelector('.c2_cm_err'), sum = m.querySelector('.c2_cm_sum');
+			var stopB = m.querySelector('.c2_cm_stop'), closeB = m.querySelector('.c2_cm_close');
+			var t0 = Date.now(), stop = false, cur = '';
+			var sec = function () { var s = Math.round((Date.now() - t0) / 1000); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); };
+			var head = function (txt) { cur = txt; hd.innerHTML = '<span>' + esc(txt) + '</span><span class="mi_tm">' + sec() + '</span>'; };
+			var tick = setInterval(function () { var x = hd.querySelector('.mi_tm'); if (x) x.textContent = sec(); }, 1000);
+			var finish = function (txt) {
+				clearInterval(tick); contBusy = false; stopB.hidden = true; closeB.hidden = false; head(txt);
+				list.querySelectorAll('.mi_p_on').forEach(function (x) { x.classList.remove('mi_p_on'); }); // тоқтатылса — айналу тоқтайды
 			};
-			if (window.ask) ask(<?=json_encode(t::w('c2 Semi fix ask', 'Рис, уксус, қант, тұз сияқты жолдар «Рис для суши» т.б. дайындамаға жиналады (қолмен өзгертілген тағамдарға тимейді). Жалғастырамыз ба?'))?>, go); else go();
+			stopB.onclick = function () { stop = true; stopB.disabled = true; stopB.textContent = CL.stopping; };
+			closeB.onclick = function () { m.remove(); reload(); };
+			head('…');
+			contPost('/products/cost2/get.php?a=cont_list', { k: k || '', id: id || 0 }).then(function (d) {
+				var st = (d && d.steps) || [];
+				if (!st.length) { bar.style.width = '100%'; finish(CL.none); return; }
+				// топтар: түрі бойынша бір жол, ішінде ағымдағы зат пен «3/12»
+				var groups = [], gi = {};
+				st.forEach(function (s) { if (!(s.k in gi)) { gi[s.k] = groups.length; groups.push({ k: s.k, n: 0, done: 0, bad: 0 }); } groups[gi[s.k]].n++; });
+				list.innerHTML = groups.map(function (g, i) { return '<li data-k="' + g.k + '"><span class="mi_pn">' + (i + 1) + '.</span><span class="mi_pt"><b>' + esc(CL.g[g.k] || g.k) + '</b> <span class="c2_cm_it"></span></span><span class="mi_pd">0/' + g.n + '</span><i class="mi_ps fal"></i></li>'; }).join('');
+				var li = function (k) { return list.querySelector('li[data-k="' + k + '"]'); };
+				var i = 0, n = 0, usd = 0, tok = 0, errs = [];
+				var next = function () {
+					if (i >= st.length || stop) {
+						bar.style.width = Math.round(i / st.length * 100) + '%';
+						sum.innerHTML = esc(CL.done.replace('{n}', n)) + ' · ' + i + '/' + st.length + (tok ? ' · ' + tok.toLocaleString('ru') + ' tok' : '') + (usd ? ' · $' + usd.toFixed(4) : '') + (stop && i < st.length ? '<br>' + esc(CL.stopped) : '');
+						finish(CL.title + ' · ' + i + '/' + st.length);
+						return;
+					}
+					var s = st[i], g = groups[gi[s.k]], el = li(s.k);
+					list.querySelectorAll('.mi_p_on').forEach(function (x) { if (x !== el) x.classList.remove('mi_p_on'); });
+					el.classList.add('mi_p_on'); el.querySelector('.c2_cm_it').textContent = '· ' + s.name; el.querySelector('.mi_pd').textContent = (g.done + g.bad + 1) + '/' + g.n;
+					head((i + 1) + '/' + st.length + ' · ' + (CL.g[s.k] || s.k));
+					var p = s.k == 'set'
+						? contPost('/products/item/set_ai.php', { id: s.id }).then(function (r) { return r && r.ok ? contPost('/products/cost2/get.php?a=cont_do', { k: 'item', id: s.id }) : { error: (r && r.error) || T.err }; })
+						: contPost('/products/cost2/get.php?a=cont_do', { k: s.k, id: s.id });
+					p.then(function (r) {
+						i++;
+						if (r && r.ok) { g.done++; n += r.n || 0; usd += +r.usd || 0; tok += +r.tokens || 0; }
+						else { g.bad++; errs.push(s.name + ': ' + ((r && r.error && r.error != 'error') ? r.error : T.err)); errb.innerHTML = '<b>' + esc(CL.errs) + ':</b><ul>' + errs.map(function (e) { return '<li>✗ ' + esc(e) + '</li>'; }).join('') + '</ul>'; }
+						if (g.done + g.bad >= g.n) { el.classList.remove('mi_p_on'); el.classList.add(g.bad && !g.done ? 'mi_p_err' : 'mi_p_ok'); el.querySelector('.c2_cm_it').textContent = g.bad ? '· ✗ ' + g.bad : ''; }
+						bar.style.width = Math.round(i / st.length * 100) + '%';
+						next();
+					});
+				};
+				next();
+			});
+		}
+		// Қайталанған шикізатты біріктіру (get.php?a=dup_list / dup_merge): топтар құсбелгімен, әр топ бөлек сұраумен (транзакция), прогресс сол поп-апта
+		var DL = <?=json_encode(['title' => t::w('c2 Dup title', 'Қайталанған шикізатты біріктіру'), 'go' => t::w('c2 Dup go', 'Біріктіру'), 'main' => t::w('c2 Dup main', 'негізгі'),
+			'hint' => t::w('c2 Dup hint', 'Көлемі не салмағы әртүрлі болса да бір шикізат болады. Барлық рецепт, накладной, қалдық негізгіге көшеді, қалғаны өшеді. Керек емес топтың белгісін алыңыз.'),
+			'done' => t::w('c2 Dup done', 'Біріктірілді: {n} шикізат'), 'none' => t::w('c2 Dup none', 'Қайталанған шикізат жоқ.')], JSON_UNESCAPED_UNICODE)?>;
+		$(document).on('click', '.c2_rawdup', function () {
+			if (contBusy) return; contBusy = true;
+			var m = document.createElement('div'); m.className = 'gt_modal c2_cmod';
+			m.innerHTML = '<div class="gt_mbox"><h4>' + esc(DL.title) + '</h4><p class="c2_dup_h">' + esc(DL.hint) + '</p><div class="mi_prog"><div class="mi_prog_h"></div><div class="mi_pbar"><div class="mi_pbar_i"></div></div><ol class="mi_posts c2_dup_l"></ol></div>'
+				+ '<div class="c2_cm_err"></div><div class="c2_cm_sum"></div><div class="gt_mb"><button type="button" class="btn c2_dup_go" disabled>' + esc(DL.go) + '</button><button type="button" class="btn c2_cm_close">' + esc(CL.close) + '</button></div></div>';
+			document.body.appendChild(m);
+			var hd = m.querySelector('.mi_prog_h'), bar = m.querySelector('.mi_pbar_i'), list = m.querySelector('.c2_dup_l'), go = m.querySelector('.c2_dup_go'), cl = m.querySelector('.c2_cm_close'), sum = m.querySelector('.c2_cm_sum'), errb = m.querySelector('.c2_cm_err');
+			var changed = false;
+			cl.onclick = function () { m.remove(); contBusy = false; if (changed) reload(); };
+			var cnt = function () { var n = list.querySelectorAll('input:checked').length; go.disabled = !n; go.textContent = DL.go + ' (' + n + ')'; };
+			hd.innerHTML = '<span>…</span>';
+			contPost('/products/cost2/get.php?a=dup_list', {}).then(function (d) {
+				var gs = (d && d.groups) || [];
+				if (!gs.length) { hd.innerHTML = '<span>' + esc(DL.none) + '</span>'; return; }
+				hd.innerHTML = '<span>' + esc(DL.title) + ': ' + gs.length + '</span><span class="mi_tm"></span>';
+				list.innerHTML = gs.map(function (g, i) {
+					return '<li data-key="' + esc(g.key) + '"><input type="checkbox" checked><span class="mi_pn">' + (i + 1) + '.</span><span class="mi_pt"><b>' + esc(g.name) + '</b> ← '
+						+ g.items.map(function (x) { return esc(x.name) + (x.id == g.main ? ' <small class="c2_dup_m">★ ' + esc(DL.main) + (x.price ? ', ' + Math.round(x.price) + ' ₸/' + esc(x.unit || '') : '') + '</small>' : ''); }).join(', ') + '</span><i class="mi_ps fal"></i></li>';
+				}).join('');
+				list.addEventListener('change', cnt); cnt();
+			});
+			go.onclick = function () {
+				var lis = [].slice.call(list.querySelectorAll('li')).filter(function (l) { return l.querySelector('input').checked; });
+				if (!lis.length) return;
+				go.disabled = true; cl.disabled = true; list.querySelectorAll('input').forEach(function (x) { x.disabled = true; });
+				var i = 0, n = 0, errs = [], t0 = Date.now();
+				var tick = setInterval(function () { var s = Math.round((Date.now() - t0) / 1000), x = hd.querySelector('.mi_tm'); if (x) x.textContent = Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }, 1000);
+				(function next() {
+					if (i >= lis.length) { clearInterval(tick); changed = true; cl.disabled = false; go.hidden = true; sum.textContent = DL.done.replace('{n}', n); return; }
+					var li = lis[i++]; li.classList.add('mi_p_on');
+					contPost('/products/cost2/get.php?a=dup_merge', { key: li.dataset.key }).then(function (r) {
+						li.classList.remove('mi_p_on');
+						if (r && r.ok) { li.classList.add('mi_p_ok'); n += r.n || 0; } else { li.classList.add('mi_p_err'); errs.push(li.querySelector('b').textContent); errb.textContent = '✗ ' + errs.join(', '); }
+						bar.style.width = Math.round(i / lis.length * 100) + '%';
+						next();
+					});
+				})();
+			};
 		});
-
-		// ЖИ толтыру: сеттегі жоқ / граммовкасыз заттар (get.php?a=ai_set, бір сет — бір ЖИ сұрауы)
-		var aiBusy = false;
-		var aiT = { run: <?=json_encode(t::w('c2 AI filling', 'ЖИ толтыруда…'))?>, done: <?=json_encode(t::w('c2 AI filled', 'ЖИ толтырды'))?>, none: <?=json_encode(t::w('c2 AI nothing', 'Толтыратын зат жоқ'))?>, skip: <?=json_encode(t::w('c2 AI skipped', 'Толтырылмады'))?> };
-		function aiOne(id) {
-			var fd = new FormData(); fd.append('id', id);
-			return fetch('/products/cost2/get.php?a=ai_set', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.json(); }).catch(function () { return { error: T.net }; });
-		}
-		function aiRun(ids, btn) {
-			if (aiBusy || !ids.length) return; aiBusy = true;
-			var lab = btn.innerHTML, i = 0, n = 0, err = '', skip = [];
-			document.querySelectorAll('.c2_ai_set, .c2_ai_all').forEach(function (b) { b.disabled = true; });
-			var next = function () {
-				if (i >= ids.length) {
-					aiBusy = false; btn.innerHTML = lab;
-					if (err && !n) mess(err, 'warn');
-					else mess(n ? aiT.done + ': ' + n + (skip.length ? ' · ' + aiT.skip + ': ' + skip.join(', ') : '') : aiT.none, n ? 'ok' : 'warn');
-					reload(); return;
-				}
-				btn.innerHTML = '<i class="fal fa-spinner fa-spin"></i> ' + esc(aiT.run) + (ids.length > 1 ? ' ' + (i + 1) + '/' + ids.length : '');
-				aiOne(ids[i++]).then(function (r) {
-					if (r && r.ok) { n += r.n || 0; if (r.skip && r.skip.length) skip = skip.concat(r.skip); }
-					else err = (r && r.error && r.error != 'error') ? r.error : T.err;
-					next();
-				});
-			};
-			next();
-		}
-		$(document).on('click', '.c2_ai_set', function (e) { e.preventDefault(); aiRun([+this.dataset.id], this); });
-		$(document).on('click', '.c2_ai_all', function () {
-			var ids = []; document.querySelectorAll('.c2_ai_set').forEach(function (b) { ids.push(+b.dataset.id); });
-			aiRun(ids, this);
+		$(document).on('click', '.c2_cont', function (e) {
+			e.preventDefault();
+			var t = this.querySelector('span') ? this.querySelector('span').textContent : this.textContent;
+			contRun(this.dataset.k || '', +this.dataset.id || 0, t.trim());
 		});
 
 		// жаңа сет: мәзірдегі тағам (әлі сет емес) + бірінші зат → si_add
