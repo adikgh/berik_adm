@@ -40,7 +40,15 @@
 			</div>
 			<div class="mi_box" data-box="insta" hidden>
 				<div class="form_im"><input type="text" class="form_txt mi_insta" placeholder="@akkaunt не instagram.com/akkaunt"><i class="fab fa-instagram form_icon"></i></div>
-				<small class="mi_hint"><?=$apify_on ? 'Соңғы 40 пост пен фотолары оқылады (Apify, бір аккаунтқа шамамен 0.1 $). Аккаунт ашық болу керек.' : 'Apify қосылмаған: config/ai.php ішіне APIFY_TOKEN жазыңыз. Әзірге «Меню» хайлайтсының скриндерін Фото ретінде салыңыз.'?></small>
+				<label class="mi_cnt">Соңғы
+					<select class="form_txt mi_insta_n">
+						<option value="40">40 пост · ~0.1 $</option>
+						<option value="80" selected>80 пост · ~0.2 $</option>
+						<option value="120">120 пост · ~0.35 $</option>
+						<option value="200">200 пост · ~0.6 $</option>
+					</select>
+				</label>
+				<small class="mi_hint"><?=$apify_on ? 'Посттар мен фотолары оқылады (Apify). Аккаунт ашық болу керек. Бір сет бірнеше рет жарияланса, ең жаңа бағасы алынады.' : 'Apify қосылмаған: config/ai.php ішіне APIFY_TOKEN жазыңыз. Әзірге «Меню» хайлайтсының скриндерін Фото ретінде салыңыз.'?></small>
 			</div>
 			<div class="mi_box" data-box="web" hidden>
 				<div class="form_im"><input type="text" class="form_txt mi_web" placeholder="Сайт сілтемесі не «Яки суши Шымкент»"><i class="fal fa-globe form_icon"></i></div>
@@ -59,6 +67,11 @@
 			<label class="mi_ck"><input type="checkbox" class="mi_fill" checked> Қосқаннан кейін шикізат, дайындама, граммовка және сет құрамын автомат толтыру</label>
 			<label class="mi_ck"><input type="checkbox" class="mi_photo" checked> Мәзір суретінен тағам фотосын қиып қою</label>
 			<div class="mi_act"><button type="button" class="btn mi_read"<?=$ai_on ? '' : ' disabled'?>><i class="fal fa-magic"></i><span>ЖИ мәзірді оқысын</span></button></div>
+			<div class="mi_prog" hidden>
+				<div class="mi_prog_h"></div>
+				<div class="mi_pbar"><div class="mi_pbar_i"></div></div>
+				<ol class="mi_posts"></ol>
+			</div>
 		</div>
 
 		<!-- 3. тексеру -->

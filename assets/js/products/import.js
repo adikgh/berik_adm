@@ -87,7 +87,12 @@
 		if (src == 'files') { if (!files.length) return say('Мәзір фотосын не PDF таңдаңыз'); files.forEach(function (f, i) { fd.append('f[]', f.blob, 'p' + i + '.jpg'); }); }
 		else { var v = (src == 'insta' ? $('.mi_insta') : $('.mi_web')).value.trim(); if (!v) return say(src == 'insta' ? 'Instagram аккаунтын жазыңыз' : 'Сілтеме не атауын жазыңыз'); fd.append('insta', v); }
 		var sp = b.querySelector('span'), t0 = sp.textContent; b.disabled = true;
-		sp.textContent = src == 'insta' ? 'Instagram оқылып жатыр (1-3 мин)...' : 'ЖИ оқып жатыр...';
+		if (src == 'insta') return insta(v).then(function (d) {
+			b.disabled = false; sp.textContent = t0; items = d.items;
+			if (!items.length) return say('Мәзірден тағам табылмады');
+			table(d);
+		}).catch(function (e) { b.disabled = false; sp.textContent = t0; say(typeof e == 'string' ? e : 'Байланыс қатесі, қайталаңыз'); });
+		sp.textContent = 'ЖИ оқып жатыр...';
 		post(API + '?read', fd).then(function (d) {
 			b.disabled = false; sp.textContent = t0;
 			if (!d.ok) return say(d.error || 'Қате');
@@ -96,6 +101,71 @@
 			table(d);
 		}).catch(function () { b.disabled = false; sp.textContent = t0; say('Байланыс қатесі, қайталаңыз'); });
 	});
+
+	// ---- Instagram: 1) Apify посттарды жинайды (тізім жанды көрінеді), 2) ЖИ 20 посттан бөліп оқиды ----
+	function wait(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
+	function insta(v) {
+		var prog = $('.mi_prog'), list = $('.mi_posts'), hd = $('.mi_prog_h'), bar = $('.mi_pbar_i');
+		var n = +$('.mi_insta_n').value || 80, t = Date.now(), run, ds, acc, LIM = 20;
+		var sec = function () { var s = Math.round((Date.now() - t) / 1000); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); };
+		var head = function (txt) { hd.innerHTML = '<span>' + h(txt) + '</span><span class="mi_tm">' + sec() + '</span>'; };
+		var tick = setInterval(function () { var x = hd.querySelector('.mi_tm'); if (x) x.textContent = sec(); }, 1000);
+		var mark = function (from, cls) { for (var i = from; i < from + LIM && list.children[i]; i++) list.children[i].className = cls; };
+		var render = function (posts) {
+			list.innerHTML = posts.map(function (p, i) {
+				return '<li><span class="mi_pn">' + (i + 1) + '</span><span class="mi_pd">' + h(p.d.slice(8, 10) + '.' + p.d.slice(5, 7) + '.' + p.d.slice(2, 4)) + '</span>'
+					+ '<span class="mi_pt">' + (p.v ? '<i class="fal fa-video"></i> ' : '') + h(p.t || '(мәтінсіз)') + '</span><i class="mi_ps fal"></i></li>';
+			}).join('');
+			list.scrollTop = list.scrollHeight;
+		};
+		prog.hidden = false; list.innerHTML = ''; bar.style.width = '0'; token = '';
+		head('Instagram ашылып жатыр...');
+		var poll = function () {
+			return post(API + '?ig_poll', { run: run }).then(function (d) {
+				if (!d.ok) throw d.error || 'Қате';
+				render(d.posts);
+				head('Посттар алынып жатыр: ' + d.posts.length + ' / ' + n);
+				bar.style.width = Math.min(100, d.posts.length / n * 100) + '%';
+				if (d.fail) throw 'Instagram оқылмады: аккаунт жабық не табылмады';
+				return d.done ? d.posts : wait(3000).then(poll);
+			});
+		};
+		return post(API + '?ig_start', { insta: v, n: n }).then(function (d) {
+			if (!d.ok) throw d.error || 'Қате';
+			run = d.run; ds = d.ds; acc = d.acc;
+			return poll();
+		}).then(function (posts) {
+			if (!posts.length) throw 'Аккаунт табылмады не жабық (private)';
+			var total = posts.length, off = 0, all = [], seen = {}, bad = 0;
+			var key = function (s) { return String(s).toLowerCase().replace(/ё/g, 'е').replace(/[^0-9a-zа-яәіңғүұқөһ]+/g, ''); };
+			var step = function () {
+				if (off >= total) return Promise.resolve();
+				mark(off, 'mi_p_on');
+				head('ЖИ оқып жатыр: ' + (off + 1) + '–' + Math.min(total, off + LIM) + ' / ' + total + ' пост · ' + all.length + ' тағам табылды');
+				bar.style.width = Math.round(off / total * 100) + '%';
+				var try1 = function (k) {
+					return post(API + '?read', { src: 'insta', ds: ds, acc: acc, off: off, lim: LIM, token: token }).then(function (d) {
+						return !d.ok && k < 1 ? try1(k + 1) : d;
+					});
+				};
+				return try1(0).then(function (d) {
+					if (d.ok) {
+						token = d.token || token;
+						// жаңа посттар алдымен келеді: қайталанған тағамның бірінші (ең жаңа) бағасы қалады
+						(d.items || []).forEach(function (it) { var k = key(it.name); if (!seen[k]) { seen[k] = 1; all.push(it); } });
+						mark(off, 'mi_p_ok');
+					} else { bad += Math.min(LIM, total - off); mark(off, 'mi_p_err'); }
+					off += LIM;
+					return step();
+				});
+			};
+			return step().then(function () {
+				clearInterval(tick); bar.style.width = '100%';
+				head('Дайын: ' + total + ' пост оқылды · ' + all.length + ' тағам' + (bad ? ' · ' + bad + ' пост оқылмады (қызыл)' : ''));
+				return { items: all, note: '@' + acc + ' · ' + total + ' пост' };
+			});
+		}).catch(function (e) { clearInterval(tick); head(typeof e == 'string' ? e : 'Байланыс қатесі'); throw e; });
+	}
 
 	// ---- 2. тексеру кестесі ----
 	function table(d) {

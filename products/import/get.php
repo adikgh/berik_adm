@@ -33,6 +33,50 @@
 		return [$m, $list];
 	};
 
+	// ---------------- 0. Instagram: Apify-да посттарды жинау (фонда), JS әр 3 секунд сайын санын сұрайды ----------------
+	$apify = function ($path, $body = null) {
+		$ch = curl_init('https://api.apify.com/v2/'.$path.(strpos($path, '?') ? '&' : '?').'token='.urlencode(APIFY_TOKEN));
+		curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 60, CURLOPT_CONNECTTIMEOUT => 15, CURLOPT_HTTPHEADER => ['content-type: application/json']]);
+		if ($body !== null) { curl_setopt($ch, CURLOPT_POST, true); curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body)); }
+		$res = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+		if ($code >= 300) error_log('apify '.$code.' '.preg_replace('/\?.*/', '', $path).': '.substr((string)$res, 0, 300));
+		return [json_decode((string)$res, true), $code];
+	};
+	// жиналған посттар: қатесіз, жаңасы алдымен (бір сет бірнеше рет жарияланса, соңғы бағасы дұрыс)
+	$ig_posts = function ($ds, $fields = '') use ($apify) {
+		if ($ds === '') return [null, 0];
+		list($d, $code) = $apify('datasets/'.$ds.'/items?clean=1&limit=1000'.($fields ? '&fields='.$fields : ''));
+		if (!is_array($d) || $code >= 300) return [null, $code];
+		$d = array_values(array_filter($d, function ($p) { return is_array($p) && empty($p['error']) && (!empty($p['timestamp']) || !empty($p['caption']) || !empty($p['displayUrl'])); }));
+		usort($d, function ($a, $b) { return strcmp((string)@$b['timestamp'], (string)@$a['timestamp']); });
+		return [$d, $code];
+	};
+	if (isset($_GET['ig_start']) || isset($_GET['ig_poll'])) {
+		if (!defined('APIFY_TOKEN') || APIFY_TOKEN === '') $out(['ok' => 0, 'error' => 'Instagram үшін Apify қосылмаған: config/ai.php ішіне APIFY_TOKEN жазу керек']);
+		if (isset($_GET['ig_start'])) {
+			$acc = trim((string)@$_POST['insta']);
+			if (preg_match('~instagram\.com/([A-Za-z0-9._]+)~', $acc, $m)) $acc = $m[1];
+			$acc = preg_replace('/[^A-Za-z0-9._]/', '', ltrim($acc, '@'));
+			if ($acc === '') $out(['ok' => 0, 'error' => 'Instagram аккаунтын жазыңыз']);
+			$n = min(200, max(10, (int)@$_POST['n'] ?: 80));
+			list($d, $code) = $apify('acts/apify~instagram-scraper/runs?timeout=600', ['directUrls' => ['https://www.instagram.com/'.$acc.'/'], 'resultsType' => 'posts', 'resultsLimit' => $n, 'addParentData' => false]);
+			if ($code >= 300 || empty($d['data']['id'])) $out(['ok' => 0, 'error' => $code == 401 ? 'Apify токені қате' : ($code == 402 ? 'Apify балансы бітті' : 'Instagram-ды ашу мүмкін болмады, сәлден соң қайталаңыз')]);
+			$out(['ok' => 1, 'run' => $d['data']['id'], 'ds' => $d['data']['defaultDatasetId'], 'acc' => $acc, 'n' => $n]);
+		}
+		// ig_poll: күйі + жиналған посттардың қысқаша тізімі (нөмір, күн, бірінші жол)
+		$run = preg_replace('/[^A-Za-z0-9]/', '', (string)@$_POST['run']);
+		list($d, $code) = $apify('actor-runs/'.$run);
+		if ($code >= 300 || empty($d['data'])) $out(['ok' => 0, 'error' => 'Apify күйі оқылмады']);
+		$st = (string)$d['data']['status'];
+		list($posts) = $ig_posts((string)$d['data']['defaultDatasetId'], 'timestamp,caption,type,displayUrl,error');
+		$list = [];
+		foreach ((array)$posts as $p) {
+			$t = trim(preg_replace('/\s+/u', ' ', strtok(trim((string)@$p['caption']) ?: ' ', "\n")));
+			$list[] = ['d' => substr((string)@$p['timestamp'], 0, 10), 't' => mb_substr($t, 0, 80), 'v' => @$p['type'] == 'Video' ? 1 : 0];
+		}
+		$out(['ok' => 1, 'status' => $st, 'done' => !in_array($st, ['READY', 'RUNNING']), 'fail' => in_array($st, ['FAILED', 'ABORTED', 'TIMED-OUT', 'TIMING-OUT', 'ABORTING']) && !$list, 'posts' => $list]);
+	}
+
 	// ---------------- 1. оқу ----------------
 	if (isset($_GET['read'])) {
 		@set_time_limit(420);
@@ -44,22 +88,16 @@
 		$src = (string)@$_POST['src']; $note_src = '';
 
 		if ($src == 'insta') {
-			$acc = trim((string)@$_POST['insta']);
-			if (preg_match('~instagram\.com/([A-Za-z0-9._]+)~', $acc, $m)) $acc = $m[1];
-			$acc = preg_replace('/[^A-Za-z0-9._]/', '', ltrim($acc, '@'));
-			if ($acc === '') $out(['ok' => 0, 'error' => 'Instagram аккаунтын жазыңыз']);
-			if (!defined('APIFY_TOKEN') || APIFY_TOKEN === '') $out(['ok' => 0, 'error' => 'Instagram үшін Apify қосылмаған: config/ai.php ішіне APIFY_TOKEN жазу керек']);
-			$body = json_encode(['directUrls' => ['https://www.instagram.com/'.$acc.'/'], 'resultsType' => 'posts', 'resultsLimit' => 40, 'addParentData' => false]);
-			$ch = curl_init('https://api.apify.com/v2/acts/apify~instagram-scraper/run-sync-get-dataset-items?timeout=180&token='.urlencode(APIFY_TOKEN));
-			curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 200, CURLOPT_CONNECTTIMEOUT => 20,
-				CURLOPT_HTTPHEADER => ['content-type: application/json'], CURLOPT_POSTFIELDS => $body]);
-			$res = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-			$posts = json_decode((string)$res, true);
-			if ($code >= 300 || !is_array($posts)) { error_log('apify '.$code.': '.substr((string)$res, 0, 300)); $out(['ok' => 0, 'error' => $code == 401 ? 'Apify токені қате' : ($code == 402 ? 'Apify балансы бітті' : 'Instagram-ды ашу мүмкін болмады, сәлден соң қайталаңыз')]); }
-			$posts = array_values(array_filter($posts, function ($p) { return is_array($p) && empty($p['error']); }));
+			// посттар ig_start/ig_poll арқылы Apify-да жиналған; JS оларды бөліп (off, 20-дан) оқытады
+			$ds = preg_replace('/[^A-Za-z0-9]/', '', (string)@$_POST['ds']);
+			$off = max(0, (int)@$_POST['off']); $lim = min(30, max(1, (int)@$_POST['lim'] ?: 20));
+			if (preg_match('/^[a-f0-9]{16}$/', (string)@$_POST['token'])) $tok = $_POST['token'];
+			list($posts, $code) = $ig_posts($ds);
+			if ($posts === null) $out(['ok' => 0, 'error' => $code == 401 ? 'Apify токені қате' : 'Instagram посттары оқылмады, қайталаңыз']);
 			if (!$posts) $out(['ok' => 0, 'error' => 'Аккаунт табылмады не жабық (private)']);
-			// жаңа посттар алдымен (бір сет бірнеше рет жарияланса, соңғы бағасы дұрыс)
-			usort($posts, function ($a, $b) { return strcmp((string)@$b['timestamp'], (string)@$a['timestamp']); });
+			$total = count($posts);
+			$posts = array_slice($posts, $off, $lim);
+			if (!$posts) $out(['ok' => 1, 'token' => $tok, 'items' => [], 'total' => $total]);
 			// әр пост: мәтіні + суреттері, барлығы 40 суретке дейін: алдымен әр посттың мұқабасы, қалғаны карусельден (3-ке дейін)
 			$pp = []; $urls = []; $all = [];
 			foreach ($posts as $p) {
@@ -84,14 +122,14 @@
 			// Claude-қа: «Пост N (күні)» мәтіні, артынан сол посттың суреттері (нөмірі $imgs индексімен бірдей)
 			$ig = [];
 			foreach ($pp as $n => $p) {
-				$ig[] = ['type' => 'text', 'text' => 'Пост '.($n + 1).' ('.$p['date'].')'.($p['caption'] !== '' ? ":\n".$p['caption'] : ': без подписи')];
-				foreach ($p['urls'] as $u) {
+				$ig[] = ['type' => 'text', 'text' => 'Пост '.($off + $n + 1).' ('.$p['date'].')'.($p['caption'] !== '' ? ":\n".$p['caption'] : ': без подписи')];
+				foreach ($p['urls'] as $j => $u) {
 					$b = $got[$u];
 					if (!$b || strlen($b) > 8e6 || !($i = @getimagesizefromstring($b)) || !in_array($i['mime'], ['image/jpeg', 'image/png', 'image/webp'])) continue;
-					$imgs[] = [$b, $i['mime'], count($ig)]; $ig[] = null; // орны: сурет блогы кейін қойылады
+					$imgs[($off + $n) * 3 + $j] = [$b, $i['mime'], count($ig)]; $ig[] = null; // орны: сурет блогы кейін қойылады
 				}
 			}
-			$note_src = '@'.$acc;
+			$note_src = '@'.preg_replace('/[^A-Za-z0-9._]/', '', (string)@$_POST['acc']);
 		} elseif ($src == 'web') {
 			// сайт / 2GIS / Wolt / Glovo сілтемесі не атауы: ЖИ интернеттен іздейді (суретсіз)
 			$q0 = mb_substr(trim((string)@$_POST['insta']), 0, 300);
@@ -180,7 +218,7 @@
 				'img' => isset($it['img']) ? (int)$it['img'] : -1, 'box' => $box, 'img_url' => (string)@$it['img_url'],
 				'same' => $same, 'same_name' => $same ? (string)@$list[$same] : ''];
 		}
-		$out(['ok' => 1, 'token' => $tok, 'items' => $res, 'note' => $note_src, 'model' => (string)@$used, 'imgs' => count($imgs)]);
+		$out(['ok' => 1, 'token' => $tok, 'items' => $res, 'note' => $note_src, 'model' => (string)@$used, 'imgs' => count($imgs), 'total' => (int)@$total]);
 	}
 
 	// ---------------- 2. қосу ----------------

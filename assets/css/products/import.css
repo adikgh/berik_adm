@@ -53,3 +53,24 @@
 	.mi_var .mi_seg_b{ min-width: 0; }
 	.mi_tbl th:nth-child(3), .mi_tbl td:nth-child(3){ display: none; }
 }
+
+/* Instagram: посттар тізімі мен прогресс */
+.mi_cnt{ display: flex; gap: 8px; align-items: center; margin-top: 10px; color: #545a56; }
+.mi_cnt .form_txt{ width: auto; min-width: 170px; }
+.mi_prog{ margin-top: 14px; border: 1px solid #e7e9ee; border-radius: 12px; padding: 12px; }
+.mi_prog_h{ display: flex; justify-content: space-between; gap: 10px; font-weight: 600; margin-bottom: 8px; }
+.mi_tm{ color: #767c78; font-weight: 400; font-variant-numeric: tabular-nums; }
+.mi_pbar{ height: 6px; border-radius: 6px; background: #f0f1f4; overflow: hidden; margin-bottom: 8px; }
+.mi_pbar_i{ height: 100%; width: 0; background: var(--bp-green, #0EA768); transition: width .4s; }
+.mi_posts{ list-style: none; margin: 0; padding: 0; max-height: 260px; overflow-y: auto; font-size: 13px; }
+.mi_posts li{ display: flex; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 8px; animation: mi_in .3s; }
+.mi_pn{ min-width: 26px; color: #767c78; font-variant-numeric: tabular-nums; text-align: right; }
+.mi_pd{ color: #767c78; font-variant-numeric: tabular-nums; }
+.mi_pt{ flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mi_posts .mi_p_on{ background: #fff8e6; }
+.mi_posts .mi_p_on .mi_ps::before{ content: "\f110"; display: inline-block; animation: mi_spin 1s linear infinite; }
+.mi_posts .mi_p_ok .mi_ps{ color: var(--bp-green, #0EA768); }
+.mi_posts .mi_p_ok .mi_ps::before{ content: "\f00c"; }
+.mi_posts .mi_p_err{ background: #fff1f0; }
+@keyframes mi_in{ from{ opacity: 0; transform: translateY(4px); } }
+@keyframes mi_spin{ to{ transform: rotate(360deg); } }
