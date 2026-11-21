@@ -1,7 +1,7 @@
 <? include "../config/core.php";
 
 	// 
-	if (!$user_id) header('location: /');
+	if (!$user_id) { header('location: /'); exit; }
 
    	$type = @$_GET['type'];
 

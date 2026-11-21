@@ -1,7 +1,7 @@
 <? include "../../../config/core.php"; if (!$user_id) exit; // кірмегенге жабық (2026-11-21 аудит)
 
 	// 
-	if (!$user_right) header('location: /');
+	if (!$user_right) { header('location: /'); exit; }
 
 	// product item
 	$item_id = $_GET['id'];

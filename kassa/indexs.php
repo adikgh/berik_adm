@@ -1,7 +1,7 @@
 <? include "../config/core.php";
 
 	// 
-	// if (!$user_id) header('location: /');
+	if (!$user_id) { header('location: /'); exit; } // 2026-11-21 аудит: кірусіз ашылып тұрған
 
 
 

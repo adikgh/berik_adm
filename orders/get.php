@@ -1,4 +1,4 @@
-<? include "../config/core.php";
+<? include "../config/core.php"; if (!$user_id) exit('none'); // кірмеген адамға жабық (2026-11-21 аудит)
    
    // returns
 	if(isset($_GET['return_sn'])) {
@@ -159,8 +159,8 @@
 
    // 
 	if(isset($_GET['delete'])) {
-      $id = strip_tags($_POST['id']);
-      $del = db::query("DELETE FROM `retail_orders` where id = '$id'");
+      $id = (int)@$_POST['id'];
+      $del = db::query("DELETE FROM `retail_orders` where id = '$id' and company_id = '".(int)$company."'");
       if ($del) echo 'yes';
 
       exit();
@@ -193,8 +193,9 @@
 		$id = strip_tags($_POST['id']);
 		$order_id = strip_tags($_POST['order_id']);
 
-      if ($id == 2) $upd = db::query("UPDATE `retail_orders` SET total = total - pay_delivery, pay_delivery = 0 WHERE id = '$order_id'");
-      $upd = db::query("UPDATE `retail_orders` SET order_type = '$id' WHERE id = '$order_id'");
+      $id = (int)$id; $order_id = (int)$order_id; $ocw = " and company_id = '".(int)$company."'";
+      if ($id == 2) $upd = db::query("UPDATE `retail_orders` SET total = total - pay_delivery, pay_delivery = 0 WHERE id = '$order_id'$ocw");
+      $upd = db::query("UPDATE `retail_orders` SET order_type = '$id' WHERE id = '$order_id'$ocw");
 
       echo 'yes';
 
