@@ -60,15 +60,16 @@
 			if (!$posts) $out(['ok' => 0, 'error' => 'Аккаунт табылмады не жабық (private)']);
 			// жаңа посттар алдымен (бір сет бірнеше рет жарияланса, соңғы бағасы дұрыс)
 			usort($posts, function ($a, $b) { return strcmp((string)@$b['timestamp'], (string)@$a['timestamp']); });
-			// әр пост: мәтіні + суреттері (карусельден 3-ке дейін), барлығы 40 суретке дейін
-			$pp = []; $urls = [];
+			// әр пост: мәтіні + суреттері, барлығы 40 суретке дейін: алдымен әр посттың мұқабасы, қалғаны карусельден (3-ке дейін)
+			$pp = []; $urls = []; $all = [];
 			foreach ($posts as $p) {
-				$us = [];
+				$c = trim((string)@$p['caption']); $us = [];
 				foreach (array_merge([(string)@$p['displayUrl']], (array)@$p['images'], array_map(function ($x) { return (string)@$x['displayUrl']; }, (array)@$p['childPosts'])) as $u)
-					if ($u && !isset($urls[$u]) && count($us) < 3 && count($urls) < 40) { $us[] = $u; $urls[$u] = 1; }
-				$c = trim((string)@$p['caption']);
-				if ($us || $c !== '') $pp[] = ['date' => substr((string)@$p['timestamp'], 0, 10), 'caption' => mb_substr($c, 0, 1500), 'urls' => $us];
+					if ($u && !in_array($u, $us)) $us[] = $u;
+				if ($us || $c !== '') { $pp[] = ['date' => substr((string)@$p['timestamp'], 0, 10), 'caption' => mb_substr($c, 0, 1500), 'urls' => []]; $all[] = $us; }
 			}
+			for ($j = 0; $j < 3; $j++) foreach ($all as $n => $us)
+				if (isset($us[$j]) && !isset($urls[$us[$j]]) && count($urls) < 40) { $pp[$n]['urls'][] = $us[$j]; $urls[$us[$j]] = 1; }
 			// суреттерді параллель жүктеу
 			$mh = curl_multi_init(); $hs = [];
 			foreach (array_keys($urls) as $u) {
@@ -155,7 +156,7 @@
 			claude::$feature = 'menu_import';
 			$d = null; $used = '';
 			foreach ($ladder() as $mdl) {
-				$r = claude::json($system, $content, $schema, 'medium', $mdl);
+				$r = claude::json($system, $content, $schema, 'medium', $mdl, 48000);
 				if (!$r) { if (preg_match('~кілт|баланс|қосылмаған~u', claude::$err)) break; continue; }
 				$d = $r; $used = $mdl;
 				$n = count((array)$r['items']); $np = count(array_filter((array)$r['items'], function ($x) { return (int)@$x['price'] > 0; }));

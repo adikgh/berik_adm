@@ -51,14 +51,14 @@ class claude {
 		} catch (Throwable $e) { error_log('ai log: '.$e->getMessage()); }
 	}
 
-	public static function json($system, array $content, array $schema, $effort = 'medium', $model = null) {
+	public static function json($system, array $content, array $schema, $effort = 'medium', $model = null, $max_tokens = 16000) {
 		self::$err = ''; self::$usage = null;
 		if (!self::ready()) { self::$err = 'Claude қосылмаған (config/ai.php ішінде ANTHROPIC_API_KEY жоқ)'; return null; }
 		if (!$model) $model = self::model();
 		if ($model == 'auto') $model = self::TOP;
 		$body = [
 			'model' => $model,
-			'max_tokens' => 16000,
+			'max_tokens' => (int)$max_tokens,
 			// жүйе мәтіні (шикізат тізімі) бірнеше сұрауда бірдей: кэштеледі, арзанырақ
 			'system' => [['type' => 'text', 'text' => $system, 'cache_control' => ['type' => 'ephemeral']]],
 			'output_config' => ['effort' => $effort, 'format' => ['type' => 'json_schema', 'schema' => $schema]],
