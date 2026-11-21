@@ -260,7 +260,7 @@
 		if (isset($_POST['card'])) {
 			$id = intval(@$_POST['id']); $cmp = (int)$company;
 			$esc = function ($v) {
-				$h = fun::name_save($v);
+				$h = fun::addon_hl(fun::name_save($v)); // «+ кола» бірден БАС ӘРІП, қызыл
 				if (fun::name_text($h) === '') return '';
 				if (mb_strlen($h) > 255) $h = fun::name_save(mb_substr($h, 0, 255));
 				return mysqli_real_escape_string(db::$connect, $h);

@@ -295,7 +295,7 @@
 			$cid = $cat_id((string)@$it['cat']);
 			$id = (int)mysqli_fetch_row(db::query("select max(id) from product"))[0] + 1;
 			$ok = db::query("insert into product (id, company_id, name_kz, name_ru, catalog_id, price, description, arh".($kind_col ? ", is_set" : "").")
-				values ('$id', '$cmp', '".$e($kz)."', '".$e($name)."', ".($cid ? "'$cid'" : "NULL").", '".max(0, (int)@$it['price'])."', '".$e($desc)."', 0".($kind_col ? ", '$set'" : "").")");
+				values ('$id', '$cmp', '".$e(fun::addon_hl($kz))."', '".$e(fun::addon_hl($name))."', ".($cid ? "'$cid'" : "NULL").", '".max(0, (int)@$it['price'])."', '".$e($desc)."', 0".($kind_col ? ", '$set'" : "").")");
 			if (!$ok) { error_log('menu import insert: '.mysqli_error(db::$connect)); continue; }
 			$ex[$nk($name)] = $id;
 			$img = $photo ? $put_photo($id, $it) : '';

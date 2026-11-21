@@ -114,7 +114,7 @@
    
    // product_add
 	if(isset($_GET['product_add'])) {
-		$name = strip_tags($_POST['name']);
+		$name = mysqli_real_escape_string(db::$connect, fun::addon_hl(trim(strip_tags((string)@$_POST['name'])))); // «+ кола» бірден қызыл
 		$catalog = strip_tags($_POST['catalog']);
 		$price = strip_tags($_POST['price']);
 		
