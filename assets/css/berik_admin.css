@@ -428,3 +428,22 @@ body .mp_topc .mp_dd_i:hover{ background: var(--bp-green-bg); color: var(--bp-gr
 body .mp_topc .mp_dd_i:hover i{ color: var(--bp-green); }
 body .mp_topc .mp_dd_i_act, body .mp_topc .mp_dd_i_act:hover{ color: var(--bp-green-ink); font-weight: 600; }
 body .mp_topc .mp_dd_i_act i{ color: var(--bp-green); }
+
+/* ---------- Планшет/шағын ноутбук 769–1439px (2026-11-21 QA): мәзір бет атауын баспасын ---------- */
+/* .aheader fixed, оның биіктігі --ah-h (block/menu.php JS өлшейді). Атау мәзірдің астынан басталады. */
+@media (min-width: 769px) and (max-width: 1439px){
+	body .head_c, body .head_c.head_c_back{ padding-top: calc(var(--ah-h, 86px) + 6px); padding-bottom: 28px; }
+}
+/* 769–1199px: аккаунтта тек аватар, мәзір бір қатарға сыйсын */
+@media (min-width: 769px) and (max-width: 1199px){
+	.ub1_ltf{ display: none; }
+	.aheader_r{ gap: 8px; }
+	body .mp_topc .mp_topi, body .mp_topc .mp_dd_t{ padding: 0 12px; gap: 8px; }
+}
+@media (min-width: 769px) and (max-width: 959px){
+	body .mp_topc .mp_topi > i:first-child, body .mp_topc .mp_dd_t > i:first-child{ display: none; }
+}
+/* Футердегі #gprog попапы оң жақтан шығып, бетті көлденең жылжытпасын */
+.gprog_ab{ left: auto; right: 0; -webkit-transform: none; transform: none; }
+.gprog_bl:hover .gprog_ab{ -webkit-transform: translateY(-2vh); transform: translateY(-2vh); }
+.gprog_ab:before{ left: auto; right: 60px; }

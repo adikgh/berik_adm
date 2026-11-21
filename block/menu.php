@@ -225,6 +225,7 @@
 			</div>
 		</div>
 	</div>
+	<script>/* жоғарғы мәзір биіктігі: бет атауы астынан басталуы үшін (berik_admin.css --ah-h) */(function(){var h=document.querySelector('.aheader');if(!h)return;var s=function(){document.documentElement.style.setProperty('--ah-h',h.offsetHeight+'px')};s();addEventListener('resize',s);addEventListener('load',s)})();</script>
 <? endif ?>
 
 <!-- <? if ($site_set['menu']): ?>
