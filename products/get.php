@@ -37,6 +37,8 @@
 		$cmp = (int)$company; $ids = json_decode((string)@$_POST['ids'], true); if (!is_array($ids)) $ids = [(int)@$_POST['id']];
 		if (isset($_POST['k'])) $k = (string)$_POST['k']; else { $v = (string)@$_POST['v']; $k = $v === '' ? '' : ((int)$v ? 1 : 2); }
 		pkind::set($cmp, $ids, $k === '' ? null : (int)$k, 'user');
+		// тікелей шикізат: атауы бойынша бір кандидат табылса — өзі байланады (граммовкасы бос болса)
+		if ((string)$k === '3' && count($ids) == 1) pkind::goods_auto($cmp, $ids[0]);
 		exit('yes');
 	}
 	// Құрам (product_comp) / шикізат (product_raw): қосу және өзгерту
@@ -127,6 +129,8 @@
          	if ($catalog) $sql = db::query("UPDATE `product` SET `catalog_id`='$catalog' WHERE `id`='$id'");
          	if ($price) $sql = db::query("UPDATE `product` SET `price`='$price' WHERE `id`='$id'");
 
+			// атауы доплата / пакет / сервис … болса — «Қатысы жоқ» (products/cost2/kind.php)
+			if (is_file(__DIR__.'/cost2/kind.php')) { require_once __DIR__.'/cost2/kind.php'; pkind::apply_rule($company, [$id]); }
 			echo 'yes';
 		} else echo 'error';
 

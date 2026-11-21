@@ -59,10 +59,13 @@
 			$preps[$id] = ['id' => $id, 'name' => $c['name_ru'] ?: $c['name_kz'], 'unit' => $c['unit'] ?: 'шт', 'yield' => (float)$c['yield_qty'], 'sum' => $sum, 'cost' => $c['cost'], 'rows' => $rows, 'kind' => $c['kind']];
 		}
 
+		// тағам түрі (products/cost2/kind.php): 1 сет, 2 тағам, 3 тікелей шикізат, 4 қатысы жоқ — Себесте мүлде көрінбейді, есептелмейді
+		require_once __DIR__.'/kind.php';
+		$km = pkind::map($cmp); $kn = pkind::names(); $kind_on = pkind::ready();
 		// Мәзірдегі тағамдар және олардың граммовкасы
 		$prd = [];
 		$q = db::query("select p.id, p.name_ru, p.name_kz, p.price, p.arh from product p where p.company_id = '$cmp'");
-		while ($q && $r = mysqli_fetch_assoc($q)) $prd[(int)$r['id']] = ['id' => (int)$r['id'], 'name' => trim(strip_tags($r['name_ru'] ?: $r['name_kz'])), 'price' => (int)preg_replace('/\D+/', '', (string)$r['price']), 'arh' => (int)$r['arh']];
+		while ($q && $r = mysqli_fetch_assoc($q)) if (($km[(int)$r['id']] ?? 0) != 4) $prd[(int)$r['id']] = ['id' => (int)$r['id'], 'name' => trim(strip_tags($r['name_ru'] ?: $r['name_kz'])), 'price' => (int)preg_replace('/\D+/', '', (string)$r['price']), 'arh' => (int)$r['arh']];
 		$dishes = [];
 		$q = db::query("select pi.id, pi.product_id, pi.comp_id, pi.quantity from product_item pi join product p on p.id = pi.product_id where p.company_id = '$cmp' and pi.comp_id > 0 order by pi.product_id, pi.id");
 		while ($q && $r = mysqli_fetch_assoc($q)) {
@@ -81,14 +84,12 @@
 			$dishes[$pid]['rows'][] = ['id' => (int)$r['id'], 'name' => $c['name_ru'] ?: $c['name_kz'], 'qty' => $qt, 'qv' => $nv($r['quantity']), 'price' => $pr, 'pe' => $pe, 'sum' => $s, 'lnk' => $lnk];
 		}
 
-		// тағам түрі (products/cost2/kind.php): 1 сет, 2 тағам, 3 тікелей шикізат, 4 қатысы жоқ (себеске кірмейді, қызыл болмайды)
-		require_once __DIR__.'/kind.php';
-		$km = pkind::map($cmp); $kn = pkind::names(); $kind_on = pkind::ready();
 		// Сеттер
 		$sets = [];
 		$q = db::query("select si.* from product_set_item si join product s on s.id = si.set_id where s.company_id = '$cmp' order by si.set_id, si.id");
 		while ($q && $r = mysqli_fetch_assoc($q)) {
 			$sid = (int)$r['set_id']; if (!isset($prd[$sid])) continue;
+			if ($r['product_id'] && ($km[(int)$r['product_id']] ?? 0) == 4) continue; // қатысы жоқ: сет себесіне де кірмейді
 			if ($r['product_id']) { $pid = (int)$r['product_id']; $nm = $prd[$pid]['name'] ?? '?'; $u = isset($dishes[$pid]) ? $dishes[$pid]['sum'] : 0; $lnk = isset($prd[$pid]) ? 'd'.$pid : ''; $miss = $u <= 0 && ($km[$pid] ?? 0) != 4; $pe = null; }
 			else { $c = $comps[(int)$r['comp_id']] ?? null; $nm = $c ? ($c['name_ru'] ?: $c['name_kz']) : '?'; $u = $c ? $c['cost'] : 0; $lnk = $c && $c['parts'] ? 'p'.(int)$c['id'] : ($c && !empty($c['raw_id']) ? 'r'.(int)$c['raw_id'] : ''); $miss = !$c || $u <= 0; $pe = $c && !$c['parts'] ? ['comp_price', (int)$c['id'], ''] : null; }
 			if (!isset($sets[$sid])) $sets[$sid] = ['id' => $sid, 'name' => $prd[$sid]['name'], 'price' => $prd[$sid]['price'], 'arh' => $prd[$sid]['arh'], 'sum' => 0, 'rows' => [], 'miss' => 0];
@@ -172,10 +173,11 @@
 	$pm = 'cost2';
 	$page_name = t::w('Cost sheet', 'Себес');
 	$page_key = 'Cost sheet';
-	$css = ['stats', 'cost2', 'products/import']; // products/import: прогресс тізімі (mi_prog, mi_posts) — ЖИ поп-апы // stats: админдегі стандарт сегмент (.st_seg) — План | Факт
+	$css = ['stats', 'cost2', 'products/import', 'products/goods']; // products/import: прогресс тізімі (mi_prog, mi_posts) — ЖИ поп-апы // stats: админдегі стандарт сегмент (.st_seg) — План | Факт
 	$js = [];
 	if (!empty($gt_all)) { $css[] = 'gtpl'; $js[] = 'gtpl'; }
 	if (!empty($has_pp)) $js[] = 'prep_pop';
+	$js[] = 'products/goods'; // тікелей шикізат: шикізатпен байланыс поп-апы
 ?>
 <? include "../../block/header.php"; ?>
 
@@ -347,7 +349,7 @@
 				<? foreach ($dishes as $x): $pr = $x['price'] ? ($x['price'] - $x['sum']) / $x['price'] * 100 : 0; ?>
 					<? $xk = $km[$x['id']] ?? 0; ?>
 					<div class="c2_card c2_blk c2_f<?=$x['rows'] ? '' : ' c2_blk_e'?><?=$xk == 4 ? ' c2_blk_none' : ''?>" data-k="<?=$xk?>"<?=isset($miss_ids[$x['id']]) ? ' data-miss="1"' : ''?> id="d<?=$x['id']?>" data-q="<?=$h(mb_strtolower($x['name']))?>">
-						<div class="c2_bh"><? if ($kind_on): ?><input type="checkbox" class="c2_ksel" value="<?=$x['id']?>" aria-label="✓"><? endif ?><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><?=isset($aim['p'][$x['id']]) ? ' '.$AIT : ''?><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?><?=isset($bk['dish'][$x['id']]) ? $CS('dish', $x['id']) : (isset($bk['flat'][$x['id']]) ? $CS('flat', $x['id']) : '')?><? if ($kind_on): ?><span class="st_page c2_kw"><span class="st_seg c2_kseg" data-id="<?=$x['id']?>"><? foreach ([1 => 'fa-box-full', 2 => 'fa-hamburger', 3 => 'fa-wine-bottle', 4 => 'fa-ban'] as $kk => $ico): ?><button type="button" class="st_seg_i<?=$xk == $kk ? ' st_seg_act' : ''?>" data-k="<?=$kk?>" title="<?=$h($kn[$kk])?>"><i class="fal <?=$ico?>"></i></button><? endforeach ?></span></span><? endif ?><?=$xk == 4 ? '<span class="c2_tag c2_knone">'.$h($kn[4]).'</span>' : ''?></div>
+						<div class="c2_bh"><? if ($kind_on): ?><input type="checkbox" class="c2_ksel" value="<?=$x['id']?>" aria-label="✓"><? endif ?><a href="/products/item/?id=<?=$x['id']?>"><?=$h($x['name'])?></a><?=isset($aim['p'][$x['id']]) ? ' '.$AIT : ''?><? if ($x['price']): ?><span><?=$f($x['price'])?> ₸</span><? endif ?><?=isset($bk['dish'][$x['id']]) ? $CS('dish', $x['id']) : (isset($bk['flat'][$x['id']]) ? $CS('flat', $x['id']) : '')?><? if ($kind_on): ?><span class="st_page c2_kw"><span class="st_seg c2_kseg" data-id="<?=$x['id']?>"><? foreach ([1 => 'fa-box-full', 2 => 'fa-hamburger', 3 => 'fa-wine-bottle', 4 => 'fa-ban'] as $kk => $ico): ?><button type="button" class="st_seg_i<?=$xk == $kk ? ' st_seg_act' : ''?>" data-k="<?=$kk?>" title="<?=$h($kn[$kk])?>"><i class="fal <?=$ico?>"></i></button><? endforeach ?></span></span><? endif ?><?=$xk == 3 && !$x['rows'] ? '<button type="button" class="c2_ai_set c2_glink" data-id="'.$x['id'].'" data-name="'.$h($x['name']).'"><i class="fal fa-link"></i> '.t::w('gl Link btn', 'Шикізатпен байланыстыру').'</button>' : ''?></div>
 						<table class="c2_tbl">
 							<tbody>
 							<? foreach ($x['rows'] as $r): ?>
@@ -757,6 +759,7 @@
 			var fd = new FormData(); fd.append('ids', JSON.stringify(ids)); fd.append('k', k);
 			return fetch('/products/get.php?kind', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (t) { if (t.trim() == 'yes') { mess(T.saved); reload(); } else mess(T.err, 'warn'); }).catch(function () { mess(T.net, 'err'); });
 		};
+		$(document).on('click', '.c2_glink', function (e) { e.preventDefault(); if (window.goodsPick) goodsPick(+this.dataset.id, this.dataset.name, reload); });
 		$(document).on('click', '.c2_kseg .st_seg_i', function (e) { e.preventDefault(); if (this.classList.contains('st_seg_act')) return; kindSet([+this.closest('.c2_kseg').dataset.id], this.dataset.k); });
 		// жаппай жолақ body ішінде (.c2_page-тің z-index контекстінен тыс), бір рет жасалады
 		var KN = <?=json_encode(isset($kn) ? $kn : [], JSON_UNESCAPED_UNICODE)?>;

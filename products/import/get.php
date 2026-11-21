@@ -302,6 +302,7 @@
 			if ($img) $ph++;
 			$res[] = ['id' => $id, 'name' => $name, 'set' => $set, 'cat' => (string)@$it['cat'], 'img' => $img ? 1 : 0];
 		}
+		if ($res && is_file(__DIR__.'/../cost2/kind.php')) { require_once __DIR__.'/../cost2/kind.php'; pkind::apply_rule($cmp, array_column($res, 'id')); }
 		$out(['ok' => 1, 'added' => $res, 'skip' => $skip, 'cats' => $new_cat, 'photos' => $ph, 'photos_ex' => $ph_ex]);
 	}
 
@@ -347,6 +348,8 @@
 		$d = mysqli_fetch_assoc(db::query("select p.name_ru, p.name_kz, c.name_ru cat from product p left join product_catalog c on c.id = p.catalog_id where p.id = '$pid' and p.company_id = '$cmp'"));
 		if (!$d) $out(['ok' => 0, 'error' => 'Тағам табылмады']);
 		if (gtpl::has_items($pid)) $out(['ok' => 1, 'result' => 'has']);
+		// қатысы жоқ (доплата, пакет): граммовкасы жоқ, себеске кірмейді (products/cost2/kind.php)
+		if (gtpl::col('product', 'kind') && (int)@mysqli_fetch_row(db::query("select kind from product where id = '$pid'"))[0] === 4) $out(['ok' => 1, 'result' => 'none']);
 		$nm = $txt($d['name_ru'] ?: $d['name_kz']); $cr = 0; $how = ''; $usd = 0;
 		// бөтелкедегі сусын: құрамы — өзі, 1 дана
 		if (preg_match('/напит|сусын|ішімдік|drink/u', gtpl::norm($d['cat'])) && !preg_match('/чай|кофе|лимонад|смузи|коктейл|морс|шейк|какао|латте|капучино/u', gtpl::norm($nm))) {

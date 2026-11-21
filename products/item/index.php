@@ -29,8 +29,8 @@
 	$site_set['utop_bk'] = 'products';
 	$site_set['utop_type'] = 'item';
 	$site_set['utop_nm'] = $page_name;
-	$css = ['products/main', 'products/item', 'products/photo']; $css[] = 'gtpl';
-	$js = ['products/main', 'products/item', 'name_ed', 'products/photo']; $js[] = 'gtpl';
+	$css = ['products/main', 'products/item', 'products/photo']; $css[] = 'gtpl'; $css[] = 'products/goods';
+	$js = ['products/main', 'products/item', 'name_ed', 'products/photo']; $js[] = 'gtpl'; $js[] = 'products/goods';
 ?>
 <? include "../../block/header.php"; ?>
 
@@ -52,7 +52,7 @@
 			else $kind = null;
 			// 4 түр (products/cost2/kind.php): 1 сет, 2 тағам, 3 тікелей шикізат (граммовкасы — өзі 1 шт), 4 қатысы жоқ (құрамы жоқ)
 			$kind4 = isset($product_d['kind']) && $product_d['kind'] !== null ? (int)$product_d['kind'] : ($kind === null ? null : ($kind === 1 ? 1 : 2));
-			if ($kind4 === 4) $kind = 4; elseif ($kind4 === 2 || $kind4 === 3) $kind = 0;
+			if ($kind4 === 4) $kind = 4; elseif ($kind4 === 3) $kind = 3; elseif ($kind4 === 2) $kind = 0;
 			$is_set = $kind === 1;
 		?>
 		<? // граммовкасы жоқ болса — ескерту (толтырылғанда өзі жоғалады)
@@ -202,6 +202,14 @@
 			</script>
 			<? endif ?>
 			<style>.ci_lnk{ color: inherit; } .ci_lnk:hover{ color: var(--bp-blue, #0c8f59); text-decoration: underline; } .ci_lnk i{ font-size: 12px; color: var(--bp-blue, #0c8f59); margin-left: 4px; }</style>
+			<? if ($kind === 3): // тікелей шикізат: граммовка құрастырғышы мен шаблон орнына — шикізатпен байланыс (assets/js/products/goods.js) ?>
+			<div class="item_c gl_c">
+				<div class="item_is"><?=t::w('gl Title', 'Шикізатпен байланыс')?></div>
+				<div class="gl_box" data-pid="<?=$product_id?>" data-name="<?=htmlspecialchars(trim(strip_tags($product_d['name_ru'] ?: $product_d['name_kz'])))?>"></div>
+			</div>
+			<? elseif ($kind === 4): ?>
+			<div class="item_c"><div class="pk_q" style="background:#f3f4f3;color:#767c78"><i class="fal fa-ban"></i> <?=t::w('c2 Kind none card', 'Қатысы жоқ: себес есептелмейді, құрамы жоқ.')?></div></div>
+			<? endif ?>
 			<? if ($kind === 0): // тек позицияда: граммовка ?>
 			<div class="item_c ci_c">
 				<div class="ci_head">

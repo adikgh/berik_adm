@@ -1,0 +1,31 @@
+/* Тікелей шикізат: позицияны шикізатпен байлау (assets/js/products/goods.js) — тағам карточкасы мен Себес поп-апы */
+.gl_mod{ z-index: 7000; }
+.gl_mod .gt_mbox{ max-width: 520px; }
+.gl_load, .gl_err, .gl_hint{ font-size: 13px; color: #767c78; padding: 6px 0; }
+.gl_hint{ padding: 10px 12px; border-radius: 10px; background: #fff7e6; color: #8a5a00; margin-bottom: 10px; }
+.gl_cur{ padding: 12px 14px; border: 1px solid #e3e6e3; border-radius: 12px; background: #f8faf8; margin-bottom: 10px; }
+.gl_cur_t{ display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 15px; }
+.gl_cur_t i{ color: var(--bp-green, #0EA768); }
+.gl_tag{ font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 6px; background: #e3f5ec; color: var(--bp-green-ink, #08794b); }
+.gl_tag_t{ background: #eef1ee; color: #4a4f4c; }
+.gl_kv{ display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0; font-size: 13px; color: #767c78; }
+.gl_kv span{ display: flex; flex-direction: column; }
+.gl_kv b{ color: #1c1f1d; font-size: 14px; }
+.gl_neg{ color: #d64545 !important; } .gl_pos{ color: var(--bp-green-ink, #08794b) !important; }
+.gl_chg, .gl_ok, .gl_nb, .gl_yes, .gl_no{ border: 0; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 6px 10px; }
+.gl_chg{ background: #fff; border: 1px solid #dfe3df; }
+.gl_q{ width: 100%; height: 40px; padding: 0 12px; border: 1px solid #dfe3df; border-radius: 10px; font: inherit; box-sizing: border-box; }
+.gl_list{ list-style: none; margin: 8px 0 0; padding: 0; max-height: 300px; overflow-y: auto; }
+.gl_list li{ display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-bottom: 1px solid #f0f2f0; font-size: 14px; }
+.gl_list li span{ flex: 1; min-width: 0; }
+.gl_list li small{ color: #767c78; white-space: nowrap; }
+.gl_same{ color: var(--bp-green-ink, #08794b) !important; font-weight: 600; }
+.gl_ok{ background: #e3f5ec; color: var(--bp-green-ink, #08794b); white-space: nowrap; }
+.gl_ok:hover{ background: #d2efe0; }
+.gl_new{ border-bottom: 0 !important; }
+.gl_nb{ background: #fff7e6; color: #8a5a00; border: 1px dashed #e3c47a; width: 100%; text-align: left; }
+.gl_nb:disabled{ opacity: .6; cursor: wait; }
+.gl_empty{ color: #a3a8a5; }
+.gl_ask{ display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: #fdecec; color: #8a2b2b; font-size: 13px; }
+.gl_ask span{ flex: 1 1 220px; }
+.gl_yes{ background: #d64545; color: #fff; } .gl_no{ background: #fff; }

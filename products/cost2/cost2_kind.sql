@@ -10,3 +10,7 @@ PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 -- бар белгілер (қолмен не бұрынғы ЖИ қойған) — қолмен деп саналады
 UPDATE `product` SET `kind` = 1, `kind_src` = 'user' WHERE `kind` IS NULL AND `is_set` = 1;
 UPDATE `product` SET `kind` = 2, `kind_src` = 'user' WHERE `kind` IS NULL AND `is_set` = 0;
+-- атауы «Доплата» (доп. плата) — қатысы жоқ (4). Белгісіз, ЖИ қойған не миграциядан келген позиция (kind 2) болса. Қайта іске қосуға болады
+UPDATE `product` SET `kind` = 4, `kind_src` = 'ai', `is_set` = 0
+WHERE (`kind` IS NULL OR `kind_src` = 'ai' OR (`kind` = 2 AND `kind_src` = 'user'))
+  AND (LOWER(TRIM(`name_ru`)) LIKE 'доплат%' OR LOWER(TRIM(`name_ru`)) LIKE 'доп. плат%' OR LOWER(TRIM(`name_ru`)) LIKE 'доп.плат%' OR LOWER(TRIM(`name_kz`)) LIKE 'доплат%');

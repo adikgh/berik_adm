@@ -31,6 +31,21 @@
 	// r12 / c5 / d7 → [түрі, id]
 	$code = function ($v) { return preg_match('/^([rcd])(\d+)$/', (string)$v, $m) ? [$m[1], (int)$m[2]] : [null, 0]; };
 
+	// ── Тікелей шикізат (тағам түрі 3): шикізатпен байланыс (products/cost2/kind.php, assets/js/products/goods.js). Жауап JSON
+	if (in_array($a, ['goods_info', 'goods_find', 'goods_link', 'goods_new'], true)) {
+		header('Content-Type: application/json; charset=utf-8');
+		try {
+			require_once __DIR__.'/kind.php';
+			$pid = (int)@$_POST['pid']; $force = !empty($_POST['force']);
+			if ($a == 'goods_info') exit(json_encode(pkind::goods_info($cmp, $pid), JSON_UNESCAPED_UNICODE));
+			if ($a == 'goods_find') exit(json_encode(['items' => pkind::goods_find($cmp, (string)@$_POST['q'])], JSON_UNESCAPED_UNICODE));
+			if ($a == 'goods_link') exit(json_encode(pkind::goods_link($cmp, $pid, (int)@$_POST['raw'], $force), JSON_UNESCAPED_UNICODE));
+			$n = trim(strip_tags((string)@$_POST['name'])); if ($n === '') exit(json_encode(['error' => 'name']));
+			@set_time_limit(120);
+			exit(json_encode(pkind::goods_new($cmp, $pid, $n, (string)@$_POST['unit'], $force), JSON_UNESCAPED_UNICODE));
+		} catch (Throwable $e) { error_log('cost2 goods: '.$e->getMessage()); exit(json_encode(['error' => 'error'])); }
+	}
+
 	// ── Қайталанған шикізат (products/cost2/rawdup.php): dup_list — топтар, dup_merge — бір топты біріктіру (транзакция)
 	if ($a == 'dup_list' || $a == 'dup_merge' || $a == 'type_group') {
 		header('Content-Type: application/json; charset=utf-8');

@@ -143,8 +143,9 @@
 			$comps = cost::comps($company);
 			$dishes = cost::dishes($company, $comps);
 			$sets = cost::sets($company, $comps, $dishes);
+			$k4 = []; if (fun::has_col('product', 'kind')) { $q4 = db::query("select id from product where company_id = '".(int)$company."' and kind = 4"); while ($q4 && $r4 = mysqli_fetch_row($q4)) $k4[(int)$r4[0]] = 1; }
 			foreach ($items as $id => $it) {
-				if ($it['zero']) continue;
+				if ($it['zero'] || isset($k4[$id])) continue; // қатысы жоқ (доплата, пакет): себес / маржа есептелмейді
 				$u = isset($sets[$id]) ? $sets[$id]['cost'] : (isset($dishes[$id]) ? $dishes[$id] : null);
 				if ($u === null || $u <= 0) { $no_cost++; continue; }
 				$items[$id]['cost'] = $u * $it['qty'];
