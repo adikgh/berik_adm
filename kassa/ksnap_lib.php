@@ -343,6 +343,65 @@
 				}
 			}
 			db::query("select RELEASE_LOCK('berik_ksnap')");
+			if ($done) self::tg_day($y); // тек соңғы аяқталған күннің есебі (өткізіп алған күндерді Telegram-ға жібермейміз)
 			return $done;
+		}
+
+
+		// ---------- Telegram: күн есебі есеп тобына (config/tg_report.php) ----------
+		// Әр компанияға күніне бір рет: белгісі осы кестеде (kind = 'r', row_key = 'tg'), UNIQUE кілт қайталатпайды.
+		public static function tg_day($day) {
+			if (!self::ready()) return;
+			include_once dirname(__DIR__) . '/config/tg_report.php';
+			$t = self::T; $now = date('Y-m-d H:i:s');
+			$q = db::query("select distinct company_id from `$t` where day = '$day' and kind = 'f' and row_key = 'all' and branch_id = 0 and company_id > 0 and number > 0");
+			while ($q && $c = mysqli_fetch_assoc($q)) {
+				$cmp = (int)$c['company_id'];
+				if (tg_report_chat($cmp) === '') continue;
+				db::query("INSERT IGNORE INTO `$t` (company_id, branch_id, day, kind, row_key, auto, ins_dt) VALUES ('$cmp', 0, '$day', 'r', 'tg', 1, '$now')");
+				if (mysqli_affected_rows(db::$connect) !== 1) continue; // бұрын жіберілген
+				$txt = self::tg_text($cmp, $day);
+				if ($txt !== '') tg_report_send($cmp, $txt);
+			}
+		}
+
+		// Күн есебінің мәтіні (сақталған суреттен; күн сақталмаса '')
+		public static function tg_text($cmp, $day) {
+			$cmp = (int)$cmp; $t = self::T;
+			$rows = []; $cour = []; $br = [];
+			$q = db::query("select * from `$t` where company_id = '$cmp' and day = '$day' and kind in ('f', 'c')");
+			while ($q && $r = mysqli_fetch_assoc($q)) {
+				if ((int)$r['branch_id'] === 0) { if ($r['kind'] == 'f') $rows[$r['row_key']] = $r; else $cour[] = $r; }
+				elseif ($r['kind'] == 'f' && $r['row_key'] == 'all' && (int)$r['number'] > 0) $br[(int)$r['branch_id']] = $r;
+			}
+			if (empty($rows['all'])) return '';
+			$a = $rows['all'];
+			$s = tgr_head('📊', 'Касса есебі', $cmp, 0, $day) . "<i>06:00 – келесі күн 06:00</i>\n\n";
+			$s .= "<b>Тапсырыс:</b> " . (int)$a['number'] . "\n<b>Түсім:</b> " . tgr_money($a['total']) . "\n";
+			foreach (['dl' => 'Жеткізу', 'yo' => 'Өзімен', 'cf' => 'Кафе', 'sv' => 'Сервис'] as $k => $nm)
+				if (!empty($rows[$k]) && (int)$rows[$k]['number'] > 0) $s .= "  • $nm: " . (int)$rows[$k]['number'] . ' · ' . tgr_money($rows[$k]['total']) . "\n";
+			if (count($br) > 1) {
+				$bq = db::query("select id, name from company_branch where company_id = '$cmp'");
+				$bn = []; while ($bq && $b = mysqli_fetch_assoc($bq)) $bn[(int)$b['id']] = $b['name'];
+				$s .= "\n<b>Точкалар:</b>\n";
+				foreach ($br as $bid => $r) $s .= '  • ' . tgr_h(@$bn[$bid] ?: "#$bid") . ': ' . (int)$r['number'] . ' · ' . tgr_money($r['total']) . "\n";
+			}
+			$pay = '';
+			foreach (['pay_cash' => 'Қолма-қол', 'pay_qr' => 'Kaspi QR', 'pay_transfer' => 'Аударым', 'pay_red' => 'RED', 'pay_prepay' => 'Предоплата', 'pay_delivery' => 'Жеткізу ақысы'] as $k => $nm)
+				if ((int)$a[$k]) $pay .= "  • $nm: " . tgr_money($a[$k]) . "\n";
+			if ($pay !== '') $s .= "\n<b>Төлем түрлері:</b>\n" . $pay;
+			if (!empty($rows['otk']) && (int)$rows['otk']['number'] > 0) {
+				$o = $rows['otk'];
+				$s .= "\n<b>Отказ:</b> " . (int)$o['number'] . ' · ' . tgr_money($o['refused']) . ((int)$o['kept'] ? ' (бізде қалды: ' . tgr_money($o['kept']) . ')' : '') . "\n";
+			}
+			if ($cour) {
+				$s .= "\n<b>Курьерлер:</b>\n";
+				foreach ($cour as $r) {
+					$kb = (int)$r['pay_cash'] - (int)$r['pay_delivery'];
+					$s .= '  • ' . tgr_h(trim((string)$r['name']) ?: '#' . $r['row_key']) . ': ' . (int)$r['number'] . ' тапс. · қолма-қол ' . tgr_money($r['pay_cash'])
+						. ' · жалақы ' . tgr_money($r['pay_delivery']) . ' · кассаға ' . tgr_money($kb) . "\n";
+				}
+			}
+			return $s;
 		}
 	}

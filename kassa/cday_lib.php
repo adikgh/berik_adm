@@ -83,7 +83,40 @@
 
 			// касса жолындағы шығын/қолма-қол келесі күнге қалмасын: нөлге түсіреміз (есепте сақталды)
 			if ($cashbox_id && !$old) db::query("UPDATE report_сourier SET expenses = 0, cash = 0 WHERE report_id = '$cashbox_id' and сourier_id = '$uid'");
+
+			// Telegram: кассир алғаш сақтағанда есеп тобына (06:00 автомат сақтау — касса күн есебінде бар)
+			if (!$old && $by) {
+				include_once dirname(__DIR__) . '/config/tg_report.php';
+				$row = self::get($cmp, $uid, $day);
+				if ($row) tg_report_send($cmp, self::tg_text($cmp, $row));
+			}
 			return true;
+		}
+
+		// Курьер күн есебінің Telegram мәтіні (courier_day_report жолынан)
+		public static function tg_text($cmp, $r) {
+			$nm = self::names_of([(int)$r['courier_id'], (int)$r['accepted_by']]);
+			$kb = (int)$r['to_cashbox'];
+			$s = tgr_head('🛵', 'Курьер есебі', $cmp, 0, $r['day']);
+			$s .= "<b>Курьер:</b> " . tgr_h(@$nm[(int)$r['courier_id']] ?: '#' . (int)$r['courier_id']) . "\n\n";
+			$s .= "<b>Жеткізді:</b> " . (int)$r['orders'] . " тапсырыс\n<b>Сома:</b> " . tgr_money($r['total']) . "\n";
+			$s .= "<b>Қолма-қол:</b> " . tgr_money($r['pay_cash']) . "\n<b>Kaspi (алдын ала):</b> " . tgr_money($r['pay_qr']) . "\n";
+			if ((int)$r['c_kaspi']) $s .= "<b>Курьер Kaspi-ге алды:</b> " . tgr_money($r['c_kaspi']) . "\n";
+			$s .= "<b>Жеткізу ақысы:</b> " . tgr_money($r['salary']) . "\n";
+			if ((int)$r['expenses']) $s .= "<b>Шығын:</b> " . tgr_money($r['expenses']) . "\n";
+			if ((int)$r['cash']) $s .= "<b>Қолма-қол тапсырды:</b> " . tgr_money($r['cash']) . "\n";
+			$s .= "\n<b>Кассаға:</b> " . tgr_money($kb) . ($kb < 0 ? " ⚠️ <i>курьерге біз " . tgr_money(-$kb) . " қарызбыз</i>" : '') . "\n";
+			if ((int)$r['kaspi']) $s .= "<b>Kaspi-мен кассаға:</b> " . tgr_money($r['kaspi']) . "\n";
+			if ((int)$r['accepted_by']) $s .= "<b>Қабылдады:</b> " . tgr_h(@$nm[(int)$r['accepted_by']]) . "\n";
+			return $s;
+		}
+
+		private static function names_of($ids) {
+			$m = []; $ids = array_filter(array_map('intval', $ids));
+			if (!$ids) return $m;
+			$q = db::query("select id, name from user where id in (" . implode(',', $ids) . ")");
+			while ($q && $d = mysqli_fetch_assoc($q)) $m[(int)$d['id']] = $d['name'];
+			return $m;
 		}
 
 		// сақтауды болдырмау: шығын/қолма-қолды кассаға қайтарады
