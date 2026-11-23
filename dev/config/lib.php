@@ -42,9 +42,9 @@ class dev {
 		'ref_pay' => [1],              // шақырушыға ақша беру
 		'partner' => [4],              // өз шақырған компаниялары мен бонусы
 		'ai' => [1, 2],
-		'wa' => [1, 2],               // WhatsApp растау коды (бүкіл жүйеге ортақ, админнің config/wa_conf.php)
-		'tg' => [1, 2],               // Telegram бот: токен (sys_setting), webhook — dev/tg/
-		'keys' => [1, 2],             // жүйе кілттері (sys_setting): Claude, Drive, Apify, SMSC, 2GIS, кіру кілттері — dev/keys/
+		'wa' => [1],                  // тек Создатель (иесі). WhatsApp растау коды (бүкіл жүйеге ортақ, админнің config/wa_conf.php)
+		'tg' => [1],                  // тек Создатель (иесі). Telegram бот: токен (sys_setting), webhook — dev/tg/
+		'keys' => [1],                // тек Создатель (иесі). жүйе кілттері (sys_setting): Claude, Drive, Apify, SMSC, 2GIS, кіру кілттері — dev/keys/
 		'tariffs' => [1],
 		'tpl' => [1, 2],
 		'team' => [1],
