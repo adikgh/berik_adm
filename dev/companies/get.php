@@ -68,6 +68,47 @@
 	}
 
 	// Компания баптаулары (settings.php): админде бұғатталған өрістер де осы жерден өзгереді
+	// Kaspi онлайн төлем (xpayment): кілт пен баптаулар company_xpay кестесінде
+	if (isset($_GET['xpay_save']) || isset($_GET['xpay_check'])) {
+		if (!dev::can('company_edit')) out(['ok' => false, 'msg' => t::w('No access', 'Рұқсат жоқ')]);
+		$cid = (int)@$_POST['company_id'];
+		if (!dev::row("select id from company where id = '$cid'")) out(['ok' => false, 'msg' => t::w('Company not found', 'Компания табылмады')]);
+		if (!dev::row("SHOW TABLES LIKE 'company_xpay'")) out(['ok' => false, 'msg' => 'company_xpay?']);
+		$x = dev::row("select * from company_xpay where company_id = '$cid'");
+		if (isset($_GET['xpay_check'])) {
+			if (!$x || $x['api_key'] === '') out(['ok' => false, 'msg' => t::w('No key', 'Кілт жоқ')]);
+			$ch = curl_init('https://api.xpayment.kz/v2/devices');
+			curl_setopt_array($ch, [CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $x['api_key'], 'Accept: application/json'], CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_TIMEOUT => 15]);
+			$r = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); $cerr = curl_error($ch); curl_close($ch);
+			$j = json_decode((string)$r, true);
+			if ($code != 200 || !isset($j['devices'])) out(['ok' => false, 'msg' => ($code == 401 ? t::w('Key refused', 'Кілт қабылданбады') : 'xpayment: ' . ($code ?: $cerr))]);
+			$names = [];
+			foreach ($j['devices'] as $d) $names[] = $d['device_name'] . (strcasecmp((string)$d['device_name'], (string)$x['device_name']) === 0 ? ' ✓' : '') . (!empty($d['session_problem_since']) ? ' (Kaspi ✗)' : '');
+			out(['ok' => true, 'msg' => t::w('Cashboxes', 'Кассалар') . ': ' . ($names ? implode(', ', $names) : '—')]);
+		}
+		if (!$x) { db::query("insert into company_xpay (company_id, upd_dt) values ('$cid', now())"); $x = dev::row("select * from company_xpay where company_id = '$cid'"); }
+		$set = [];
+		if (!empty($_POST['opts'])) {
+			$pre = max(0, min(1000000, (int)@$_POST['prepay_sum']));
+			$ap = (int)!empty($_POST['allow_prepay']); $af = (int)!empty($_POST['allow_full']); $al = (int)!empty($_POST['allow_later']);
+			if ($ap && !$pre) out(['ok' => false, 'msg' => t::w('Enter the prepay sum', 'Предоплата сомасын жазыңыз')]);
+			if (!$ap && !$af && !$al) out(['ok' => false, 'msg' => t::w('Turn on at least one option', 'Кемінде бір төлем түрін қосыңыз')]);
+			$set = ["prepay_sum = '$pre'", "allow_prepay = '$ap'", "allow_full = '$af'", "allow_later = '$al'"];
+		} else {
+			$key = trim((string)@$_POST['api_key']);
+			if ($key === '') $key = (string)$x['api_key'];
+			elseif (!preg_match('/^xapi_(test_)?[A-Za-z0-9]{16,}$/', $key)) out(['ok' => false, 'msg' => t::w('The key must start with xapi_', 'Кілт xapi_ деп басталуы керек (API v2)')]);
+			$dev = preg_replace('/[^A-Za-z0-9]/', '', (string)@$_POST['device_name']);
+			$sec = trim((string)@$_POST['hook_secret']);
+			if ($sec === '') $sec = (string)$x['hook_secret'];
+			$on = (int)!empty($_POST['is_on']);
+			if ($on && ($key === '' || $dev === '')) out(['ok' => false, 'msg' => t::w('Enter the key and cashbox name', 'Кілт пен касса атын жазыңыз')]);
+			$set = ["is_on = '$on'", "api_key = '" . dev::e($key) . "'", "device_name = '" . dev::e($dev) . "'", "hook_secret = '" . dev::e($sec) . "'"];
+		}
+		db::query("update company_xpay set " . implode(', ', $set) . ", upd_dt = now() where company_id = '$cid'");
+		out(['ok' => true, 'msg' => t::w('Saved', 'Сақталды')]);
+	}
+
 	if (isset($_GET['cs_save']) || isset($_GET['br_save']) || isset($_GET['br_add'])) {
 		if (!dev::can('company_edit')) out(['ok' => false, 'msg' => t::w('No access', 'Рұқсат жоқ')]);
 		$cid = (int)@$_POST['company_id'];

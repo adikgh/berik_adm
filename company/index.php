@@ -62,6 +62,15 @@
 				if ($has('multi_cart')) $set[] = "multi_cart = '".$sw('multi_cart')."'";
 				if ($has('multi_cart_max') && isset($_POST['multi_cart_max'])) $set[] = "multi_cart_max = '".max(2, min(15, (int)$_POST['multi_cart_max']))."'";
 			// Telegram (chat_send, chat_id) — тек dev өзгертеді, мұнда сақталмайды
+			} elseif ($sec == 'xpay') {
+				// Kaspi онлайн төлем: тек төлем түрлері мен предоплата сомасы (кілт, касса аты — dev панелінде)
+				if (mysqli_num_rows(db::query("SHOW TABLES LIKE 'company_xpay'")) && mysqli_num_rows(db::query("select company_id from company_xpay where company_id = '$cmp'"))) {
+					$pre = max(0, min(1000000, (int)preg_replace('/\D+/', '', (string)@$_POST['prepay_sum'])));
+					$ap = $sw('allow_prepay'); $af = $sw('allow_full'); $al = $sw('allow_later');
+					if ($ap && !$pre) $err = t::w('xp:Need prepay', 'Предоплата сомасын жазыңыз.');
+					elseif (!$ap && !$af && !$al) $err = t::w('xp:Need option', 'Кемінде бір төлем түрін қосыңыз.');
+					else db::query("update company_xpay set prepay_sum = '$pre', allow_prepay = '$ap', allow_full = '$af', allow_later = '$al', upd_dt = now() where company_id = '$cmp'");
+				}
 			} elseif ($sec == 'branch') {
 				$bid = (int)@$_POST['id'];
 				$own = $bid ? mysqli_num_rows(db::query("select id from company_branch where id = '$bid' and company_id = '$cmp'")) : 0;
@@ -92,6 +101,8 @@
 	if ($err) $msg = $err;
 
 	$c = $cmp ? mysqli_fetch_assoc(db::query("select * from company where id = '$cmp'")) : null;
+	$xp = ($cmp && mysqli_num_rows(db::query("SHOW TABLES LIKE 'company_xpay'"))) ? mysqli_fetch_assoc(db::query("select * from company_xpay where company_id = '$cmp'")) : null;
+	$xp_on = $xp && (int)$xp['is_on'] && $xp['api_key'] !== '';
 	$branches = [];
 	if ($c) { $q = db::query("select * from company_branch where company_id = '$cmp' order by number is null, number, id"); while ($q && $r = mysqli_fetch_assoc($q)) $branches[] = $r; }
 
@@ -121,6 +132,13 @@
 ?>
 <? include "../block/header.php"; ?>
 
+<style>
+.cmp_cats{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;margin:0 0 6px;padding:10px 0;background:var(--bg,#f6f7f6);scrollbar-width:none}
+.cmp_cats::-webkit-scrollbar{display:none}
+.cmp_cats a{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;background:#fff;border:1px solid #e6e9e7;color:#3d4642;font-size:14px;font-weight:600;white-space:nowrap}
+.cmp_cats a:hover,.cmp_cats a.on{border-color:var(--green,#0EA768);color:var(--green,#0EA768)}
+.cmp_page .cmp_h2{scroll-margin-top:64px}
+</style>
 <div class="bl_c cl_page lc_page cmp_page">
 
 	<? if (!$c): ?>
@@ -129,6 +147,9 @@
 
 	<? if ($msg): ?><div class="lc_msg cmp_msg<?=($err ? ' cmp_msg_err' : '')?>"><?=$h($msg)?></div><? endif ?>
 
+	<nav class="cmp_cats"><a href="#c_main"><i class="fal fa-building"></i><?=t::w('xp:cat Main', 'Негізгі')?></a><a href="#c_pos"><i class="fal fa-cash-register"></i><?=$w('cs:Cashbox')?></a><a href="#c_pay"><i class="fal fa-credit-card"></i><?=t::w('xp:cat Pay', 'Онлайн төлем')?></a><a href="#c_dlv"><i class="fal fa-car"></i><?=$w('cs:Delivery')?></a><a href="#c_tg"><i class="fal fa-bell"></i><?=t::w('xp:cat Notify', 'Хабарламалар')?></a><a href="#branches"><i class="fal fa-store"></i><?=$w('cs:Branches')?></a><a href="#c_other"><i class="fal fa-sliders-h"></i><?=$w('cs:Other settings')?></a></nav>
+
+	<div class="cmp_h2" id="c_main"><i class="fal fa-building"></i> <?=t::w('xp:cat Main', 'Негізгі')?></div>
 	<div class="cmp_grid">
 
 		<? // 1. Негізгі ?>
@@ -171,6 +192,10 @@
 		</form>
 		<? endif ?>
 
+	</div>
+
+	<div class="cmp_h2" id="c_pos"><i class="fal fa-cash-register"></i> <?=$w('cs:Cashbox')?></div>
+	<div class="cmp_grid">
 		<? // 3. Касса ?>
 		<?=$form('pos')?>
 			<div class="cl_box_h"><div><i class="fal fa-cash-register"></i> <?=$w('cs:Cashbox')?></div></div>
@@ -204,6 +229,34 @@
 			<?=$save?>
 		</form>
 
+	</div>
+
+	<div class="cmp_h2" id="c_pay"><i class="fal fa-credit-card"></i> <?=t::w('xp:cat Pay', 'Онлайн төлем')?></div>
+	<div class="cmp_grid">
+		<? if ($xp_on): ?>
+		<?=$form('xpay')?>
+			<div class="cl_box_h"><div><i class="fal fa-credit-card"></i> Kaspi</div><a class="cmp_lnk" href="/kaspi/"><?=t::w('xp:Payments', 'Онлайн төлемдер')?> <i class="far fa-angle-right"></i></a></div>
+			<div class="lc_body">
+				<?=$swh('allow_prepay', (int)$xp['allow_prepay'], t::w('xp:Prepay', 'Предоплата'), t::w('xp:Prepay note', 'Клиент төмендегі соманы төлейді, қалғанын алғанда. Тек жеткізу мен өзі алып кетуге.'))?>
+				<div class="lc_row">
+					<label class="cl_lbl"><?=t::w('xp:Prepay sum', 'Предоплата сомасы')?></label>
+					<div class="lc_num lc_num_sum"><input type="number" name="prepay_sum" class="cl_inp" min="0" step="100" value="<?=(int)$xp['prepay_sum']?>"><span>тг</span></div>
+				</div>
+				<?=$swh('allow_full', (int)$xp['allow_full'], t::w('xp:Full', 'Толық төлеу'), t::w('xp:Full note', 'Клиент бүкіл соманы бірден төлейді.'))?>
+				<?=$swh('allow_later', (int)$xp['allow_later'], t::w('xp:Later', 'Алғанда төлеу (Kaspi-сіз)'), t::w('xp:Later note', 'Өшік болса, тапсырыс төлемсіз берілмейді.'))?>
+			</div>
+			<?=$save?>
+		</form>
+		<? else: ?>
+		<div class="cl_box lc_set cmp_box">
+			<div class="cl_box_h"><div><i class="fal fa-credit-card"></i> Kaspi</div></div>
+			<div class="lc_body"><div class="cl_small"><?=t::w('xp:Not connected', 'Мәзірден Kaspi арқылы онлайн төлем әлі қосылмаған. Қосу үшін бізге жазыңыз.')?></div></div>
+		</div>
+		<? endif ?>
+	</div>
+
+	<div class="cmp_h2" id="c_dlv"><i class="fal fa-car"></i> <?=$w('cs:Delivery')?></div>
+	<div class="cmp_grid">
 		<? // 4. Жеткізу ?>
 		<? if ($has('delivery_price') || $has('kv')): ?>
 		<?=$form('delivery')?>
@@ -222,6 +275,10 @@
 		</form>
 		<? endif ?>
 
+	</div>
+
+	<div class="cmp_h2" id="c_tg"><i class="fal fa-bell"></i> <?=t::w('xp:cat Notify', 'Хабарламалар')?></div>
+	<div class="cmp_grid">
 		<? // 5. Telegram ?>
 		<? if ($has('chat_send') || $has('chat_id')): ?>
 		<div class="cl_box lc_set cmp_box" id="tg">
@@ -298,7 +355,7 @@
 	</div>
 
 	<? // 7. Басқа беттердегі баптаулар ?>
-	<div class="cmp_h2"><i class="fal fa-sliders-h"></i> <?=$w('cs:Other settings')?></div>
+	<div class="cmp_h2" id="c_other"><i class="fal fa-sliders-h"></i> <?=$w('cs:Other settings')?></div>
 	<div class="cmp_links">
 		<a href="/team/"><i class="fal fa-user-headset"></i><span><?=$w('cs:Staff')?></span><i class="far fa-angle-right"></i></a>
 		<a href="/delivery/"><i class="fal fa-map-marked-alt"></i><span><?=$w('cs:Delivery zones')?></span><i class="far fa-angle-right"></i></a>
@@ -307,6 +364,7 @@
 		<a href="/promo/"><i class="fal fa-tags"></i><span><?=$w('cs:Promotions')?></span><i class="far fa-angle-right"></i></a>
 		<a href="/receipt/"><i class="fal fa-print"></i><span><?=$w('cs:Receipt')?></span><i class="far fa-angle-right"></i></a>
 		<a href="/qr/"><i class="fal fa-qrcode"></i><span><?=$w('cs:QR menu')?></span><i class="far fa-angle-right"></i></a>
+		<a href="/kaspi/"><i class="fal fa-credit-card"></i><span><?=t::w('xp:Payments', 'Онлайн төлемдер')?></span><i class="far fa-angle-right"></i></a>
 	</div>
 
 	<? endif ?>

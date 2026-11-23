@@ -94,6 +94,38 @@
 		<? endif ?>
 	</div>
 
+	<? // Kaspi онлайн төлем (xpayment.kz): кілт, касса аты, вебхук құпиясы, қосу/өшіру — тек осында. Предоплата мен төлем түрлері — админ ▸ Компания баптаулары
+	$xp_ok = (bool)dev::row("SHOW TABLES LIKE 'company_xpay'");
+	$xp = $xp_ok ? dev::row("select * from company_xpay where company_id = '$id'") : null;
+	$xp_mask = function ($k) { return $k === '' ? '' : substr($k, 0, 9) . '…' . substr($k, -4); };
+	$xp_dis = $edit ? '' : ' disabled'; ?>
+	<h2 class="cs_h2"><i class="fal fa-credit-card"></i> <?=t::w('Kaspi online payment', 'Kaspi онлайн төлем')?></h2>
+	<div class="grid g2">
+		<? if (!$xp_ok): ?>
+		<div class="card"><p class="hint"><?=t::w('Add the xpay SQL to the database first.', 'Алдымен базаға xpay SQL-ын қосыңыз (company_xpay).')?></p></div>
+		<? else: ?>
+		<form class="card" data-post="get.php?xpay_save" autocomplete="off">
+			<input type="hidden" name="company_id" value="<?=$id?>">
+			<div class="card_h"><h2><i class="fal fa-key"></i> xpayment</h2><small><?=($xp && (int)$xp['is_on'] ? t::w('On', 'Қосулы') : t::w('Off', 'Өшік'))?></small></div>
+			<input type="hidden" name="is_on" value="0"><label class="chk mb"><input type="checkbox" name="is_on" value="1"<?=($xp && (int)$xp['is_on'] ? ' checked' : '')?><?=$xp_dis?>> <?=t::w('Kaspi payment in the menu (QR / cabinet)', 'Мәзірде Kaspi төлем (QR / кабинет)')?></label>
+			<label class="mb"><?=t::w('API v2 key (xapi_…)', 'API v2 кілті (xapi_…)')?><input name="api_key" placeholder="<?=dev::h($xp ? $xp_mask((string)$xp['api_key']) : 'xapi_…')?>"<?=$xp_dis?>></label>
+			<p class="hint"><?=t::w('xpayment cabinet → API keys → API v2 keys. Leave empty to keep the saved key.', 'xpayment кабинеті → «API-ключи» → «Ключи API v2». Бос қалса, сақталған кілт өзгермейді.')?></p>
+			<label class="mb"><?=t::w('Cashbox name (device_name)', 'Касса аты (device_name)')?><input name="device_name" maxlength="32" value="<?=dev::h($xp ? $xp['device_name'] : '')?>" placeholder="Kassa1"<?=$xp_dis?>></label>
+			<label class="mb"><?=t::w('Webhook secret', 'Вебхук құпиясы (secret)')?><input name="hook_secret" placeholder="<?=($xp && $xp['hook_secret'] !== '' ? '••••••' : '')?>"<?=$xp_dis?>></label>
+			<p class="hint"><?=t::w('Webhook URL in xpayment:', 'xpayment-тегі вебхук URL:')?> <b>https://myb.gprog.kz/xpay_hook.php</b> · payment.*</p>
+			<?=$save?>
+		</form>
+		<? if ($xp && $xp['api_key'] !== ''): ?>
+		<form class="card" data-post="get.php?xpay_check">
+			<input type="hidden" name="company_id" value="<?=$id?>">
+			<div class="card_h"><h2><i class="fal fa-plug"></i> <?=t::w('Check connection', 'Байланысты тексеру')?></h2></div>
+			<p class="hint mb"><?=t::w('Lists the cashboxes of this key. No payment is made.', 'Кілттің кассаларын көрсетеді. Төлем жасалмайды.')?></p>
+			<button class="btn btn_l" type="submit"><i class="fal fa-plug"></i><?=t::w('Check', 'Тексеру')?></button>
+		</form>
+		<? endif ?>
+		<? endif ?>
+	</div>
+
 	<h2 class="cs_h2"><?=t::w('Branches', 'Филиалдар')?> · <?=count($branches)?></h2>
 	<div class="grid g2">
 		<? foreach ($branches as $b): $bid = (int)$b['id']; ?>
