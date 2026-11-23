@@ -68,5 +68,5 @@
 
 
     // 
-    $token = "1581082911:AAEKW20w_-5V0Wx9tzhyThV2pjCgZtCjyc8";
+    $token = ''; // Telegram бот токені базада (sys_setting.tg_token, dev ▸ Telegram бот): core.php-да толтырылады
     // $chat_id = "-1002461390168";

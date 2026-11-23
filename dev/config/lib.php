@@ -43,6 +43,7 @@ class dev {
 		'partner' => [4],              // өз шақырған компаниялары мен бонусы
 		'ai' => [1, 2],
 		'wa' => [1, 2],               // WhatsApp растау коды (бүкіл жүйеге ортақ, админнің config/wa_conf.php)
+		'tg' => [1, 2],               // Telegram бот: токен (sys_setting), webhook — dev/tg/
 		'tariffs' => [1],
 		'tpl' => [1, 2],
 		'team' => [1],

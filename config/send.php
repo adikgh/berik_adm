@@ -1,8 +1,8 @@
 <? include 'core.php';
 
-	// https://api.telegram.org/bot1581082911:AAEKW20w_-5V0Wx9tzhyThV2pjCgZtCjyc8/getUpdates
+	// https://api.telegram.org/bot<TOKEN>/getUpdates
 
-	$token = "1581082911:AAEKW20w_-5V0Wx9tzhyThV2pjCgZtCjyc8";
+	$token = sys_set('tg_token'); // базадан (dev ▸ Telegram бот)
 	$chat_id = "-1002461390168";
 	$chat_id = "-1002262540522";
 	

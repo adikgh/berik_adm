@@ -6,6 +6,7 @@
    require 't.php';
    // require 'smsc_api.php';
    require 'var.php';
+   require_once __DIR__.'/sys_set.php'; // жүйе кілттері базада (sys_setting)
    require 'auth.php'; // пароль, cookie, WhatsApp коды
 
    class core {
@@ -57,6 +58,7 @@
 
    // data
    $core = new core;
+   $token = sys_set('tg_token'); // Telegram бот (dev ▸ Telegram бот)
    $user = core::$user_data;
    $user_id = @$user['id'];
    $user_right = fun::user_staffw($user_id);

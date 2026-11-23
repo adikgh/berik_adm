@@ -109,6 +109,12 @@ $page_h = @$page_title ?: t::w('Developer panel', 'Әзірлеуші панел
 										<div class="menu_cih">WhatsApp</div>
 									</a>
 								<? endif ?>
+								<? if (dev::can('tg')): ?>
+									<a class="menu_ci" href="/tg/">
+										<div class="menu_cin"><i class="fab fa-telegram-plane"></i></div>
+										<div class="menu_cih"><?=t::w('Telegram bot', 'Telegram бот')?></div>
+									</a>
+								<? endif ?>
 								<? if (dev::can('team')): ?>
 									<a class="menu_ci" href="/team/">
 										<div class="menu_cin"><i class="fal fa-user-shield"></i></div>

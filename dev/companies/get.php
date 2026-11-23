@@ -67,6 +67,26 @@
 		out(['ok' => true, 'msg' => t::w('Saved', 'Сақталды')]);
 	}
 
+	// Telegram тобы: бір реттік сілтеме (t.me/<бот>?startgroup=<код>), тексеру, ажырату — dev/tg/lib.php
+	if (isset($_GET['tg_link']) || isset($_GET['tg_check']) || isset($_GET['tg_off'])) {
+		if (!dev::can('company_edit')) out(['ok' => false, 'msg' => t::w('No access', 'Рұқсат жоқ')]);
+		$cid = (int)@$_POST['company_id'];
+		if (!dev::row("select id from company where id = '$cid'")) out(['ok' => false, 'msg' => t::w('Company not found', 'Компания табылмады')]);
+		require_once dirname(__DIR__) . '/tg/lib.php';
+		if (!tg_cols_ok()) out(['ok' => false, 'msg' => t::w('Add the SQL first', 'Алдымен SQL қосыңыз')]);
+		if (isset($_GET['tg_off'])) {
+			db::query("update company set chat_send = 0, chat_id = NULL, tg_title = NULL, tg_code = NULL, tg_code_dt = NULL where id = '$cid'");
+			out(['ok' => true, 'msg' => t::w('Disconnected', 'Ажыратылды')]);
+		}
+		if (isset($_GET['tg_check'])) {
+			if (tg_hook_url() === '') tg_poll(); // локалда webhook жоқ: хабарларды өзіміз аламыз
+			out(['ok' => true, 'msg' => t::w('Checked', 'Тексерілді')]);
+		}
+		$u = tg_link_url($cid);
+		if ($u === '') out(['ok' => false, 'msg' => t::w('The bot is not set', 'Бот қойылмаған (dev ▸ Telegram бот)')]);
+		out(['ok' => true, 'msg' => t::w('Opening Telegram…', 'Telegram ашылып жатыр…'), 'go' => $u]);
+	}
+
 	// Компания баптаулары (settings.php): админде бұғатталған өрістер де осы жерден өзгереді
 	// Kaspi онлайн төлем (xpayment): кілт пен баптаулар company_xpay кестесінде
 	if (isset($_GET['xpay_save']) || isset($_GET['xpay_check'])) {
