@@ -45,7 +45,9 @@
 		if (c.logo_on && c.logo) h += '<div class="rc_logo"><img src="' + esc(c.logo) + '" style="width:' + (+c.logo_w || 60) + '%"></div>';
 		if (c.title_on) h += '<div class="branch_name">' + esc(c.rtitle || d.title) + '</div>';
 		if (c.head_text) h += '<div class="rc_htxt">' + nl(c.head_text) + '</div>';
-		if (c.show_status) h += '<div class="pred_order"><div>РАСПЕЧАТАНО</div></div>';
+		// Негізгі чекте белгі жоқ, тек қайта басқанда (кассадағы order_print.php-дағыдай)
+		var cp = (p.querySelector('[name=pv_copy]:checked') || {}).value || '1';
+		if (c.show_status && cp !== '1') h += '<div class="pred_order"><div>РАСПЕЧАТАНО · ' + cp + '</div></div>';
 		h += '</div>';
 		if (c.show_type && tp !== '1') h += '<div class="soboi">Собой</div>';
 

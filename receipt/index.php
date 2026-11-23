@@ -64,7 +64,7 @@
 					<div class="qr_opt"><span>Тақырып өлшемі</span><?=$opt('title_size', ['s' => 'Кіші', 'm' => 'Орташа', 'l' => 'Үлкен'])?></div>
 				</div>
 				<label class="qr_note"><span>Тақырып астындағы жазу (мекенжай, телефон, Instagram)</span><textarea name="head_text" autocomplete="off" class="cl_inp" rows="2" maxlength="300" placeholder="Мысалы: Ақтау, 12 мкр, 5 үй&#10;+7 700 000 00 00"><?=htmlspecialchars($rc['head_text'])?></textarea></label>
-				<?=$sw('show_status', '«РАСПЕЧАТАНО» / «ИЗМЕНЕНО» белгісі')?>
+				<?=$sw('show_status', 'Қайта басқанда «РАСПЕЧАТАНО · 2» / «ИЗМЕНЕНО» белгісі')?>
 				<?=$sw('show_type', 'Тапсырыс түрі (Собой, Кафе)')?>
 				<?=$sw('show_number', 'Тапсырыс нөмірі')?>
 				<?=$sw('show_date', 'Күні мен уақыты')?>
@@ -117,6 +117,10 @@
 						<label><input type="radio" name="pv_type" value="1" checked><i>Жеткізу</i></label>
 						<label><input type="radio" name="pv_type" value="2"><i>Собой</i></label>
 					</div>
+				</div>
+				<div class="qr_opt rc_pv_t">
+					<label><input type="radio" name="pv_copy" value="1" checked><i>Негізгі чек</i></label>
+					<label><input type="radio" name="pv_copy" value="2"><i>Қайта басу</i></label>
 				</div>
 				<div class="rc_pv_wrap"><div class="rc_paper"></div></div>
 				<div class="cl_small">Мысал тапсырыс. Нақты чек кассада осы баптаумен шығады.</div>
