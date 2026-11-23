@@ -92,8 +92,10 @@
 			</div>
 
 			<div class="cl_box rc_sec">
-				<div class="cl_box_h"><div class="qr_h">Кухня чегі</div></div>
-				<?=$sw('kitchen', '«Печать» басқанда кухня чегі де шықсын (клиент чегінен кейін, бөлек параққа)')?>
+				<div class="cl_box_h"><div class="qr_h">Чек түрлері</div></div>
+				<?=$sw('client_on', 'Клиент чегі (баға, сома, клиент)')?>
+				<?=$sw('kitchen', 'Кухня чегі (бағасыз, ірі жазу)')?>
+				<div class="cl_small">Браузердегі кассада «Тапсырыстар» бетінде әр қосулы чекке бөлек батырма шығады: «Клиентке», «Кухняға». Berik POS программасында сатқанда қосулы чектің бәрі өз принтеріне өзі шығады (программада «Принтер» батырмасынан кухня принтерін таңдайсыз).</div>
 				<div class="rc_sub rc_kc_f">
 					<div class="qr_fields"><label><span>Тақырып</span><input type="text" name="k_title" class="cl_inp" maxlength="40" autocomplete="off" placeholder="КУХНЯ" value="<?=htmlspecialchars($rc['k_title'])?>"></label></div>
 					<div class="qr_opt"><span>Тағамдар жазуының өлшемі</span><?=$opt('k_font', ['s' => 'Кіші', 'm' => 'Орташа', 'l' => 'Үлкен'])?></div>

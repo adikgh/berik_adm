@@ -109,7 +109,7 @@
 	// Тәуелді бөлімдер
 	function deps(p, c) {
 		var t = function (s, on) { var e = p.querySelector(s); if (e) e.classList.toggle('rc_off', !on); };
-		t('.rc_logo_f', c.logo_on); t('.rc_cl_f', c.show_client);
+		t('.rc_logo_f', c.logo_on); t('.rc_cl_f', c.show_client); t('.rc_kc_f', c.kitchen);
 		var lw = p.querySelector('.rc_lw'); if (lw) lw.textContent = c.logo_w;
 	}
 
