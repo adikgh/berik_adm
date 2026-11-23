@@ -119,6 +119,22 @@
 			.then(done);
 	}
 
+	// Сілтемедегі атау: сақталса бет жаңарады (сілтемелер мен QR жаңа атаумен)
+	$(document).on('input', '.qr_slug input[name=slug]', function () {
+		var v = this.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+		if (v !== this.value) this.value = v;
+	});
+	$(document).on('submit', '.qr_slug', function (e) {
+		e.preventDefault();
+		var btn = this.querySelector('.qr_slug_save');
+		btn.classList.add('cl_btn_wait');
+		post('slug', new FormData(this), function (r) {
+			btn.classList.remove('cl_btn_wait');
+			mess(r.ok ? 'Сәтті сақталды' : (r.msg || 'Қате'));
+			if (r.ok) location.reload();
+		});
+	});
+
 	$(document).on('submit', '.qr_form', function (e) {
 		e.preventDefault();
 		var p = page(), form = this, btn = form.querySelector('.qr_save');

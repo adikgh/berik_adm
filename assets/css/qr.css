@@ -45,6 +45,12 @@
 .qr_btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .qr_urls { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e6e8e4; }
 .qr_url { color: #0EA768; font-weight: 600; word-break: break-all; }
+.qr_slug { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: flex-end; margin-top: 16px; }
+.qr_slug label { display: flex; flex-direction: column; gap: 6px; flex: 1 1 280px; min-width: 0; }
+.qr_slug_r { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.qr_slug_r i { font-style: normal; color: #6b6f68; white-space: nowrap; }
+.qr_slug_r .cl_inp { flex: 1; min-width: 0; }
+.qr_slug_note { flex-basis: 100%; }
 
 .qr_tb { display: flex; gap: 8px; align-items: center; }
 .qr_list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
