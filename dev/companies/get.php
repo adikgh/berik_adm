@@ -74,15 +74,18 @@
 		if (!dev::row("select id from company where id = '$cid'")) out(['ok' => false, 'msg' => t::w('Company not found', 'Компания табылмады')]);
 		require_once dirname(__DIR__) . '/tg/lib.php';
 		if (!tg_cols_ok()) out(['ok' => false, 'msg' => t::w('Add the SQL first', 'Алдымен SQL қосыңыз')]);
+		$kind = @$_POST['kind'] === 'report' ? 'report' : 'order'; // тапсырыс тобы не есеп тобы
+		if ($kind === 'report' && !tg_cols_report_ok()) out(['ok' => false, 'msg' => t::w('Add the SQL first', 'Алдымен SQL қосыңыз') . ' (report_chat_id)']);
 		if (isset($_GET['tg_off'])) {
-			db::query("update company set chat_send = 0, chat_id = NULL, tg_title = NULL, tg_code = NULL, tg_code_dt = NULL where id = '$cid'");
+			if ($kind === 'report') db::query("update company set report_chat_send = 0, report_chat_id = NULL, report_tg_title = NULL where id = '$cid'");
+			else db::query("update company set chat_send = 0, chat_id = NULL, tg_title = NULL, tg_code = NULL, tg_code_dt = NULL where id = '$cid'");
 			out(['ok' => true, 'msg' => t::w('Disconnected', 'Ажыратылды')]);
 		}
 		if (isset($_GET['tg_check'])) {
 			if (tg_hook_url() === '') tg_poll(); // локалда webhook жоқ: хабарларды өзіміз аламыз
 			out(['ok' => true, 'msg' => t::w('Checked', 'Тексерілді')]);
 		}
-		$u = tg_link_url($cid);
+		$u = tg_link_url($cid, $kind);
 		if ($u === '') out(['ok' => false, 'msg' => t::w('The bot is not set', 'Бот қойылмаған (dev ▸ Telegram бот)')]);
 		out(['ok' => true, 'msg' => t::w('Opening Telegram…', 'Telegram ашылып жатыр…'), 'go' => $u]);
 	}

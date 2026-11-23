@@ -1,6 +1,7 @@
 <?php
 // Telegram бот: токен базада (sys_setting: tg_token, tg_bot_name, tg_hook_secret), dev ▸ Telegram бот (/tg/) өзгертеді.
-// Компанияның тобы: company.chat_id (+ tg_title). Иесі «Топқа қосу» батырмасын басады → t.me/<бот>?startgroup=<код>
+// Компанияның екі тобы: тапсырыс тобы company.chat_id (+ tg_title), есеп тобы company.report_chat_id (+ report_tg_title).
+// Иесі «Топқа қосу» батырмасын басады → t.me/<бот>?startgroup=<код>
 // → бот топқа қосылғанда Telegram «/start <код>» жібереді → tg_update() топтың ID-ын сол компанияға жазады.
 // Live (https): webhook → /tg/hook.php. Локал (http): webhook болмайды, «Тексеру» getUpdates арқылы алады.
 require_once dirname(__DIR__, 2) . '/config/sys_set.php';
@@ -12,6 +13,13 @@ function tg_q1($sql) { $q = db::query($sql); return $q ? mysqli_fetch_assoc($q) 
 function tg_cols_ok() {
 	static $ok = null;
 	if ($ok === null) { try { $q = db::query("SHOW COLUMNS FROM company LIKE 'tg_code'"); $ok = $q && mysqli_num_rows($q) > 0; } catch (Throwable $e) { $ok = false; } }
+	return $ok;
+}
+
+// Есеп тобының бағандары бар ма (_sql/tg_report_20261123.sql)
+function tg_cols_report_ok() {
+	static $ok = null;
+	if ($ok === null) { try { $q = db::query("SHOW COLUMNS FROM company LIKE 'report_chat_id'"); $ok = $q && mysqli_num_rows($q) > 0; } catch (Throwable $e) { $ok = false; } }
 	return $ok;
 }
 
@@ -48,12 +56,12 @@ function tg_hook_set() {
 	return ['ok' => !empty($r['ok']), 'msg' => !empty($r['ok']) ? $url : (string)@$r['description']];
 }
 
-// Бір реттік код (24 сағат): «Топқа қосу» сілтемесі үшін
-function tg_link_url($cid) {
+// Бір реттік код (24 сағат): «Топқа қосу» сілтемесі үшін. $kind: 'order' (код c…) не 'report' (код r…)
+function tg_link_url($cid, $kind = 'order') {
 	$cid = (int)$cid;
 	$bot = sys_set('tg_bot_name');
-	if ($bot === '' || !tg_cols_ok()) return '';
-	$code = 'c' . $cid . '_' . bin2hex(random_bytes(8));
+	if ($bot === '' || !tg_cols_ok() || ($kind === 'report' && !tg_cols_report_ok())) return '';
+	$code = ($kind === 'report' ? 'r' : 'c') . $cid . '_' . bin2hex(random_bytes(8));
 	db::query("UPDATE company SET tg_code = '" . tg_esc($code) . "', tg_code_dt = NOW() WHERE id = '$cid'");
 	return 'https://t.me/' . rawurlencode($bot) . '?startgroup=' . rawurlencode($code);
 }
@@ -69,7 +77,10 @@ function tg_update($u) {
 		$m = $u['my_chat_member'];
 		$cid = (string)@$m['chat']['id'];
 		$st = (string)@$m['new_chat_member']['status'];
-		if ($cid !== '' && in_array($st, ['left', 'kicked'], true)) db::query("UPDATE company SET chat_send = 0 WHERE chat_id = '" . tg_esc($cid) . "'");
+		if ($cid !== '' && in_array($st, ['left', 'kicked'], true)) {
+			db::query("UPDATE company SET chat_send = 0 WHERE chat_id = '" . tg_esc($cid) . "'");
+			if (tg_cols_report_ok()) db::query("UPDATE company SET report_chat_send = 0 WHERE report_chat_id = '" . tg_esc($cid) . "'");
+		}
 		return;
 	}
 
@@ -80,12 +91,14 @@ function tg_update($u) {
 
 	// Топ супертопқа айналса ID өзгереді: компанияда жаңасына ауыстырамыз
 	if (!empty($msg['migrate_to_chat_id'])) {
-		db::query("UPDATE company SET chat_id = '" . tg_esc($msg['migrate_to_chat_id']) . "' WHERE chat_id = '" . tg_esc($chat_id) . "'");
+		$new = tg_esc($msg['migrate_to_chat_id']);
+		db::query("UPDATE company SET chat_id = '$new' WHERE chat_id = '" . tg_esc($chat_id) . "'");
+		if (tg_cols_report_ok()) db::query("UPDATE company SET report_chat_id = '$new' WHERE report_chat_id = '" . tg_esc($chat_id) . "'");
 		return;
 	}
 
 	$text = trim((string)@$msg['text']);
-	if (!preg_match('~^/start(?:@(\w+))?\s+(c\d+_[0-9a-f]{16})$~i', $text, $mm)) return; // басқасы еленбейді
+	if (!preg_match('~^/start(?:@(\w+))?\s+([cr]\d+_[0-9a-f]{16})$~i', $text, $mm)) return; // басқасы еленбейді
 	$bot = sys_set('tg_bot_name');
 	if ($mm[1] !== '' && $bot !== '' && strcasecmp($mm[1], $bot) !== 0) return;
 	if (!in_array((string)@$chat['type'], ['group', 'supergroup'], true)) return; // тек топ
@@ -93,8 +106,15 @@ function tg_update($u) {
 	$c = tg_q1("SELECT id, name FROM company WHERE tg_code = '" . tg_esc($mm[2]) . "' AND tg_code_dt > NOW() - INTERVAL 1 DAY LIMIT 1");
 	if (!$c) return; // код жоқ не ескірген: үндемейміз
 	$title = mb_substr(trim((string)@$chat['title']), 0, 255);
+	$name = htmlspecialchars($c['name'], ENT_QUOTES, 'UTF-8');
+	if (strtolower($mm[2][0]) === 'r') { // есеп тобы
+		if (!tg_cols_report_ok()) return;
+		db::query("UPDATE company SET report_chat_id = '" . tg_esc($chat_id) . "', report_chat_send = 1, report_tg_title = '" . tg_esc($title) . "', tg_code = NULL, tg_code_dt = NULL WHERE id = '" . (int)$c['id'] . "'");
+		tg_say($chat_id, "✅ Есеп тобы қосылды: <b>$name</b>\nКүндік есептер осы топқа келеді.");
+		return;
+	}
 	db::query("UPDATE company SET chat_id = '" . tg_esc($chat_id) . "', chat_send = 1, tg_title = '" . tg_esc($title) . "', tg_code = NULL, tg_code_dt = NULL WHERE id = '" . (int)$c['id'] . "'");
-	tg_say($chat_id, "✅ Топ қосылды: <b>" . htmlspecialchars($c['name'], ENT_QUOTES, 'UTF-8') . "</b>\nЖаңа тапсырыстар осы топқа келеді.");
+	tg_say($chat_id, "✅ Топ қосылды: <b>$name</b>\nЖаңа тапсырыстар осы топқа келеді.");
 }
 
 // Локал үшін: webhook жоқ кезде жиналған жаңартуларды алып өңдейді. Қайтарады: өңделген саны не қате мәтіні

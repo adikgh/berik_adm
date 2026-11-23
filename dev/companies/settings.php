@@ -98,27 +98,33 @@
 	require_once dirname(__DIR__) . '/tg/lib.php';
 	$tg_ok = tg_cols_ok() && (bool)dev::row("SHOW TABLES LIKE 'sys_setting'");
 	$tg_bot = $tg_ok ? sys_set('tg_bot_name') : '';
-	$tg_on = trim((string)$c['chat_id']) !== ''; ?>
-	<h2 class="cs_h2" id="tg"><i class="fab fa-telegram-plane"></i> <?=t::w('Telegram group', 'Telegram тобы')?></h2>
+	// Екі топ: тапсырыс тобы (chat_id) және есеп тобы (report_chat_id; бос болса есептер тапсырыс тобына барады)
+	$tg_kinds = ['order' => ['id' => 'chat_id', 'send' => 'chat_send', 'title' => 'tg_title', 'h' => t::w('Orders group', 'Тапсырыс тобы'),
+		'off' => t::w('Disconnect the group? Orders stop going to Telegram.', 'Топты ажыратамыз ба? Тапсырыстар Telegram-ға бармайды.')]];
+	if ($tg_ok && tg_cols_report_ok()) $tg_kinds['report'] = ['id' => 'report_chat_id', 'send' => 'report_chat_send', 'title' => 'report_tg_title', 'h' => t::w('Reports group', 'Есеп тобы'),
+		'off' => t::w('Disconnect the reports group? Reports go to the orders group.', 'Есеп тобын ажыратамыз ба? Есептер тапсырыс тобына барады.'),
+		'hint' => t::w('If empty, reports go to the orders group.', 'Бос болса, есептер тапсырыс тобына барады.')]; ?>
+	<h2 class="cs_h2" id="tg"><i class="fab fa-telegram-plane"></i> <?=t::w('Telegram groups', 'Telegram топтары')?></h2>
 	<div class="grid g2">
+		<? if (!$tg_ok): ?>
+		<div class="card"><p class="hint"><?=t::w('Add the Telegram SQL to the database first.', 'Алдымен базаға Telegram SQL-ын қосыңыз.')?></p></div>
+		<? elseif ($tg_bot === ''): ?>
+		<div class="card"><p class="hint"><?=t::w('The bot is not set yet.', 'Бот әлі қойылмаған.')?> <? if (dev::can('tg')): ?><a href="/tg/"><?=t::w('Set the bot', 'Ботты баптау')?></a><? endif ?></p></div>
+		<? else: foreach ($tg_kinds as $tk => $k): $tg_on = trim((string)@$c[$k['id']]) !== ''; ?>
 		<div class="card">
-			<? if (!$tg_ok): ?>
-			<p class="hint"><?=t::w('Add the Telegram SQL to the database first.', 'Алдымен базаға Telegram SQL-ын қосыңыз.')?></p>
-			<? elseif ($tg_bot === ''): ?>
-			<p class="hint"><?=t::w('The bot is not set yet.', 'Бот әлі қойылмаған.')?> <? if (dev::can('tg')): ?><a href="/tg/"><?=t::w('Set the bot', 'Ботты баптау')?></a><? endif ?></p>
-			<? else: ?>
-			<div class="card_h"><h2><i class="fal fa-users"></i> <?=($tg_on ? dev::h($c['tg_title'] ?: t::w('Group connected', 'Топ қосылған')) : t::w('No group', 'Топ жоқ'))?></h2><small><?=($tg_on ? ((int)$c['chat_send'] ? t::w('Sending', 'Жіберіп тұр') : t::w('Off', 'Өшік')) : '')?></small></div>
-			<? if ($tg_on): ?><p class="hint mb">Chat ID: <b><?=dev::h($c['chat_id'])?></b> · @<?=dev::h($tg_bot)?></p><? endif ?>
+			<div class="card_h"><h2><i class="fal fa-<?=($tk === 'report' ? 'chart-bar' : 'users')?>"></i> <?=$k['h']?></h2><small><?=($tg_on ? ((int)@$c[$k['send']] ? t::w('Sending', 'Жіберіп тұр') : t::w('Off', 'Өшік')) : '')?></small></div>
+			<p class="hint mb"><b><?=($tg_on ? dev::h(@$c[$k['title']] ?: t::w('Group connected', 'Топ қосылған')) : t::w('No group', 'Топ жоқ'))?></b><? if ($tg_on): ?> · Chat ID: <b><?=dev::h($c[$k['id']])?></b> · @<?=dev::h($tg_bot)?><? endif ?></p>
+			<? if (!empty($k['hint'])): ?><p class="hint mb"><?=$k['hint']?></p><? endif ?>
 			<p class="hint mb"><?=t::w('Create a group in Telegram first. Then press the button, choose the group, and add the bot. The group ID is saved by itself. The link works for 24 hours.', 'Алдымен Telegram-да топ ашыңыз. Сосын батырманы басып, топты таңдап, ботты қосыңыз. Топ ID-ы өзі жазылады. Сілтеме 24 сағат жұмыс істейді.')?></p>
 			<? if ($edit): ?>
 			<div style="display:flex;gap:8px;flex-wrap:wrap">
-				<form data-post="get.php?tg_link" style="margin:0"><input type="hidden" name="company_id" value="<?=$id?>"><button class="btn btn_g" type="submit"><i class="fab fa-telegram-plane"></i><?=($tg_on ? t::w('Change group', 'Топты ауыстыру') : t::w('Add to group', 'Топқа қосу'))?></button></form>
-				<form data-post="get.php?tg_check" style="margin:0"><input type="hidden" name="company_id" value="<?=$id?>"><button class="btn btn_l" type="submit"><i class="fal fa-sync"></i><?=t::w('Check', 'Тексеру')?></button></form>
-				<? if ($tg_on): ?><form data-post="get.php?tg_off" data-danger data-ask="<?=dev::h(t::w('Disconnect the group? Orders stop going to Telegram.', 'Топты ажыратамыз ба? Тапсырыстар Telegram-ға бармайды.'))?>" style="margin:0"><input type="hidden" name="company_id" value="<?=$id?>"><button class="btn btn_l" type="submit"><i class="fal fa-unlink"></i><?=t::w('Disconnect', 'Ажырату')?></button></form><? endif ?>
+				<form data-post="get.php?tg_link" style="margin:0"><input type="hidden" name="company_id" value="<?=$id?>"><input type="hidden" name="kind" value="<?=$tk?>"><button class="btn btn_g" type="submit"><i class="fab fa-telegram-plane"></i><?=($tg_on ? t::w('Change group', 'Топты ауыстыру') : t::w('Add to group', 'Топқа қосу'))?></button></form>
+				<form data-post="get.php?tg_check" style="margin:0"><input type="hidden" name="company_id" value="<?=$id?>"><input type="hidden" name="kind" value="<?=$tk?>"><button class="btn btn_l" type="submit"><i class="fal fa-sync"></i><?=t::w('Check', 'Тексеру')?></button></form>
+				<? if ($tg_on): ?><form data-post="get.php?tg_off" data-danger data-ask="<?=dev::h($k['off'])?>" style="margin:0"><input type="hidden" name="company_id" value="<?=$id?>"><input type="hidden" name="kind" value="<?=$tk?>"><button class="btn btn_l" type="submit"><i class="fal fa-unlink"></i><?=t::w('Disconnect', 'Ажырату')?></button></form><? endif ?>
 			</div>
 			<? endif ?>
-			<? endif ?>
 		</div>
+		<? endforeach; endif ?>
 	</div>
 
 	<? // Kaspi онлайн төлем (xpayment.kz): кілт, касса аты, вебхук құпиясы, қосу/өшіру — тек осында. Предоплата мен төлем түрлері — админ ▸ Компания баптаулары

@@ -108,6 +108,8 @@ return [
 		'tg' => ['fa-paper-plane', ['Telegram', 'Telegram'], [
 			'chat_send' => ['t' => 'bool', 'l' => ['Send orders to Telegram', 'Тапсырысты Telegram-ға жіберу']],
 			'chat_id' => ['l' => ['Chat ID', 'Chat ID'], 'n' => ['Filled in by itself with «Add to group» below. Change by hand only if needed.', 'Төмендегі «Топқа қосу» батырмасымен өзі жазылады. Қолмен тек керек болса өзгертіңіз.']],
+			'report_chat_send' => ['t' => 'bool', 'l' => ['Send reports to Telegram', 'Есепті Telegram-ға жіберу']],
+			'report_chat_id' => ['l' => ['Reports group Chat ID', 'Есеп тобының Chat ID'], 'n' => ['Filled in by itself with «Add to group» in the reports card. If empty, reports go to the orders group.', 'Есеп тобы картасындағы «Топқа қосу» батырмасымен өзі жазылады. Бос болса, есептер тапсырыс тобына барады.']],
 		]],
 		'loyal' => ['fa-coins', ['Cashback and gift', 'Кэшбэк пен сыйлық'], [
 			'cashback_percent' => ['l' => ['Cashback, %', 'Кэшбэк, %'], 'min' => 0, 'max' => 100, 'n' => ['0 = off', '0 = жоқ']],
@@ -135,6 +137,6 @@ return [
 		'offline' => ['t' => 'bool', 'l' => ['Offline cashbox (Windows program)', 'Офлайн касса (Windows программа)']],
 	],
 	// өзгертілмейтін бағандар
-	'skip' => ['company' => ['id', 'tg_code', 'tg_code_dt', 'tg_title'], 'branch' => ['id', 'company_id']],
+	'skip' => ['company' => ['id', 'tg_code', 'tg_code_dt', 'tg_title', 'report_tg_title'], 'branch' => ['id', 'company_id']],
 	'ro' => ['company' => ['ins_dt'], 'branch' => ['ins_dt']],
 ];

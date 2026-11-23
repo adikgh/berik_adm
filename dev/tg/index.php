@@ -12,7 +12,8 @@
 	$info = $tok !== '' ? tg_api('getWebhookInfo') : null;
 	$hook = $info && !empty($info['ok']) ? $info['result'] : null;
 	$mask = $tok === '' ? '' : substr($tok, 0, strpos($tok, ':') ?: 6) . ':…' . substr($tok, -4);
-	$linked = $cols_ok ? dev::rows("select id, name, chat_id, chat_send, tg_title from company where chat_id is not null and chat_id <> '' order by name") : [];
+	$rep_ok = $cols_ok && tg_cols_report_ok(); // есеп тобының бағандары
+	$linked = $cols_ok ? dev::rows("select id, name, chat_id, chat_send, tg_title" . ($rep_ok ? ", report_chat_id, report_tg_title" : "") . " from company where (chat_id is not null and chat_id <> '')" . ($rep_ok ? " or (report_chat_id is not null and report_chat_id <> '')" : "") . " order by name") : [];
 	$edit = dev::can('tg');
 ?>
 <? include "../block/header.php"; ?>
@@ -52,10 +53,10 @@
 		<div class="card_h"><h2><i class="fal fa-users"></i> <?=t::w('Company groups', 'Компания топтары')?></h2><small><?=count($linked)?></small></div>
 		<? if ($linked): ?>
 		<div class="tbl_w"><table class="tbl">
-			<thead><tr><th><?=t::w('Company', 'Компания')?></th><th><?=t::w('Group', 'Топ')?></th><th>Chat ID</th><th><?=t::w('Sending', 'Жіберу')?></th></tr></thead>
+			<thead><tr><th><?=t::w('Company', 'Компания')?></th><th><?=t::w('Group', 'Топ')?></th><th>Chat ID</th><th><?=t::w('Sending', 'Жіберу')?></th><? if ($rep_ok): ?><th><?=t::w('Reports group', 'Есеп тобы')?></th><? endif ?></tr></thead>
 			<tbody>
 			<? foreach ($linked as $l): ?>
-				<tr data-href="/companies/settings.php?id=<?=(int)$l['id']?>#tg"><td><?=dev::h($l['name'])?></td><td><?=dev::h($l['tg_title'] ?: '—')?></td><td><?=dev::h($l['chat_id'])?></td><td class="<?=(int)$l['chat_send'] ? 'tg_ok' : 'tg_bad'?>"><?=(int)$l['chat_send'] ? t::w('On', 'Қосулы') : t::w('Off', 'Өшік')?></td></tr>
+				<tr data-href="/companies/settings.php?id=<?=(int)$l['id']?>#tg"><td><?=dev::h($l['name'])?></td><td><?=dev::h($l['tg_title'] ?: '—')?></td><td><?=dev::h($l['chat_id'])?></td><td class="<?=(int)$l['chat_send'] ? 'tg_ok' : 'tg_bad'?>"><?=(int)$l['chat_send'] ? t::w('On', 'Қосулы') : t::w('Off', 'Өшік')?></td><? if ($rep_ok): ?><td><?=dev::h($l['report_tg_title'] ?: ($l['report_chat_id'] ?: '—'))?></td><? endif ?></tr>
 			<? endforeach ?>
 			</tbody>
 		</table></div>
