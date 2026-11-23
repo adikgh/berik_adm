@@ -39,6 +39,27 @@
 		var del = tp === '1' ? 1000 : 0, prepay = 0, sum = 0, h = '';
 		ITEMS.forEach(function (i) { sum += i.s; });
 		var total = sum + del;
+		var cp = (p.querySelector('[name=pv_copy]:checked') || {}).value || '1';
+		var st = c.show_status && cp !== '1' ? '<div class="pred_order"><div>РАСПЕЧАТАНО · ' + cp + '</div></div>' : '';
+
+		// Кухня чегі: бағасыз, клиентсіз (кассадағы order_print.php .kc-мен бірдей)
+		if (((p.querySelector('[name=pv_kind]:checked') || {}).value) === 'kitchen') {
+			h += '<div class="head"><div class="branch_name">' + esc(c.k_title || 'КУХНЯ') + '</div>' + st + '</div>';
+			if (c.k_show_type) h += '<div class="soboi">' + (tp === '1' ? 'Доставка' : 'Собой') + '</div>';
+			h += '<div class="head2"><div class="number">' + esc(d.code) + '125</div>';
+			if (c.k_show_date) { var t2 = new Date(), z2 = function (n) { return (n < 10 ? '0' : '') + n; };
+				h += '<div class="head_bd"><b>' + z2(t2.getDate()) + '-' + z2(t2.getMonth() + 1) + '-' + t2.getFullYear() + ', ' + z2(t2.getHours()) + ':' + z2(t2.getMinutes()) + '</b></div>'; }
+			if (c.k_show_additional) h += '<div class="additional kc_note">Соусы отдельно</div>';
+			h += '</div><table><tr class="tr_border"><td><b>' + esc(c.l_name) + '</b></td><td class="c_q"><b>' + esc(c.l_qty) + '</b></td></tr>';
+			ITEMS.forEach(function (i, n) {
+				h += '<tr class="tr"><td>' + (c.item_num ? (n + 1) + '. ' : '') + esc(i[c.item_lang] || i.ru) + '</td><td class="c_q san">' + i.q + '</td></tr>';
+			});
+			h += '</table>';
+			box.className = 'rc_paper app kc p' + w + ' fs_' + c.k_font;
+			box.innerHTML = h;
+			deps(p, c);
+			return;
+		}
 
 		// Басы
 		h += '<div class="head">';
@@ -46,8 +67,7 @@
 		if (c.title_on) h += '<div class="branch_name">' + esc(c.rtitle || d.title) + '</div>';
 		if (c.head_text) h += '<div class="rc_htxt">' + nl(c.head_text) + '</div>';
 		// Негізгі чекте белгі жоқ, тек қайта басқанда (кассадағы order_print.php-дағыдай)
-		var cp = (p.querySelector('[name=pv_copy]:checked') || {}).value || '1';
-		if (c.show_status && cp !== '1') h += '<div class="pred_order"><div>РАСПЕЧАТАНО · ' + cp + '</div></div>';
+		h += st;
 		h += '</div>';
 		if (c.show_type && tp !== '1') h += '<div class="soboi">Собой</div>';
 
@@ -83,8 +103,11 @@
 
 		box.className = 'rc_paper app p' + w + ' fs_' + c.font + ' ts_' + c.title_size;
 		box.innerHTML = h;
+		deps(p, c);
+	}
 
-		// Тәуелді бөлімдер
+	// Тәуелді бөлімдер
+	function deps(p, c) {
 		var t = function (s, on) { var e = p.querySelector(s); if (e) e.classList.toggle('rc_off', !on); };
 		t('.rc_logo_f', c.logo_on); t('.rc_cl_f', c.show_client);
 		var lw = p.querySelector('.rc_lw'); if (lw) lw.textContent = c.logo_w;

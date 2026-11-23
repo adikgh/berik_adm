@@ -76,3 +76,7 @@
 .rc_paper.p58 .clens1 { font-size: 12px; }
 .rc_paper.p58 .rc_htxt { font-size: 11px; }
 .rc_paper.p58 .rc_foot { font-size: 12px; margin-top: 12px; }
+/* Кухня чегі (print.css .kc) */
+.rc_paper.kc .tr td { padding: 5px 0; border-bottom: 1px dashed #000; }
+.rc_paper.kc .san { font-size: 1.4em; }
+.rc_paper.kc .kc_note { font-weight: 700; border: 2px solid #000; padding: 4px 6px; }

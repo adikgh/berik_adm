@@ -21,6 +21,9 @@
 				'delivery' => 'always', 'prepay' => 'always', 'show_topay' => 1, // always / nonzero / never
 				'show_client' => 1, 'show_phone' => 1, 'show_address' => 1, 'show_cashback' => 1,
 				'footer' => '',
+				// Кухня чегі: бағасыз, клиент мәліметісіз, ірі жазу. kitchen = 1 болса «Печать» басқанда клиент чегінен кейін бірге шығады
+				'kitchen' => 0, 'k_title' => 'КУХНЯ', 'k_font' => 'l',
+				'k_show_type' => 1, 'k_show_date' => 1, 'k_show_additional' => 1,
 				'l_name' => 'Наименование', 'l_qty' => 'Кол.', 'l_sum' => 'Сумма', 'l_delivery' => 'Доставка',
 				'l_total' => 'ОБЩИЙ', 'l_prepay' => 'Предоплата', 'l_topay' => 'К ОПЛАТЕ',
 				'l_client' => 'Клиент', 'l_ph' => 'Номер', 'l_adr' => 'Адрес',
@@ -65,6 +68,9 @@
 			$txt = function ($v, $n) { return mb_substr(trim(str_replace("\r", '', strip_tags((string)$v))), 0, $n); };
 			$c['width'] = (int)$pick(@$p['width'], ['0', '80', '58'], '0');
 			$c['font'] = $pick(@$p['font'], ['s', 'm', 'l'], 'm');
+			$c['k_font'] = $pick(@$p['k_font'], ['s', 'm', 'l'], 'l');
+			foreach (['kitchen', 'k_show_type', 'k_show_date', 'k_show_additional'] as $k) $c[$k] = (int)!empty($p[$k]);
+			$c['k_title'] = $txt(@$p['k_title'], 40);
 			$c['title_size'] = $pick(@$p['title_size'], ['s', 'm', 'l'], 'm');
 			$c['item_lang'] = $pick(@$p['item_lang'], ['ru', 'kz'], 'ru');
 			foreach (['delivery', 'prepay'] as $k) $c[$k] = $pick(@$p[$k], ['always', 'nonzero', 'never'], 'always');
