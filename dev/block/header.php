@@ -34,8 +34,8 @@ $page_h = @$page_title ?: t::w('Developer panel', 'Әзірлеуші панел
 	<link rel="icon" type="image/svg+xml" href="<?=$A?>img/logo/berik-icon.svg">
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;600;700;800;900&display=swap">
 	<link rel="stylesheet" href="<?=$A?>pl/fontawesome/css/all.min.css">
-	<? foreach (array_merge(['anim', 'norm', 'main'], $page_css ?? [], ['berik_admin', 'berik_mobile']) as $c): ?>
-	<link rel="stylesheet" href="<?=$A?>css/<?=$c?>.css<?=$av("css/$c.css")?>">
+	<? foreach (array_merge(['anim', 'norm', 'main'], $page_css ?? [], ['berik_admin', 'berik_mobile']) as $css_f): ?>
+	<link rel="stylesheet" href="<?=$A?>css/<?=$css_f?>.css<?=$av("css/$css_f.css")?>">
 	<? endforeach ?>
 	<link rel="stylesheet" href="/assets/css/dev.css?v=<?=@filemtime(DEV_ADM . '/assets/css/dev.css')?>">
 	<script src="<?=$A?>pl/jquery.min.js"></script>
