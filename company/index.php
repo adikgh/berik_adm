@@ -133,10 +133,15 @@
 <? include "../block/header.php"; ?>
 
 <style>
-.cmp_cats{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;margin:0 0 6px;padding:10px 0;background:var(--bg,#f6f7f6);scrollbar-width:none}
+.cmp_cats{position:sticky;top:0;z-index:5;display:flex;gap:4px;overflow-x:auto;margin:0 0 14px;padding:6px;background:#fff;border:1px solid #e6e8e4;border-radius:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .cmp_cats::-webkit-scrollbar{display:none}
-.cmp_cats a{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;background:#fff;border:1px solid #e6e9e7;color:#3d4642;font-size:14px;font-weight:600;white-space:nowrap}
-.cmp_cats a:hover,.cmp_cats a.on{border-color:var(--green,#0EA768);color:var(--green,#0EA768)}
+.cmp_cats a{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:11px;color:#545a56;font-size:15px;font-weight:600;white-space:nowrap;border:0;outline:none;text-decoration:none;transition:background-color .2s cubic-bezier(.22,1,.36,1),color .2s cubic-bezier(.22,1,.36,1)}
+.cmp_cats a i{font-size:16px;color:#767c78;transition:color .2s}
+.cmp_cats a:hover{background:#f1f3f0;color:#1c1f1d}
+.cmp_cats a.on{background:#e7f5ee;color:#08794b}
+.cmp_cats a.on i{color:#0c8f59}
+.cmp_cats a:focus-visible{box-shadow:0 0 0 2px #0c8f59 inset}
+@media (max-width:760px){.cmp_cats{margin:0 -16px 12px;border-radius:0;border-left:0;border-right:0;padding:6px 12px}.cmp_cats a{height:40px;padding:0 12px;font-size:14px}}
 .cmp_page .cmp_h2{scroll-margin-top:64px}
 .cmp_tab>.cmp_h2{display:none}
 .cmp_tab[hidden]{display:none}
