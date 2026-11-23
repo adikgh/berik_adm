@@ -1,6 +1,5 @@
 /config/db.php
 /assets/pl/fontawesome/
-/config/client_link.php
 *.bak_2026*
 /config/ai.php
 /config/gdrive_token.php
@@ -16,3 +15,4 @@
 /assets/uploads/users/*
 !/assets/uploads/users/Sample_User_Icon.png
 _bak_*/
+/config/client_link_secret.php

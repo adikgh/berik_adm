@@ -103,6 +103,12 @@ $page_h = @$page_title ?: t::w('Developer panel', 'Әзірлеуші панел
 										<div class="menu_cih"><?=t::w('Recipe templates', 'Граммовка шаблондары')?></div>
 									</a>
 								<? endif ?>
+								<? if (dev::can('keys')): ?>
+									<a class="menu_ci" href="/keys/">
+										<div class="menu_cin"><i class="fal fa-key"></i></div>
+										<div class="menu_cih"><?=t::w('Keys', 'Кілттер')?></div>
+									</a>
+								<? endif ?>
 								<? if (dev::can('wa')): ?>
 									<a class="menu_ci" href="/wa/">
 										<div class="menu_cin"><i class="fab fa-whatsapp"></i></div>

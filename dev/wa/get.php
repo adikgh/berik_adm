@@ -6,7 +6,7 @@
 	require __DIR__ . '/lib.php';
 	function wa_str($k, $max = 600) { return mb_substr(trim(str_replace(["\r", "\n"], '', (string)@$_POST[$k])), 0, $max); }
 
-	// Баптауды сақтау → админнің config/wa_conf.php
+	// Баптауды сақтау → базаға (sys_setting.wa_conf)
 	if (isset($_GET['save'])) {
 		$old = dwa_conf();
 		$c = wa_conf_default();
@@ -25,7 +25,7 @@
 		$c['trust_days'] = max(1, min(365, (int)@$_POST['trust_days']));
 		if ($c['channel'] == 'test' && !in_array(@$_SERVER['REMOTE_ADDR'], ['127.0.0.1', '::1'])) out(['ok' => false, 'msg' => t::w('Test mode works only locally (the code is shown on screen)', 'Тест режимі тек локалда (код экранда көрінеді)')]);
 		$c['owners'] = $old['owners'];
-		if (!dwa_write($c)) out(['ok' => false, 'msg' => t::w('Could not write config/wa_conf.php', 'config/wa_conf.php файлына жазу мүмкін болмады')]);
+		if (!dwa_write($c)) out(['ok' => false, 'msg' => t::w('Could not save to the database', 'Базаға сақталмады')]);
 		out(['ok' => true, 'msg' => t::w('Saved', 'Сақталды')]);
 	}
 

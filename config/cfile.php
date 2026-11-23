@@ -4,7 +4,7 @@
 // Базада (company_file) тек сілтемесі (drive_id) жазылады. Ашу: /files/?id=N (рұқсат тексеріледі).
 // Drive: OAuth, scope drive.file — сайт тек өзі жасаған файлдарды көреді.
 
-if (is_file(__DIR__.'/ai.php')) require_once __DIR__.'/ai.php';
+require_once __DIR__.'/sys_keys.php'; // GDRIVE_* кілттері: базада (dev ▸ Кілттер), жоқ болса config/ai.php
 
 class cfile {
 	public static $err = '';
@@ -32,13 +32,15 @@ class cfile {
 
 	// ---------- Google Drive ----------
 	public static function drive_conf() { return defined('GDRIVE_CLIENT_ID') && GDRIVE_CLIENT_ID !== '' && GDRIVE_CLIENT_SECRET !== ''; }
-	// токен файлы: .php (браузерден ашылмайды), ішінде JSON. include емес — opcache ескі нұсқасын бермесін
+	// Drive токені (JSON) базада: sys_setting.gdrive_token. Базада жоқ болса ескі config/gdrive_token.php файлынан оқылады (көшіргенге дейін).
 	public static function tok() {
+		$t = json_decode(sys_set('gdrive_token'), true);
+		if (is_array($t)) return $t;
 		$raw = is_file(self::TOKEN) ? (string)@file_get_contents(self::TOKEN) : '';
 		$t = json_decode(substr($raw, (int)strpos($raw, "\n") + 1), true);
 		return is_array($t) ? $t : [];
 	}
-	public static function tok_save($t) { return @file_put_contents(self::TOKEN, "<?php exit; // Google Drive токені, құпия ?>\n".json_encode($t, JSON_UNESCAPED_UNICODE), LOCK_EX) !== false; }
+	public static function tok_save($t) { return sys_set_put('gdrive_token', json_encode($t, JSON_UNESCAPED_UNICODE), (int)($GLOBALS['user_id'] ?? 0)); }
 	public static function drive_on() { $t = self::tok(); return self::drive_conf() && !empty($t['refresh_token']); }
 
 	public static function auth_url($state) {
@@ -77,6 +79,7 @@ class cfile {
 	public static function disconnect() {
 		$t = self::tok();
 		if (!empty($t['refresh_token'])) self::http('POST', 'https://oauth2.googleapis.com/revoke', http_build_query(['token' => $t['refresh_token']]), ['Content-Type: application/x-www-form-urlencoded']);
+		sys_set_put('gdrive_token', '', (int)($GLOBALS['user_id'] ?? 0));
 		@unlink(self::TOKEN);
 	}
 

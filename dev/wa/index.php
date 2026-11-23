@@ -4,7 +4,6 @@
 	$menu = 'wa'; $page_title = 'WhatsApp';
 	$page_sub = t::w('Confirmation code for sign-in and password reset. One setting for the whole system.', 'Кіру мен парольді қалпына келтіру коды. Бүкіл жүйеге бір баптау.');
 	$wc = dwa_conf();
-	$conf_ok = is_writable(is_file(dwa_path()) ? dwa_path() : dirname(dwa_path()));
 	$plain = dwa_plain();
 	$sites = ['admin' => t::w('Admin', 'Админ'), 'delivery' => t::w('Courier (delivery)', 'Курьер (доставка)'), 'dist' => t::w('Dispatch', 'Раздача'), 'ktch' => t::w('Kitchen', 'Кухня'), 'my' => t::w('My (client cabinet)', 'My (клиент кабинеті)'), 'qr' => t::w('QR menu', 'QR меню')];
 	$keep = ' (' . t::w('leave empty to keep', 'өзгертпесеңіз бос қалдырыңыз') . ')';
@@ -39,7 +38,6 @@
 		</div>
 		<label class="wa_s"><?=t::w('Remember the device, days', 'Құрылғыны неше күн есте сақтау')?><input type="number" name="trust_days" min="1" max="365" value="<?=(int)$wc['trust_days']?>"></label>
 		<p class="note"><?=t::w('«Forgot password» works by code on all sites when a channel is on. Client sign-up in the cabinet uses the same channel.', '«Парольді ұмыттым» барлық сайтта код арқылы жұмыс істейді (арна қосулы болса). Клиент кабинетінде тіркелу де осы арнамен жүреді.')?></p>
-		<? if (!$conf_ok): ?><p class="wa_warn"><?=t::w('Cannot write config/wa_conf.php in the admin folder. Give the folder write permission.', 'Админ папкасындағы config/wa_conf.php файлына жазу мүмкін емес. Папкаға жазу рұқсатын беріңіз.')?></p><? endif ?>
 		<div class="wa_b"><button class="btn btn_g" type="submit"><i class="fal fa-check"></i><?=t::w('Save', 'Сақтау')?></button></div>
 	</form>
 
