@@ -7,6 +7,7 @@
 	$cmp = (int)$company;
 	if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
 	@include_once "../config/client_link.php";
+	include_once "../config/company_slug.php";
 
 	$has = mysqli_num_rows(db::query("SHOW TABLES LIKE 'company_menu'")) > 0;
 	$c = mysqli_fetch_assoc(db::query("select id, name, code, delivery, yourself, coffee, delivery_price from company where id = '$cmp'"));
@@ -21,7 +22,9 @@
 	$live = preg_match('~gprog\.kz$~i', (string)@$_SERVER['HTTP_HOST']);
 	$qr_base = $live ? 'https://qrb.gprog.kz' : 'http://qr.berik.c';
 	$my_base = $live ? 'https://myb.gprog.kz' : 'http://my.berik.c';
-	$code = ltrim(strtolower((string)$c['code']), '#');
+	// Клиентке ашық сілтеме компания атауымен (?c=yaki). company.code — құпия, тек касса мен админге.
+	$slug = slug_of($cmp);
+	$code = $slug;
 
 	// QR дизайны: компанияның өз файлында (assets/uploads/qr/c<id>.json), логотип сол папкада
 	$st = ['color' => '#111111', 'bg' => '#ffffff', 'frame_color' => '#0EA768', 'dots' => 'round', 'eyes' => 'round', 'frame' => 1,
@@ -124,6 +127,14 @@
 				<div><div class="cl_small">Жеке кабинетте</div><a class="qr_url" href="<?=htmlspecialchars($my_base.'/?c='.$code)?>" target="_blank"><?=htmlspecialchars($my_base.'/?c='.$code)?></a></div>
 				<button type="button" class="cl_btn cl_btn_light qr_copy" data-url="<?=htmlspecialchars($qr_base.'/?c='.$code)?>"><i class="fal fa-copy"></i> Көшіру</button>
 			</div>
+			<? if (slug_col()): ?>
+				<form class="qr_slug" autocomplete="off">
+					<label><span class="cl_small">Сілтемедегі атау (компания коды емес, оны клиент көрмейді)</span>
+						<span class="qr_slug_r"><i><?=htmlspecialchars(preg_replace('~^https?://~', '', $qr_base))?>/?c=</i><input type="text" name="slug" class="cl_inp" maxlength="30" value="<?=htmlspecialchars($slug)?>" required></span></label>
+					<button type="submit" class="cl_btn cl_btn_light qr_slug_save"><i class="fal fa-check"></i> Сақтау</button>
+					<div class="cl_small qr_slug_note">Тек латын әріп, сан және сызықша. Атауды ауыстырсаңыз, бұрын басылған QR кодтар ашылмай қалады, оларды қайта басу керек.</div>
+				</form>
+			<? endif ?>
 		</div>
 	</div>
 

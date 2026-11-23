@@ -52,6 +52,17 @@
 		out(true, 'Логотип өшірілді');
 	}
 
+	// Сілтемедегі атау (company.slug)
+	if (isset($_GET['slug'])) {
+		include_once "../config/company_slug.php";
+		if (!slug_col()) out(false, 'Базаға berik_005_company_slug.sql іске қосу керек');
+		$slug = strtolower(trim((string)@$_POST['slug']));
+		if (($err = slug_check($slug, $cmp)) !== '') out(false, $err);
+		$st = mysqli_prepare(db::$connect, "update company set slug = ? where id = ?");
+		mysqli_stmt_bind_param($st, 'si', $slug, $cmp);
+		out(mysqli_stmt_execute($st), 'Сақталды');
+	}
+
 	if (!mysqli_num_rows(db::query("SHOW TABLES LIKE 'company_menu'"))) out(false, 'company_menu кестесі жоқ');
 	mysqli_report(MYSQLI_REPORT_OFF);
 
