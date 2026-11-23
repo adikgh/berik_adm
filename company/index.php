@@ -138,6 +138,9 @@
 .cmp_cats a{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;background:#fff;border:1px solid #e6e9e7;color:#3d4642;font-size:14px;font-weight:600;white-space:nowrap}
 .cmp_cats a:hover,.cmp_cats a.on{border-color:var(--green,#0EA768);color:var(--green,#0EA768)}
 .cmp_page .cmp_h2{scroll-margin-top:64px}
+.cmp_tab>.cmp_h2{display:none}
+.cmp_tab[hidden]{display:none}
+.cmp_tab{padding-top:8px}
 </style>
 <div class="bl_c cl_page lc_page cmp_page">
 
@@ -149,6 +152,7 @@
 
 	<nav class="cmp_cats"><a href="#c_main"><i class="fal fa-building"></i><?=t::w('xp:cat Main', 'Негізгі')?></a><a href="#c_pos"><i class="fal fa-cash-register"></i><?=$w('cs:Cashbox')?></a><a href="#c_pay"><i class="fal fa-credit-card"></i><?=t::w('xp:cat Pay', 'Онлайн төлем')?></a><a href="#c_dlv"><i class="fal fa-car"></i><?=$w('cs:Delivery')?></a><a href="#c_tg"><i class="fal fa-bell"></i><?=t::w('xp:cat Notify', 'Хабарламалар')?></a><a href="#branches"><i class="fal fa-store"></i><?=$w('cs:Branches')?></a><a href="#c_other"><i class="fal fa-sliders-h"></i><?=$w('cs:Other settings')?></a></nav>
 
+	<section class="cmp_tab" data-tab="c_main">
 	<div class="cmp_h2" id="c_main"><i class="fal fa-building"></i> <?=t::w('xp:cat Main', 'Негізгі')?></div>
 	<div class="cmp_grid">
 
@@ -194,6 +198,9 @@
 
 	</div>
 
+	</section>
+
+	<section class="cmp_tab" data-tab="c_pos">
 	<div class="cmp_h2" id="c_pos"><i class="fal fa-cash-register"></i> <?=$w('cs:Cashbox')?></div>
 	<div class="cmp_grid">
 		<? // 3. Касса ?>
@@ -231,6 +238,9 @@
 
 	</div>
 
+	</section>
+
+	<section class="cmp_tab" data-tab="c_pay">
 	<div class="cmp_h2" id="c_pay"><i class="fal fa-credit-card"></i> <?=t::w('xp:cat Pay', 'Онлайн төлем')?></div>
 	<div class="cmp_grid">
 		<? if ($xp_on): ?>
@@ -255,6 +265,9 @@
 		<? endif ?>
 	</div>
 
+	</section>
+
+	<section class="cmp_tab" data-tab="c_dlv">
 	<div class="cmp_h2" id="c_dlv"><i class="fal fa-car"></i> <?=$w('cs:Delivery')?></div>
 	<div class="cmp_grid">
 		<? // 4. Жеткізу ?>
@@ -277,6 +290,9 @@
 
 	</div>
 
+	</section>
+
+	<section class="cmp_tab" data-tab="c_tg">
 	<div class="cmp_h2" id="c_tg"><i class="fal fa-bell"></i> <?=t::w('xp:cat Notify', 'Хабарламалар')?></div>
 	<div class="cmp_grid">
 		<? // 5. Telegram ?>
@@ -296,6 +312,9 @@
 	</div>
 
 	<? // 6. Точкалар ?>
+	</section>
+
+	<section class="cmp_tab" data-tab="branches">
 	<div class="cmp_h2" id="branches"><i class="fal fa-store"></i> <?=$w('cs:Branches')?></div>
 	<? if (!$branches): ?><div class="cl_box"><div class="cl_empty"><?=$w('cs:No branches')?></div></div><? endif ?>
 	<div class="cmp_grid">
@@ -355,6 +374,9 @@
 	</div>
 
 	<? // 7. Басқа беттердегі баптаулар ?>
+	</section>
+
+	<section class="cmp_tab" data-tab="c_other">
 	<div class="cmp_h2" id="c_other"><i class="fal fa-sliders-h"></i> <?=$w('cs:Other settings')?></div>
 	<div class="cmp_links">
 		<a href="/team/"><i class="fal fa-user-headset"></i><span><?=$w('cs:Staff')?></span><i class="far fa-angle-right"></i></a>
@@ -366,8 +388,38 @@
 		<a href="/qr/"><i class="fal fa-qrcode"></i><span><?=$w('cs:QR menu')?></span><i class="far fa-angle-right"></i></a>
 		<a href="/kaspi/"><i class="fal fa-credit-card"></i><span><?=t::w('xp:Payments', 'Онлайн төлемдер')?></span><i class="far fa-angle-right"></i></a>
 	</div>
+	</section>
 
 	<? endif ?>
 </div>
+<script>
+// Компания баптаулары: санаттар — бөлек табтар, URL #хэште сақталады
+(function () {
+	var cur = '';
+	function show(h, scroll) {
+		var tabs = document.querySelectorAll('.cmp_tab'); if (!tabs.length) return;
+		var t = h ? document.querySelector('.cmp_tab[data-tab="' + h + '"]') : null;
+		if (!t && h) { var el = document.getElementById(h); if (el && el.closest) t = el.closest('.cmp_tab'); }
+		if (!t) t = document.querySelector('.cmp_tab[data-tab="' + cur + '"]') || tabs[0];
+		cur = t.getAttribute('data-tab');
+		tabs.forEach(function (x) { x.hidden = x !== t; x.setAttribute('data-ok', '1'); });
+		document.querySelectorAll('.cmp_cats a').forEach(function (a) { a.classList.toggle('on', a.getAttribute('href') === '#' + cur); });
+		if (scroll) window.scrollTo(0, 0);
+	}
+	document.addEventListener('click', function (e) {
+		var a = e.target.closest && e.target.closest('.cmp_cats a'); if (!a) return;
+		e.preventDefault();
+		var h = a.getAttribute('href').slice(1);
+		try { history.replaceState(null, '', '#' + h); } catch (er) {}
+		show(h, true);
+	});
+	window.addEventListener('hashchange', function () { show(location.hash.slice(1), false); });
+	show(location.hash.slice(1), false);
+	// AJAX сақтаудан кейін бет ішкі HTML-і ауысады: сол табты қайта ашамыз
+	if (window.MutationObserver) new MutationObserver(function () {
+		if (document.querySelector('.cmp_tab:not([data-ok])')) show(cur, false);
+	}).observe(document.body, { childList: true, subtree: true });
+})();
+</script>
 
 <? include "../block/footer.php"; ?>
