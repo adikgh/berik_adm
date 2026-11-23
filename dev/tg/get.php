@@ -15,7 +15,7 @@
 		$me = tg_api('getMe', [], $tok);
 		if (empty($me['ok'])) out(['ok' => false, 'msg' => t::w('Telegram refused the token', 'Telegram токенді қабылдамады') . ': ' . (string)@$me['description']]);
 		if ($tok !== $old) {
-			if ($old !== '') tg_api('deleteWebhook', [], $old); // ескі бот бұдан былай сайтқа жазбайды
+			if ($old !== '' && tg_hook_url() !== '') tg_api('deleteWebhook', [], $old); // ескі бот бұдан былай сайтқа жазбайды
 			sys_set_put('tg_offset', '0', $user_id);
 			sys_set_put('tg_hook_secret', bin2hex(random_bytes(16)), $user_id);
 		}

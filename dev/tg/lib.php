@@ -38,13 +38,10 @@ function tg_hook_url() {
 	return $https && $host !== '' ? 'https://' . $host . '/tg/hook.php' : '';
 }
 
-// Webhook тіркеу (live) не өшіру (локал). Қайтарады: ['ok' => bool, 'msg' => '']
+// Webhook тіркеу (live). Локалда webhook-қа тимейді: бот live-пен ортақ. Қайтарады: ['ok' => bool, 'msg' => '']
 function tg_hook_set() {
 	$url = tg_hook_url();
-	if ($url === '') {
-		$r = tg_api('deleteWebhook', ['drop_pending_updates' => 'false']);
-		return ['ok' => !empty($r['ok']), 'msg' => !empty($r['ok']) ? 'local' : (string)@$r['description']];
-	}
+	if ($url === '') return ['ok' => true, 'msg' => 'local'];
 	$sec = sys_set('tg_hook_secret');
 	if ($sec === '') { $sec = bin2hex(random_bytes(16)); sys_set_put('tg_hook_secret', $sec); }
 	$r = tg_api('setWebhook', ['url' => $url, 'secret_token' => $sec, 'allowed_updates' => ['message', 'my_chat_member'], 'drop_pending_updates' => 'true']);
