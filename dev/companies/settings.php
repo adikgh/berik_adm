@@ -98,12 +98,12 @@
 	require_once dirname(__DIR__) . '/tg/lib.php';
 	$tg_ok = tg_cols_ok() && (bool)dev::row("SHOW TABLES LIKE 'sys_setting'");
 	$tg_bot = $tg_ok ? sys_set('tg_bot_name') : '';
-	// Екі топ: тапсырыс тобы (chat_id) және есеп тобы (report_chat_id; бос болса есептер тапсырыс тобына барады)
+	// Екі топ: тапсырыс тобы (chat_id) және есеп тобы (report_chat_id; бос болса есептер жіберілмейді, тапсырыс тобына ешқашан бармайды)
 	$tg_kinds = ['order' => ['id' => 'chat_id', 'send' => 'chat_send', 'title' => 'tg_title', 'h' => t::w('Orders group', 'Тапсырыс тобы'),
 		'off' => t::w('Disconnect the group? Orders stop going to Telegram.', 'Топты ажыратамыз ба? Тапсырыстар Telegram-ға бармайды.')]];
 	if ($tg_ok && tg_cols_report_ok()) $tg_kinds['report'] = ['id' => 'report_chat_id', 'send' => 'report_chat_send', 'title' => 'report_tg_title', 'h' => t::w('Reports group', 'Есеп тобы'),
-		'off' => t::w('Disconnect the reports group? Reports go to the orders group.', 'Есеп тобын ажыратамыз ба? Есептер тапсырыс тобына барады.'),
-		'hint' => t::w('If empty, reports go to the orders group.', 'Бос болса, есептер тапсырыс тобына барады.')]; ?>
+		'off' => t::w('Disconnect the reports group? Reports will not be sent.', 'Есеп тобын ажыратамыз ба? Есептер жіберілмейді.'),
+		'hint' => t::w('If empty, reports are not sent (never to the orders group).', 'Бос болса, есептер жіберілмейді (тапсырыс тобына бармайды).')]; ?>
 	<h2 class="cs_h2" id="tg"><i class="fab fa-telegram-plane"></i> <?=t::w('Telegram groups', 'Telegram топтары')?></h2>
 	<div class="grid g2">
 		<? if (!$tg_ok): ?>

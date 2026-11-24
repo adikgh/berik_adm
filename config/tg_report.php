@@ -1,6 +1,6 @@
 <?php
 // Telegram есептері (касса күні, курьер, смена) компанияның есеп тобына барады.
-// Топ: есеп тобы (company.report_chat_send = 1, report_chat_id), ол жоқ болса тапсырыс тобы (chat_send = 1, chat_id), әйтпесе жіберілмейді.
+// Топ: тек есеп тобы (company.report_chat_send = 1, report_chat_id). Ол жоқ болса жіберілмейді, тапсырыс тобына ешқашан бармайды.
 // Токен базада: sys_setting.tg_token (dev ▸ Telegram бот). Қате болса error_log-қа жазады, бетті тоқтатпайды.
 require_once __DIR__ . '/sys_set.php';
 
@@ -13,9 +13,8 @@ if (!function_exists('tg_report_send')) {
 		$c = $q ? mysqli_fetch_assoc($q) : null;
 		if (!$c) return '';
 		$rep = trim((string)@$c['report_chat_id']);
-		if ((int)@$c['report_chat_send'] === 1 && $rep !== '') return $rep;
-		$ord = trim((string)@$c['chat_id']);
-		if ((int)@$c['chat_send'] === 1 && $ord !== '') return $ord;
+		// Есеп тек бөлек есеп тобына. Тапсырыс тобына ЕШҚАШАН жіберілмейді (user 2026-11-24).
+		if ((int)@$c['report_chat_send'] === 1 && $rep !== '' && $rep !== trim((string)@$c['chat_id'])) return $rep;
 		return '';
 	}
 
