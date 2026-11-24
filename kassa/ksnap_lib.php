@@ -107,7 +107,8 @@
 						$r['pay_qr'] += intval($o['pay_qr']);
 						$r['pay_cash'] += intval($o['pay_cash']);
 						$r['pay_transfer'] += intval(@$o['pay_transfer']);
-						$r['pay_red'] += intval(@$o['pay_red']);
+						// RED: толық қабылданған сома (pay_red-та тек +% үстеме тұрады)
+						if (intval(@$o['pay_red']) > 0) $r['pay_red'] += (@$o['prepay_method'] == 'red' && intval(@$o['pay_prepay']) > 0) ? intval($o['pay_prepay']) : intval($o['total']);
 						$r['pay_prepay'] += intval(@$o['pay_prepay']);
 						$r['pay_delivery'] += intval($o['pay_delivery']);
 					}

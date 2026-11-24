@@ -93,6 +93,11 @@
 	$col_q = db::query("SHOW COLUMNS FROM `retail_orders`");
 	while ($col_q && $col_d = mysqli_fetch_assoc($col_q)) $cols[$col_d['Field']] = 1;
 	$sum = function ($c) use ($cols) { return isset($cols[$c]) ? "COALESCE(SUM(`$c`), 0)" : "0"; };
+	// RED: pay_red-та тек үстеме (+%) жазылады, ал бағанда RED арқылы қабылданған толық сома керек
+	// (RED предоплата болса — pay_prepay, әйтпесе тапсырыстың толық сомасы total)
+	$red_sum = !isset($cols['pay_red']) ? "0" : (isset($cols['prepay_method'])
+		? "COALESCE(SUM(IF(pay_red > 0, IF(prepay_method = 'red' and pay_prepay > 0, pay_prepay, total), 0)), 0)"
+		: "COALESCE(SUM(IF(pay_red > 0, total, 0)), 0)");
 
 	$ok_st  = "order_status in (1, 8, 2, 11, 3, 9, 4)";
 	$otk_st = "order_status in (5, 6, 10)"; // 6, 10: отказ, бірақ бізде қалған ақша (kept_sum) жалпы сомаға қосылады
@@ -132,7 +137,7 @@
 	// ---------- Негізгі сандар ----------
 	$cur = st_row("select COUNT(*) as cnt, COALESCE(SUM(total), 0) as total,
 		".$sum('pay_qr')." as pay_qr, ".$sum('pay_cash')." as pay_cash, ".$sum('pay_transfer')." as pay_transfer,
-		".$sum('pay_red')." as pay_red, ".$sum('pay_prepay')." as pay_prepay, ".$sum('pay_delivery')." as pay_delivery
+		".$red_sum." as pay_red, ".$sum('pay_prepay')." as pay_prepay, ".$sum('pay_delivery')." as pay_delivery
 		from retail_orders where $base and $ok_st and ins_dt >= '$live_start' and ins_dt < '$p_to'");
 	$prv = st_row("select COUNT(*) as cnt, COALESCE(SUM(total), 0) as total
 		from retail_orders where $base and $ok_st and ins_dt >= '$c_start' and ins_dt < '$c_to'");
