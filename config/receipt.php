@@ -21,6 +21,10 @@
 				'delivery' => 'always', 'prepay' => 'always', 'show_topay' => 1, // always / nonzero / never
 				'show_client' => 1, 'show_phone' => 1, 'show_address' => 1, 'show_cashback' => 1,
 				'footer' => '',
+				// Чек түрлері: client_on — клиент чегі, kitchen — кухня чегі (бағасыз, клиент мәліметісіз, ірі жазу).
+				// Браузер кассада әрқайсысына бөлек батырма; Berik POS программасында сатқанда қосулының бәрі өз принтеріне өзі шығады
+				'client_on' => 1, 'kitchen' => 0, 'k_title' => 'КУХНЯ', 'k_font' => 'l',
+				'k_show_type' => 1, 'k_show_date' => 1, 'k_show_additional' => 1,
 				'l_name' => 'Наименование', 'l_qty' => 'Кол.', 'l_sum' => 'Сумма', 'l_delivery' => 'Доставка',
 				'l_total' => 'ОБЩИЙ', 'l_prepay' => 'Предоплата', 'l_topay' => 'К ОПЛАТЕ',
 				'l_client' => 'Клиент', 'l_ph' => 'Номер', 'l_adr' => 'Адрес',
@@ -44,6 +48,20 @@
 
 		// Компанияның баптауы ('logo' — data:image/... не бос)
 		public static function get($cmp) {
+			static $cache = [];
+			if (isset($cache[(int)$cmp])) return $cache[(int)$cmp];
+			return $cache[(int)$cmp] = self::load($cmp);
+		}
+
+		// Чек түрлері: қосулы түрлер тізімі ['client', 'kitchen']
+		public static function kinds($cmp) {
+			$c = self::get($cmp); $k = [];
+			if (!empty($c['client_on'])) $k[] = 'client';
+			if (!empty($c['kitchen'])) $k[] = 'kitchen';
+			return $k ?: ['client'];
+		}
+
+		public static function load($cmp) {
 			$c = self::defaults(); $c['logo'] = '';
 			if (!self::table()) return $c;
 			$q = db::query("select cfg, logo from company_receipt where company_id = '".(int)$cmp."'");
@@ -65,6 +83,10 @@
 			$txt = function ($v, $n) { return mb_substr(trim(str_replace("\r", '', strip_tags((string)$v))), 0, $n); };
 			$c['width'] = (int)$pick(@$p['width'], ['0', '80', '58'], '0');
 			$c['font'] = $pick(@$p['font'], ['s', 'm', 'l'], 'm');
+			$c['k_font'] = $pick(@$p['k_font'], ['s', 'm', 'l'], 'l');
+			foreach (['client_on', 'kitchen', 'k_show_type', 'k_show_date', 'k_show_additional'] as $k) $c[$k] = (int)!empty($p[$k]);
+			$c['k_title'] = $txt(@$p['k_title'], 40);
+			if (!$c['client_on'] && !$c['kitchen']) $c['client_on'] = 1; // ең болмаса біреуі қосулы
 			$c['title_size'] = $pick(@$p['title_size'], ['s', 'm', 'l'], 'm');
 			$c['item_lang'] = $pick(@$p['item_lang'], ['ru', 'kz'], 'ru');
 			foreach (['delivery', 'prepay'] as $k) $c[$k] = $pick(@$p[$k], ['always', 'nonzero', 'never'], 'always');

@@ -92,6 +92,21 @@
 			</div>
 
 			<div class="cl_box rc_sec">
+				<div class="cl_box_h"><div class="qr_h">Чек түрлері</div></div>
+				<?=$sw('client_on', 'Клиент чегі (баға, сома, клиент)')?>
+				<?=$sw('kitchen', 'Кухня чегі (бағасыз, ірі жазу)')?>
+				<div class="cl_small">Браузердегі кассада «Тапсырыстар» бетінде әр қосулы чекке бөлек батырма шығады: «Клиентке», «Кухняға». Berik POS программасында сатқанда қосулы чектің бәрі өз принтеріне өзі шығады (программада «Принтер» батырмасынан кухня принтерін таңдайсыз).</div>
+				<div class="rc_sub rc_kc_f">
+					<div class="qr_fields"><label><span>Тақырып</span><input type="text" name="k_title" class="cl_inp" maxlength="40" autocomplete="off" placeholder="КУХНЯ" value="<?=htmlspecialchars($rc['k_title'])?>"></label></div>
+					<div class="qr_opt"><span>Тағамдар жазуының өлшемі</span><?=$opt('k_font', ['s' => 'Кіші', 'm' => 'Орташа', 'l' => 'Үлкен'])?></div>
+					<?=$sw('k_show_type', 'Тапсырыс түрі (Доставка, Собой, Кафе)')?>
+					<?=$sw('k_show_date', 'Күні мен уақыты')?>
+					<?=$sw('k_show_additional', 'Тапсырысқа түсініктеме')?>
+					<div class="cl_small">Кухня чегінде баға, сома, клиент телефоны мен мекенжайы жоқ. Тапсырыс нөмірі әрқашан бар.</div>
+				</div>
+			</div>
+
+			<div class="cl_box rc_sec">
 				<div class="cl_box_h">
 					<div class="qr_h">Жазулар</div>
 					<div class="rc_lang"><button type="button" class="cl_btn cl_btn_light rc_lng" data-l="kz">Қазақша</button><button type="button" class="cl_btn cl_btn_light rc_lng" data-l="ru">Орысша</button></div>
@@ -117,6 +132,10 @@
 						<label><input type="radio" name="pv_type" value="1" checked><i>Жеткізу</i></label>
 						<label><input type="radio" name="pv_type" value="2"><i>Собой</i></label>
 					</div>
+				</div>
+				<div class="qr_opt rc_pv_t">
+					<label><input type="radio" name="pv_kind" value="client" checked><i>Клиентке</i></label>
+					<label><input type="radio" name="pv_kind" value="kitchen"><i>Кухняға</i></label>
 				</div>
 				<div class="qr_opt rc_pv_t">
 					<label><input type="radio" name="pv_copy" value="1" checked><i>Негізгі чек</i></label>
