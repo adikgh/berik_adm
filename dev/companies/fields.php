@@ -95,7 +95,7 @@ return [
 			'type_def' => ['t' => 'sel', 'l' => ['Default type', 'Стандарт түрі'], 'o' => $cs_types, 'n' => ['Opens first in the cashbox. Must be one of the enabled types.', 'Кассада бірінші ашылады. Қосулы түрлердің бірі болуы керек.']],
 		]],
 		'pos' => ['fa-cash-register', ['Cashbox', 'Касса'], [
-			'print' => ['t' => 'bool', 'l' => ['Print button', 'Чек басу батырмасы']],
+			'print' => ['t' => 'bool', 'l' => ['Auto print on save', 'Сақтағанда чек автомат шықсын']],
 			'show_branch' => ['t' => 'bool', 'l' => ['Show branch', 'Точканы көрсету']],
 			'red' => ['l' => ['RED, %', 'RED, %'], 'min' => 0, 'max' => 100, 'n' => ['0 = hidden. In admin only 0, 5 or 10 can be chosen.', '0 = жасырын. Админде тек 0, 5, 10 таңдалады.']],
 			'multi_cart' => ['t' => 'bool', 'l' => ['Several carts', 'Бірнеше касса қатары']],

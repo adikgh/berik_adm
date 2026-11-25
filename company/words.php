@@ -36,6 +36,8 @@ return [
 
 	'cs:Cashbox' => ['Касса', 'Cashbox', 'Kassa', 'Касса', 'Касса'],
 	'cs:Print button' => ['«Чек шығару» батырмасы', '"Print receipt" button', '"Chek chiqarish" tugmasi', '"Чек чыгаруу" баскычы', 'Кнопка «Печать чека»'],
+	'cs:Auto print' => ['Сақтағанда чек автомат шықсын', 'Print the receipt automatically on save', 'Saqlaganda chek avtomatik chiqsin', 'Сактаганда чек автоматтык чыксын', 'Автопечать чека при сохранении'],
+	'cs:auto_print_note' => ['Кассада «Сақтау» басқанда қосулы чектердің бәрі (клиент, кухня) бірден шығады. Чек түрлері «Чек» бетінде.', 'When the order is saved at the cashbox, all enabled receipts (client, kitchen) print at once. Receipt types are on the «Receipt» page.', 'Kassada «Saqlash» bosilganda yoqilgan cheklarning hammasi (mijoz, oshxona) darhol chiqadi.', 'Кассада «Сактоо» басылганда күйгүзүлгөн чектердин баары (кардар, ашкана) дароо чыгат.', 'При сохранении заказа в кассе сразу печатаются все включённые чеки (клиент, кухня). Типы чеков — на странице «Чек».'],
 	'cs:print_note' => ['Кассада тапсырысты сақтағанда чек басып шығарылады.', 'A receipt is printed when the order is saved at the cashbox.', 'Kassada buyurtma saqlanganda chek chop etiladi.', 'Кассада буйрутма сакталганда чек басылып чыгат.', 'При сохранении заказа в кассе печатается чек.'],
 	'cs:RED' => ['RED жеңілдігі (Kaspi Red)', 'RED discount (Kaspi Red)', 'RED chegirmasi (Kaspi Red)', 'RED арзандатуусу (Kaspi Red)', 'Скидка RED (Kaspi Red)'],
 	'cs:red_note' => ['0 болса кассада RED батырмасы көрінбейді.', 'At 0 the RED button is hidden at the cashbox.', '0 bo‘lsa kassada RED tugmasi ko‘rinmaydi.', '0 болсо кассада RED баскычы көрүнбөйт.', 'При 0 кнопка RED в кассе скрыта.'],

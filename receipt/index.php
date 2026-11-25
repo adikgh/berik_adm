@@ -8,6 +8,8 @@
 	$cmp = (int)$company;
 	if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
 	$rc = receipt::get($cmp);
+	// Автомат чек: company.print (касса «Сақтау» басқанда чек өзі шығады). Мұнда да, Компания баптаулары ▸ Касса-да да өзгереді.
+	$ap = mysqli_fetch_assoc(db::query("select `print` from company where id = '$cmp'"));
 	$logo = $rc['logo']; unset($rc['logo']);
 
 	// Алдын ала көрініс үшін бірінші филиал (атауы, ені, нөмір коды)
@@ -95,7 +97,11 @@
 				<div class="cl_box_h"><div class="qr_h">Чек түрлері</div></div>
 				<?=$sw('client_on', 'Клиент чегі (баға, сома, клиент)')?>
 				<?=$sw('kitchen', 'Кухня чегі (бағасыз, ірі жазу)')?>
-				<div class="cl_small">Браузердегі кассада «Тапсырыстар» бетінде әр қосулы чекке бөлек батырма шығады: «Клиентке», «Кухняға». Berik POS программасында сатқанда қосулы чектің бәрі өз принтеріне өзі шығады (программада «Принтер» батырмасынан кухня принтерін таңдайсыз).</div>
+				<? if ($ap): ?>
+				<input type="hidden" name="has_print" value="1">
+				<label class="qr_sw qr_sw_s"><input type="checkbox" name="auto_print" value="1" <?=((int)$ap['print'] == 1 ? 'checked' : '')?>><span></span><b>Сақтағанда чек автомат шықсын</b></label>
+				<? endif ?>
+				<div class="cl_small">Браузердегі кассада «Тапсырыстар» бетінде әр қосулы чекке бөлек батырма шығады: «Клиентке», «Кухняға». «Чек автомат шықсын» қосулы болса, кассада «Сақтау» басқанда қосулы чектің бәрі бірден шығады (Berik POS программасында сұрамай, өз принтеріне) (программада «Принтер» батырмасынан кухня принтерін таңдайсыз).</div>
 				<div class="rc_sub rc_kc_f">
 					<div class="qr_fields"><label><span>Тақырып</span><input type="text" name="k_title" class="cl_inp" maxlength="40" autocomplete="off" placeholder="КУХНЯ" value="<?=htmlspecialchars($rc['k_title'])?>"></label></div>
 					<div class="qr_opt"><span>Тағамдар жазуының өлшемі</span><?=$opt('k_font', ['s' => 'Кіші', 'm' => 'Орташа', 'l' => 'Үлкен'])?></div>

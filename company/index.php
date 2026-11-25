@@ -12,7 +12,7 @@
 	mysqli_report(MYSQLI_REPORT_OFF);
 
 	// Аудармалар: бірінші ашылғанда site_word-қа 5 тілде жазылады (бар сөз өзгермейді)
-	$cs_ver = 'cs:_v3';
+	$cs_ver = 'cs:_v4';
 	$W = include __DIR__.'/words.php';
 	$wl = ['kz', 'en', 'uz', 'ky', 'ru'];
 	if (mysqli_num_rows(db::query("SHOW TABLES LIKE 'site_word'")) && !mysqli_num_rows(db::query("select id from site_word where name = '$cs_ver' and lang = 'kz'"))) {
@@ -212,7 +212,7 @@
 		<?=$form('pos')?>
 			<div class="cl_box_h"><div><i class="fal fa-cash-register"></i> <?=$w('cs:Cashbox')?></div></div>
 			<div class="lc_body">
-				<? if ($has('print')): ?><?=$swh('print', (int)$c['print'] == 1, $w('cs:Print button'), $w('cs:print_note'))?><? endif ?>
+				<? if ($has('print')): ?><?=$swh('print', (int)$c['print'] == 1, $w('cs:Auto print'), $w('cs:auto_print_note'))?><? endif ?>
 				<? if ($has('show_branch')): ?><?=$swh('show_branch', (int)$c['show_branch'], $w('cs:Show branch'), $w('cs:show_branch_note'))?><? endif ?>
 				<? if ($has('red')): $rv = (int)$c['red']; if (!in_array($rv, $reds)) $reds[] = $rv; sort($reds); ?>
 				<div class="lc_row">
