@@ -1,0 +1,55 @@
+/* «Касса программасы» беті /kassa/app/ (2026-11-25). Unslop: сұр шкала + бір жасыл акцент, қара батырма, салмақ ≤600. */
+.ka_page{ padding-bottom: 40px; max-width: 880px; }
+.ka_page *{ box-sizing: border-box; }
+.ka_intro{ margin: 0 0 18px; max-width: 640px; font-size: 15px; line-height: 1.55; color: var(--bp-text2, #545a56); }
+
+.ka_cards{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.ka_card{ display: flex; flex-direction: column; padding: 22px; background: var(--bp-card, #fff); border-radius: 18px; box-shadow: var(--bp-shadow, 0 0 0 1px rgba(28,31,29,.06)); }
+.ka_card_main{ box-shadow: 0 0 0 2px var(--bp-green, #0EA768); }
+.ka_ic{ width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: var(--bp-pill, #f1f3f0); color: var(--bp-text2, #545a56); font-size: 22px; }
+.ka_ic_g{ background: var(--bp-green-bg, #e3f5ec); color: var(--bp-green, #0EA768); }
+.ka_ct{ margin-top: 14px; font-size: 18px; font-weight: 600; color: var(--bp-text, #1c1f1d); }
+.ka_cd{ margin-top: 6px; flex: 1 1 auto; font-size: 14px; line-height: 1.5; color: var(--bp-muted, #767c78); }
+.ka_cf{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+.ka_meta{ font-size: 13px; color: var(--bp-muted, #767c78); }
+
+.ka_btn{ display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; padding: 0 20px; border: 0; border-radius: 12px; background: var(--bp-text, #1c1f1d); color: #fff; font: inherit; font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer; transition: opacity .15s; }
+.ka_btn:hover{ opacity: .88; color: #fff; }
+.ka_btn_line{ background: var(--bp-pill, #f1f3f0); color: var(--bp-text, #1c1f1d); }
+.ka_btn_line:hover{ color: var(--bp-text, #1c1f1d); background: #e8ebe6; opacity: 1; }
+.ka_btn i{ font-size: 15px; }
+
+.ka_code{ display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 16px; padding: 16px 22px; background: var(--bp-card, #fff); border-radius: 18px; box-shadow: var(--bp-shadow, 0 0 0 1px rgba(28,31,29,.06)); }
+.ka_code_h{ font-size: 15px; font-weight: 600; color: var(--bp-text, #1c1f1d); }
+.ka_code_d{ margin-top: 2px; font-size: 13px; color: var(--bp-muted, #767c78); }
+.ka_code_r{ display: flex; align-items: center; gap: 10px; }
+.ka_code_v{ font-size: 20px; font-weight: 600; letter-spacing: .04em; color: var(--bp-text, #1c1f1d); }
+.ka_copy{ display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--bp-pill, #f1f3f0); color: var(--bp-text2, #545a56); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s; }
+.ka_copy:hover{ background: #e8ebe6; }
+.ka_copy_ok, .ka_copy_ok:hover{ background: var(--bp-green-bg, #e3f5ec); color: var(--bp-green-ink, #08794b); }
+
+.ka_box{ margin-top: 16px; padding: 22px; background: var(--bp-card, #fff); border-radius: 18px; box-shadow: var(--bp-shadow, 0 0 0 1px rgba(28,31,29,.06)); }
+.ka_h2{ font-size: 17px; font-weight: 600; color: var(--bp-text, #1c1f1d); margin-bottom: 4px; }
+.ka_st{ display: flex; align-items: flex-start; gap: 14px; padding: 16px 0; border-top: 1px solid var(--bp-line, #e6e8e4); }
+.ka_st:first-child{ border-top: 0; }
+.ka_n{ flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bp-green, #0EA768); color: #fff; font-size: 13px; font-weight: 600; }
+.ka_stt{ flex: 1 1 auto; min-width: 0; }
+.ka_stn{ font-size: 15px; font-weight: 600; color: var(--bp-text, #1c1f1d); line-height: 28px; }
+.ka_std{ margin-top: 2px; font-size: 14px; line-height: 1.55; color: var(--bp-text2, #545a56); overflow-wrap: anywhere; }
+.ka_note{ display: flex; gap: 8px; margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--bp-pill, #f1f3f0); font-size: 13px; line-height: 1.45; color: var(--bp-text2, #545a56); }
+.ka_note i{ margin-top: 2px; color: var(--bp-muted, #767c78); }
+.ka_links{ display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.ka_lnk{ display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 10px; background: var(--bp-pill, #f1f3f0); color: var(--bp-green-ink, #08794b); font-size: 14px; font-weight: 600; text-decoration: none; transition: background-color .15s; }
+.ka_lnk:hover{ background: var(--bp-green-bg, #e3f5ec); }
+
+.ka_help{ margin-top: 16px; padding: 18px 22px; border-radius: 18px; background: var(--bp-pill, #f1f3f0); }
+.ka_help_h{ display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--bp-text, #1c1f1d); margin-bottom: 4px; }
+.ka_help_h i{ color: var(--bp-muted, #767c78); }
+
+@media (max-width: 768px){
+	.ka_cards{ grid-template-columns: 1fr; gap: 12px; }
+	.ka_card, .ka_box{ padding: 18px 16px; border-radius: 16px; }
+	.ka_code{ padding: 14px 16px; border-radius: 16px; }
+	.ka_help{ padding: 16px; border-radius: 16px; }
+	.ka_cf .ka_btn{ width: 100%; }
+}

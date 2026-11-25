@@ -93,18 +93,22 @@
 								</style>
 								<a class="mp_topi <?=($menu_name=='orders'?'mp_topi_act':'')?>" href="/orders/?time=<?=$time_sort?>"><i class="fal fa-receipt"></i><span><?=t::w('Orders', 'Тапсырыстар')?></span></a>
 								<!-- Касса: компьютерде бір батырма, ішінен Касса, ОПиУ, РНП ашылады -->
-								<div class="mp_dd <?=(in_array($menu_name, ['kassa', 'opiu', 'rnp'])?'mp_dd_act':'')?>">
+								<div class="mp_dd <?=(in_array($menu_name, ['kassa', 'opiu', 'rnp', 'kassa_app'])?'mp_dd_act':'')?>">
 									<a class="mp_dd_t" href="/kassa/?time=<?=$time_sort?>" tabindex="0"><i class="fal fa-cash-register"></i><span><?=t::w('Cashbox', 'Касса')?></span><i class="far fa-angle-down mp_dd_ar"></i></a>
 									<div class="mp_dd_c">
 										<a class="mp_dd_i <?=($menu_name=='kassa'?'mp_dd_i_act':'')?>" href="/kassa/?time=<?=$time_sort?>"><i class="fal fa-cash-register"></i><span><?=t::w('Cashbox', 'Касса')?></span></a>
 										<div class="mp_dd_sep"></div>
 										<a class="mp_dd_i <?=($menu_name=='opiu'?'mp_dd_i_act':'')?>" href="/opiu/"><i class="fal fa-table"></i><span><?=t::w('PnL report', 'ОПиУ')?></span></a>
 										<a class="mp_dd_i <?=($menu_name=='rnp'?'mp_dd_i_act':'')?>" href="/rnp/"><i class="fal fa-heartbeat"></i><span><?=t::w('Pulse report', 'РНП')?></span></a>
+										<div class="mp_dd_sep"></div>
+										<!-- Касса программасы: онлайн касса + Windows программасын жүктеу (kassa/app/) -->
+										<a class="mp_dd_i <?=($menu_name=='kassa_app'?'mp_dd_i_act':'')?>" href="/kassa/app/"><i class="fal fa-desktop"></i><span><?=t::w('Cash desk app', 'Касса программасы')?></span></a>
 									</div>
 									<!-- телефондағы төменгі мәзір үшін -->
 									<a class="mp_topi mp_dd_m <?=($menu_name=='kassa'?'mp_topi_act':'')?>" href="/kassa/?time=<?=$time_sort?>"><i class="fal fa-cash-register"></i><span><?=t::w('Cashbox', 'Касса')?></span></a>
 									<a class="mp_topi mp_dd_m <?=($menu_name=='opiu'?'mp_topi_act':'')?>" href="/opiu/"><i class="fal fa-table"></i><span><?=t::w('PnL report', 'ОПиУ')?></span></a>
 									<a class="mp_topi mp_dd_m <?=($menu_name=='rnp'?'mp_topi_act':'')?>" href="/rnp/"><i class="fal fa-heartbeat"></i><span><?=t::w('Pulse report', 'РНП')?></span></a>
+									<a class="mp_topi mp_dd_m <?=($menu_name=='kassa_app'?'mp_topi_act':'')?>" href="/kassa/app/"><i class="fal fa-desktop"></i><span><?=t::w('Cash desk app', 'Касса программасы')?></span></a>
 								</div>
 								<!-- Тағамдар: компьютерде бір батырма, ішінен бөлімдері ашылады (Аналитика сияқты) -->
 								<? $pm = @$pod_menu_name;
@@ -210,6 +214,10 @@
 										<div class="menu_cih"><?=t::w('Open cash desk', 'Кассаға кіру')?></div>
 									</a>
 								<? endif ?>
+								<a class="menu_ci" href="/kassa/app/">
+									<div class="menu_cin"><i class="fal fa-desktop"></i></div>
+									<div class="menu_cih"><?=t::w('Cash desk app', 'Касса программасы')?></div>
+								</a>
 								<a class="menu_ci ac_open" href="/acc/">
 									<div class="menu_cin"><i class="fal fa-user"></i></div>
 									<div class="menu_cih"><?=t::w('Account', 'Аккаунт')?></div>
