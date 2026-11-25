@@ -21,7 +21,10 @@
 		$st = mysqli_prepare(db::$connect, "insert into company_receipt (company_id, cfg, logo, upd_dt) values (?, ?, ?, now())
 			on duplicate key update cfg = values(cfg), logo = values(logo), upd_dt = now()");
 		mysqli_stmt_bind_param($st, 'iss', $cmp, $cfg, $logo);
-		out(mysqli_stmt_execute($st), 'Сақталды');
+		$ok = mysqli_stmt_execute($st);
+		// Автомат чек (company.print)
+		if ($ok && isset($_POST['has_print'])) db::query("update company set `print` = '".(isset($_POST['auto_print']) ? 1 : 0)."' where id = '$cmp'");
+		out($ok, 'Сақталды');
 	}
 
 	// Әдепкі чекке қайтару
