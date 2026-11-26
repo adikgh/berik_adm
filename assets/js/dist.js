@@ -87,3 +87,65 @@
 		try { sessionStorage.setItem(key, cur) } catch (e) {}
 	})
 })()
+
+// Курьерлер беті (orders/dist/couriers.php): қосу / өзгерту / тізімнен шығару. Аккаунт беті (acc.php): профиль фотосы
+;(function () {
+	var U = '/orders/dist/get.php?', W = window.DSP_W || {}
+	var csrf = function () { var c = document.querySelector('[data-csrf]'); return c ? c.dataset.csrf : '' }
+	var send = function (a, f, ok) {
+		f.append('csrf', csrf())
+		fetch(U + a, { method: 'POST', body: f, credentials: 'same-origin' }).then(function (r) { return r.text() }).then(ok).catch(function () { ok('') })
+	}
+	var sh = document.querySelector('.bp_cr_sh'), form = sh && sh.querySelector('.bp_cr_form')
+
+	document.addEventListener('click', function (e) {
+		var t = e.target, b
+		if (form && ((b = t.closest('.on_cr_add')) || (b = t.closest('.on_cr_edit')))) {
+			var ed = b.classList.contains('on_cr_edit'), h = sh.querySelector('.bp_cr_h')
+			form.reset()
+			form.elements.id.value = ed ? b.dataset.id : ''
+			form.elements.name.value = ed ? b.dataset.name : ''
+			form.elements.surname.value = ed ? b.dataset.surname : ''
+			form.elements.phone.value = ed && b.dataset.phone ? '8' + b.dataset.phone : ''
+			h.textContent = ed ? h.dataset.edit : h.dataset.add
+			sh.querySelector('.bp_cr_pass').style.display = ed ? '' : 'none'
+			sh.querySelector('.bp_cr_hint').style.display = ed ? 'none' : ''
+			form.querySelector('.prof_msg').textContent = ''
+			window.bpSheet(sh, true)
+			setTimeout(function () { form.elements.name.focus() }, 250)
+			return
+		}
+		if ((b = t.closest('.on_cr_del'))) {
+			if (!confirm(b.dataset.confirm)) return
+			var f = new FormData(); f.append('id', b.dataset.id)
+			send('cr_del', f, function (r) { if (r == 'yes') { var u = b.closest('.bp_user'); if (u) u.remove() } })
+		}
+	})
+
+	if (form) form.addEventListener('submit', function (e) {
+		e.preventDefault()
+		var btn = form.querySelector('button[type=submit]'), msg = form.querySelector('.prof_msg')
+		btn.disabled = true; msg.textContent = ''
+		send(form.elements.id.value ? 'cr_edit' : 'cr_add', new FormData(form), function (r) {
+			btn.disabled = false
+			if (r == 'yes') { location.reload(); return }
+			msg.textContent = W[r] || (r == 'busy' ? W.phone_busy : W.err) || '…'
+		})
+	})
+
+	// Профиль фотосы
+	var inp = document.querySelector('.prof_ed .prof_img')
+	if (inp) inp.addEventListener('change', function () {
+		var box = inp.closest('.prof_ed'), file = inp.files[0]; if (!file) return
+		if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { alert(box.dataset.eType); return }
+		if (file.size > 8 * 1024 * 1024) { alert(box.dataset.eSize); return }
+		var f = new FormData(); f.append('img', file)
+		box.classList.add('prof_wait')
+		send('acc_img', f, function (r) {
+			box.classList.remove('prof_wait'); inp.value = ''
+			var j = null; try { j = JSON.parse(r) } catch (x) {}
+			if (!j || !j.ok) { alert(box.dataset.eSave); return }
+			var av = box.querySelector('.bp_prof_av'); av.textContent = ''; av.style.backgroundImage = "url('" + j.img + "')"
+		})
+	})
+})()

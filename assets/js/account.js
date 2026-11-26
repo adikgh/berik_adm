@@ -20,7 +20,7 @@
 	}
 	window.acpOpen = open;
 
-	$(document).on('click', '.ac_open', function (e) { e.preventDefault(); open(); });
+	$(document).on('click', '.ac_open', function (e) { e.preventDefault(); open(this.getAttribute('data-tab')); });
 	$(document).on('click', '.acp_x', close);
 	$(document).on('keydown', function (e) { if (e.key === 'Escape' && $p().hasClass('acp_on')) close(); });
 	$(document).on('click', '.acp_tab', function () { tabTo(this.dataset.t); });

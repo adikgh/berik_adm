@@ -62,6 +62,7 @@
 								<? endwhile ?>
 								<a class="mp_topi <?=($menu_name=='kassa'?'mp_topi_act':'')?>" href="/kassa/?time=<?=$time_sort?>"><i class="fal fa-cash-register"></i><span><?=t::w('Cashbox', 'Касса')?></span></a>
 								<a class="mp_topi <?=(@$dist_menu == 'none' ? 'mp_topi_act' : '')?>" href="/orders/dist/?sort=none"><i class="fal fa-ban"></i><span><?=t::w('Refusals', 'Бас тарту')?></span></a>
+								<a class="mp_topi <?=(@$dist_menu == 'acc' ? 'mp_topi_act' : '')?>" href="/orders/dist/acc.php"><i class="fal fa-user"></i><span><?=t::w('Account', 'Аккаунт')?></span></a>
 							<? elseif ($user_right['positions_id'] == 3): ?>
 								<a class="mp_topi <?=($menu_name=='kassa'?'mp_topi_act':'')?>" href="/kassa/?time=<?=$time_sort?>"><i class="fal fa-cash-register"></i><span><?=t::w('Cashbox', 'Касса')?></span></a>
 							<? else: ?>
@@ -233,10 +234,12 @@
 									</a>
 								<? endif ?>
 								<? endif // Раздача / Кухня хосты ?>
+								<? if (empty($dist)): // Раздачада «Аккаунт» мәзірдің өзінде (orders/dist/acc.php) ?>
 								<a class="menu_ci ac_open" href="/acc/">
 									<div class="menu_cin"><i class="fal fa-user"></i></div>
 									<div class="menu_cih"><?=t::w('Account', 'Аккаунт')?></div>
 								</a>
+								<? endif ?>
 								<a class="menu_ci acc_exit" href="/exit.php">
 									<div class="menu_cin"><i class="fal fa-sign-out"></i></div>
 									<div class="menu_cih"><?=t::w('Log out', 'Шығу')?></div>

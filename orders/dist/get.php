@@ -59,4 +59,93 @@
 		exit('yes');
 	}
 
+	// ---------- Курьерлер (orders/dist/couriers.php) және профиль фотосы (orders/dist/acc.php): тек POST + CSRF ----------
+	if (isset($_GET['cr_add']) || isset($_GET['cr_edit']) || isset($_GET['cr_del']) || isset($_GET['acc_img'])) {
+		if ($_SERVER['REQUEST_METHOD'] != 'POST' || empty($_SESSION['csrf']) || !hash_equals($_SESSION['csrf'], (string)@$_POST['csrf'])) exit('csrf');
+	}
+	$cr_phone = function () { $p = preg_replace('/\D/', '', (string)@$_POST['phone']); if (strlen($p) == 11 && ($p[0] == '7' || $p[0] == '8')) $p = substr($p, 1); return $p; };
+	$cr_txt = function ($k) { return mb_substr(trim(strip_tags((string)@$_POST[$k])), 0, 60); };
+
+	// Курьер қосу: адам бұрыннан бар болса (клиент т.б.) сол жазба, жоқ болса жаңасы (құпиясөзі 123456)
+	if (isset($_GET['cr_add'])) {
+		$name = $cr_txt('name'); $surname = $cr_txt('surname'); $phone = $cr_phone();
+		if ($name === '') exit('name');
+		if (!preg_match('/^7\d{9}$/', $phone)) exit('phone');
+		$st = mysqli_prepare(db::$connect, "SELECT id, `right`, password FROM `user` WHERE phone = ? LIMIT 1");
+		mysqli_stmt_bind_param($st, 's', $phone); mysqli_stmt_execute($st);
+		$u = mysqli_fetch_assoc(mysqli_stmt_get_result($st));
+		if (!$u) {
+			$pw = pass_sql('123456');
+			$st = mysqli_prepare(db::$connect, "INSERT INTO `user` (`name`, `surname`, `phone`, `password`, `right`) VALUES (?, ?, ?, ?, 1)");
+			mysqli_stmt_bind_param($st, 'ssss', $name, $surname, $phone, $pw);
+			if (!mysqli_stmt_execute($st)) exit('error');
+			$cid = (int)mysqli_insert_id(db::$connect);
+		} else {
+			$cid = (int)$u['id'];
+			if (!$u['right'] || !$u['password']) db::query("UPDATE `user` SET `right` = 1, `password` = IFNULL(`password`, '".pass_sql('123456')."') WHERE id = '$cid'");
+		}
+		if (mysqli_num_rows(db::query("SELECT id FROM company_staff WHERE user_id = '$cid' AND company_id = '$company' LIMIT 1"))) exit('busy'); // бұл компанияда басқа лауазыммен бар
+		db::query("INSERT INTO `company_staff` (`user_id`, `positions_id`, `company_id`) VALUES ('$cid', 6, '$company')");
+		exit('yes');
+	}
+
+	// Курьерді өзгерту: аты, тегі, нөмірі, жаңа құпиясөз (бос болса өзгермейді). Тек осы компанияның курьері
+	if (isset($_GET['cr_edit'])) {
+		$cid = (int)@$_POST['id'];
+		if (!mysqli_num_rows(db::query("SELECT id FROM company_staff WHERE user_id = '$cid' AND positions_id = 6 AND company_id = '$company' LIMIT 1"))) exit('none');
+		$name = $cr_txt('name'); $surname = $cr_txt('surname'); $phone = $cr_phone(); $pass = trim((string)@$_POST['pass']);
+		if ($name === '') exit('name');
+		if (!preg_match('/^7\d{9}$/', $phone)) exit('phone');
+		if ($pass !== '' && mb_strlen($pass) < 6) exit('pass');
+		$st = mysqli_prepare(db::$connect, "SELECT id FROM `user` WHERE phone = ? AND id <> ? LIMIT 1");
+		mysqli_stmt_bind_param($st, 'si', $phone, $cid); mysqli_stmt_execute($st);
+		if (mysqli_fetch_assoc(mysqli_stmt_get_result($st))) exit('phone_busy');
+		$st = mysqli_prepare(db::$connect, "UPDATE `user` SET `name` = ?, `surname` = ?, `phone` = ?, `upd_dt` = ? WHERE id = ?");
+		mysqli_stmt_bind_param($st, 'ssssi', $name, $surname, $phone, $datetime, $cid);
+		if (!mysqli_stmt_execute($st)) exit('error');
+		if ($pass !== '') db::query("UPDATE `user` SET `password` = '".pass_sql($pass)."' WHERE id = '$cid'");
+		exit('yes');
+	}
+
+	// Курьерді тізімнен шығару: тек компаниямен байланысы алынады, адамның аккаунты өшпейді (team/get.php?remove сияқты)
+	if (isset($_GET['cr_del'])) {
+		$sid = (int)@$_POST['id'];
+		db::query("DELETE FROM company_staff WHERE id = '$sid' AND positions_id = 6 AND company_id = '$company'");
+		exit('yes');
+	}
+
+	// Профиль фотосы: JPG/PNG/WEBP, 8 МБ дейін, 400x400 шаршы JPG болып сақталады
+	if (isset($_GET['acc_img'])) {
+		$f = @$_FILES['img'];
+		if (!$f || $f['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($f['tmp_name'])) exit('file');
+		if ($f['size'] > 8 * 1024 * 1024) exit('size');
+		$info = @getimagesize($f['tmp_name']);
+		$types = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_WEBP => 'webp'];
+		if (!$info || !isset($types[$info[2]]) || $info[0] < 50 || $info[1] < 50 || $info[0] > 8000 || $info[1] > 8000) exit('type');
+		$dir = $_SERVER['DOCUMENT_ROOT'].'/assets/uploads/users/';
+		$name = 'u'.$uid.'_'.bin2hex(random_bytes(6));
+		if (function_exists('imagecreatetruecolor')) {
+			$src = $info[2] == IMAGETYPE_JPEG ? @imagecreatefromjpeg($f['tmp_name']) : ($info[2] == IMAGETYPE_PNG ? @imagecreatefrompng($f['tmp_name']) : @imagecreatefromwebp($f['tmp_name']));
+			if (!$src) exit('type');
+			if ($info[2] == IMAGETYPE_JPEG && function_exists('exif_read_data')) { // телефон фотосының бұрылысы
+				$o = (int)@exif_read_data($f['tmp_name'])['Orientation'];
+				if ($o == 3) $src = imagerotate($src, 180, 0); elseif ($o == 6) $src = imagerotate($src, -90, 0); elseif ($o == 8) $src = imagerotate($src, 90, 0);
+			}
+			$w = imagesx($src); $h = imagesy($src); $side = min($w, $h);
+			$dst = imagecreatetruecolor(400, 400);
+			imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
+			imagecopyresampled($dst, $src, 0, 0, (int)(($w - $side) / 2), (int)(($h - $side) / 2), 400, 400, $side, $side);
+			$name .= '.jpg';
+			if (!imagejpeg($dst, $dir.$name, 85)) exit('save');
+		} else {
+			$name .= '.'.$types[$info[2]];
+			if (!move_uploaded_file($f['tmp_name'], $dir.$name)) exit('save');
+		}
+		$old = (string)@$user['img'];
+		$st = mysqli_prepare(db::$connect, "UPDATE `user` SET img = ?, upd_dt = ? WHERE id = ?");
+		mysqli_stmt_bind_param($st, 'ssi', $name, $datetime, $uid); mysqli_stmt_execute($st);
+		if ($old !== '' && preg_match('/^u'.$uid.'_[a-f0-9]{12}\.(jpg|png|webp)$/', $old) && is_file($dir.$old)) @unlink($dir.$old); // тек өзі жүктеген ескі фото
+		exit(json_encode(['ok' => 1, 'img' => '/assets/uploads/users/'.$name]));
+	}
+
 	echo 'none';

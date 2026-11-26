@@ -297,11 +297,11 @@
 									<? if ($buy_d['address']): ?>
 										<div class="uc_uil2_raz">
 											<div class="uc_uil2_mi">
-												<div class="uc_uil2_mi1"><?=t::w('Operator', 'Оператор')?>:</div>
+												<div class="uc_uil2_mi1"><?=rtrim(t::w('Operator', 'Оператор'), ': ')?>:</div>
 												<div class="uc_uil2_mi2"><?=(fun::user($buy_d['user_id']))['name']?></div>
 											</div>
 											<div class="uc_uil2_mi">
-												<div class="uc_uil2_mi1"><?=t::w('Address', 'Мекенжай')?>:</div>
+												<div class="uc_uil2_mi1"><?=rtrim(t::w('Address', 'Мекенжай'), ': ')?>:</div>
 												<div class="uc_uil2_mi2"><?=htmlspecialchars($buy_d['address'])?></div>
 											</div>
 											<? $fa = trim((string)@$buy_d['floor_apt']); if ($fa !== ''): ?>

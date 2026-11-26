@@ -455,3 +455,18 @@ html.ovr_h{ overflow: hidden; }
 .dsp .prof_msg{min-height: 18px; font-size: 13px; color: #d33;}
 .dsp .prof_form button{height: 48px; border: 0; border-radius: 12px; background: var(--bp-green); color: #fff; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;}
 .dsp .prof_form button:disabled{opacity: .6;}
+
+/* 2026-11-26: Курьерлер мен Аккаунт беттері, телефон көрінісі */
+.dsp .bp_user_b{border: 0; padding: 0; font: inherit; font-size: 15px;}
+.dsp .bp_li_n{margin-left: auto; font-size: 15px; font-weight: 700; color: var(--bp-text);}
+.dsp .bp_li_n + .bp_li_ar{margin-left: 8px;}
+.dsp .bp_lang_i.bp_lang_act{background: var(--bp-green); color: #fff;}
+.dsp .prof_hint{font-size: 13px; color: var(--bp-muted);}
+.dsp .dsp_cr .bp_head_t{align-items: center;}
+@media (max-width: 400px){
+.dsp .dsp_cr .bp_add span{display: inline;}
+.dsp .dsp_cr .bp_add{padding: 0 16px;}
+}
+
+/* панельдер төменгі мәзірдің (.bm_nav 6900) үстінде тұрсын: Сақтау батырмасы жабылмайды */
+.dsp .bp_dr{z-index: 7000;}

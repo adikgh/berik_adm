@@ -9,12 +9,12 @@ $alias_cfgs = [
 	'dist' => [
 		'pos' => [1, 2, 3, 8], 'site' => 'dist', 'plan' => 'dst', 'home' => '/orders/dist/', 'name' => ['Dispatch', 'Раздача'],
 		'pages' => [
-			'/orders/dist/index.php', '/orders/dist/item.php', '/orders/dist/get.php',
+			'/orders/dist/index.php', '/orders/dist/item.php', '/orders/dist/get.php', '/orders/dist/acc.php', '/orders/dist/couriers.php',
 			'/kassa/index.php', '/kassa/get.php', '/kassa/cday_get.php', '/kassa/ksnap_get.php', '/kassa/couriers.php',
 			'/pay/index.php', '/api/index.php',
 		],
 		// бұрынғы Раздача сілтемелері (курьер сайтындағы)
-		'legacy' => ['/orders/index.php' => '/orders/dist/', '/orders/item.php' => '/orders/dist/item.php'],
+		'legacy' => ['/orders/index.php' => '/orders/dist/', '/orders/item.php' => '/orders/dist/item.php', '/users/index.php' => '/orders/dist/couriers.php'],
 	],
 	'ktc' => [
 		'pos' => [1, 2, 3, 9], 'site' => 'ktch', 'plan' => 'ktc', 'home' => '/orders/kitchen/', 'name' => ['Kitchen', 'Кухня'],
