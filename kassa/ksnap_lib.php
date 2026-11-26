@@ -105,6 +105,13 @@
 			}
 			$r = [];
 			foreach ($have as $k => $v) { $r['pp_'.$k] = $pre[$k]; $r['dp_'.$k] = $v - $pre[$k]; }
+			// RED доплата болмайды: қалып қойса (деректің қатесі) QR-ға қосылады, жалпы сома сақталады
+			$r['dp_qr'] += $r['dp_red']; $r['dp_red'] = 0;
+			// Жеткізу: курьер доплатаны қолма-қол не Kaspi-ге алады (courier_method, courier_kaspi). Kaspi бөлігі — Доплата QR
+			if ((int)$o['order_type'] == 1 && !empty($o['courier_method']) && $r['dp_cash'] > 0) {
+				$k = min($r['dp_cash'], max(0, intval(@$o['courier_kaspi'])));
+				$r['dp_cash'] -= $k; $r['dp_qr'] += $k;
+			}
 			return $r;
 		}
 
