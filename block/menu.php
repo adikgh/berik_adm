@@ -232,19 +232,6 @@
 										<div class="menu_cih"><?=t::w('Plan payment', 'Оплата')?></div>
 									</a>
 								<? endif ?>
-								<? // Кассаға кіру: компания коды арқылы (pos ?code=n990), жаңа бетте ашылады. Адрес config/onboard.php pos_url() сияқты
-									$pos_code = ltrim((string)(@$my_companies[$company]['code'] ?: @mysqli_fetch_row(db::query("select code from company where id = '".(int)@$company."'"))[0]), '#');
-									if ($pos_code !== ''):
-										$pos_base = preg_match('~gprog\.kz$~i', (string)@$_SERVER['HTTP_HOST']) ? 'https://posb.gprog.kz' : 'http://pos.berik.c'; ?>
-									<a class="menu_ci" href="<?=htmlspecialchars($pos_base.'/?code='.rawurlencode($pos_code))?>" target="_blank" rel="noopener">
-										<div class="menu_cin"><i class="fal fa-cash-register"></i></div>
-										<div class="menu_cih"><?=t::w('Open cash desk', 'Кассаға кіру')?></div>
-									</a>
-								<? endif ?>
-								<a class="menu_ci" href="/kassa/app/">
-									<div class="menu_cin"><i class="fal fa-desktop"></i></div>
-									<div class="menu_cih"><?=t::w('Cash desk app', 'Касса программасы')?></div>
-								</a>
 								<? endif // Раздача / Кухня хосты ?>
 								<a class="menu_ci ac_open" href="/acc/">
 									<div class="menu_cin"><i class="fal fa-user"></i></div>
