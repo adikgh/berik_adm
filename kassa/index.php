@@ -121,6 +121,14 @@
 	foreach ($k_d['c'] as $uid => $cr) if (!isset($k_cour[$uid])) $k_cour[$uid] = $cr['name'];
 	$k_names = ksnap::names(array_keys($k_cour));
 
+	// Курьер кестесі: аударым (алдын ала төлем). Ескі сақталған есептерде жазылмаған — сондай болса тапсырыстардан тірі есептейміз
+	$k_ctr = 0;
+	foreach ($k_d['c'] as $uid => $cr) $k_ctr += intval(@$cr['pay_transfer']);
+	if (!$k_ctr) {
+		$q = db::query("select `сourier_id` as uid, COALESCE(SUM(pay_transfer), 0) as tr from retail_orders where ins_dt >= '$start_cdate' and ins_dt < '$end_cdate' and company_id = '$company' and number is not null and order_status in (1, 8, 2, 11, 3, 4) and `сourier_id` > 0 $br_cond group by `сourier_id`");
+		while ($q && $t = mysqli_fetch_assoc($q)) if (isset($k_d['c'][$t['uid']])) $k_d['c'][$t['uid']]['pay_transfer'] = intval($t['tr']);
+	}
+
 	// күндік көріністе: курьердің қолма-қол тапсырыстарының тізімі (ашылатын жол)
 	$k_clist = [];
 	if ($k_daily && $has_cpay) {
@@ -145,6 +153,7 @@
     $onw['number'] = 0;
     $onw['total'] = 0;
     $onw['pay_qr'] = 0;
+    $onw['pay_transfer'] = 0;
     $onw['pay_cash'] = 0;
     $onw['pay_delivery'] = 0;
     $onw['rask'] = 0;
@@ -243,6 +252,7 @@
                                 $onw['number'] += $cr['number'];
                                 $onw['total'] += $cr['total'];
                                 $onw['pay_qr'] += $cr['pay_qr'];
+                                $onw['pay_transfer'] += intval(@$cr['pay_transfer']);
                                 $onw['pay_cash'] += $cr['pay_cash'];
                                 $onw['pay_delivery'] += $cr['pay_delivery'];
                                 $onw['rask'] += $cr['expenses'];
@@ -255,6 +265,7 @@
                                 <td><?=$cr['number']?></td>
                                 <td class="fr_price"><?=$cr['total']?></td>
                                 <td class="fr_price"><?=$cr['pay_qr']?></td>
+                                <td class="fr_price"><?=intval(@$cr['pay_transfer'])?></td>
                                 <td>
                                     <div class="fr_price"><?=$cr['pay_cash']?></div>
                                     <? if ($has_cpay && $cr['pay_cash']): ?>
@@ -298,7 +309,7 @@
                             </tr>
                             <? if ($has_cpay && $c_list): ?>
                                 <tr class="k_cr_det" data-id="<?=$staff_id?>">
-                                    <td colspan="11">
+                                    <td colspan="12">
                                         <div class="k_cr_list">
                                             <? foreach ($c_list as $co): ?>
                                                 <div class="k_cr_o">
@@ -320,6 +331,7 @@
                             <td><?=t::w('Qty', 'Саны')?></td>
                             <td><?=t::w('Total', 'Жалпы')?></td>
                             <td><?=t::w('Prepaid QR', 'Алдын ала (QR)')?></td>
+                            <td><?=t::w('Prepaid transfer', 'Аударым')?></td>
                             <td><?=t::w('Courier collected', 'Курьер алды')?></td>
                             <td><?=t::w('Salary', 'Жалақы')?></td>
                             <td><?=t::w('To cashbox', 'Кассаға')?></td>
@@ -333,6 +345,7 @@
                             <td><?=$onw['number']?></td>
                             <td class="fr_price"><?=$onw['total']?></td>
                             <td class="fr_price"><?=$onw['pay_qr']?></td>
+                            <td class="fr_price"><?=$onw['pay_transfer']?></td>
                             <td class="fr_price"><?=$onw['pay_cash']?></td>
                             <td class="fr_price"><?=$onw['pay_delivery']?></td>
                             <td class="fr_price"><?=$onw['pay_cash'] - $onw['pay_delivery']?></td>

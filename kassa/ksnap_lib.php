@@ -132,6 +132,7 @@
 					$r['total'] += intval($o['total']);
 					$r['pay_qr'] += intval($o['pay_qr']);
 					$r['pay_cash'] += intval($o['pay_cash']);
+					$r['pay_transfer'] += intval(@$o['pay_transfer']); // аударыммен алдын ала төленген
 					$r['pay_delivery'] += intval($o['pay_delivery']) + $dprice; // жалақы
 					if ($o['pay_cash'] > 0) {
 						if (!empty($o['courier_method'])) { $r['c_cash'] += intval(@$o['courier_cash']); $r['c_kaspi'] += intval(@$o['courier_kaspi']); }
