@@ -56,15 +56,9 @@
 		'sv'   => ['name' => t::w('type:Сервис', 'Сервис'),   'cond' => "order_type = 3 and order_status in (1, 8, 2, 11, 3, 9, 4, 6, 10)"],
 		'otk'  => ['name' => t::w('st:Отказ', 'Отказ'),    'cond' => "order_status in (5, 6, 10)"],
 	];
-	// төлем бағандары: ақша қалай түсті (ретімен)
-	$k_cols = [
-		'pay_cash'     => t::w('Cash', 'Қолма-қол'),
-		'pay_qr'       => t::w('Kaspi QR', 'Kaspi QR'),
-		'pay_transfer' => t::w('Transfer', 'Аударым'),
-		'pay_prepay'   => t::w('Prepayment', 'Предоплата'),
-		'pay_red'      => t::w('RED', 'RED'),
-		'pay_delivery' => t::w('Delivery charge', 'Жеткізу ақысы'),
-	];
+	// Формат кестесі (2026-11-26): Предоплата мен Доплата — Нал / QR / Аударым / RED бойынша (ksnap::split), соңында курьер жалақысы
+	$k_pay = ['cash' => t::w('Cash short', 'Нал'), 'qr' => 'QR', 'tr' => t::w('Transfer', 'Аударым'), 'red' => 'RED'];
+	$k_cols = ['pay_cash', 'pay_qr', 'pay_transfer', 'pay_prepay', 'pay_red', 'pay_delivery']; // ескі сақталған отказ жолын тексеру үшін
 	$has_cpay = fun::has_col('retail_orders', 'courier_method');
 
 	// точкалар (батырма түрінде)
@@ -76,7 +70,10 @@
 	$k_today = ksnap::today();
 	$k_from = date('Y-m-d', strtotime($start_cdate));
 	$k_to = date('Y-m-d', strtotime($end_cdate));
-	$k_all = ksnap::agg($company, $branch_id, $k_from, $k_to, 'all');
+	$k_days = ksnap::agg($company, $branch_id, $k_from, $k_to, 'day');
+	ksnap::fill_split($k_days, $company, $branch_id); // ескі суретте Предоплата / Доплата жоқ күндер — тапсырыстардан
+	$k_all = [];
+	foreach ($k_days as $kd) ksnap::merge($k_all, 'all', $kd);
 	$k_d = isset($k_all['all']) ? $k_all['all'] : ksnap::empty_day();
 	$k_is_today = $k_daily && $k_from == $k_today; // енгізу тек бүгін
 	$k_info = ($k_daily && $k_from < $k_today) ? ksnap::info($company, $branch_id, $k_from) : false;
@@ -90,9 +87,9 @@
 	// Отказ жолы: ескі сақталған есептерде төлем бағандары жазылмаған — сондай болса тапсырыстардан тірі есептейміз
 	$k_otk = $k_d['f']['otk'];
 	$k_otk_pay = 0;
-	foreach ($k_cols as $ck => $cn) $k_otk_pay += intval($k_otk[$ck]);
+	foreach ($k_cols as $ck) $k_otk_pay += intval($k_otk[$ck]);
 	if ($k_otk['refused'] > 0 && !$k_otk_pay) {
-		foreach ($k_cols as $ck => $cn) $k_otk[$ck] = 0;
+		foreach ($k_cols as $ck) $k_otk[$ck] = 0;
 		$q = db::query("select * from retail_orders where ins_dt >= '$start_cdate' and ins_dt < '$end_cdate' and company_id = '$company' and number is not null and order_status in (5, 6, 10) $br_cond");
 		while ($q && $o = mysqli_fetch_assoc($q)) {
 			$k_otk['pay_qr'] += intval($o['pay_qr']);
@@ -210,25 +207,31 @@
 
             <div class="table4">
 
-				<table>
+				<table class="k_fmt_tb"><!-- топтар арасында тік сызық (kf_s), топ аты ортада (kassa.css) -->
                     <thead>
-                        <tr>
-                            <td><b><?=t::w('Format', 'Формат')?></b></td>
-                            <td><?=t::w('Qty', 'Саны')?></td>
-                            <td><?=t::w('Total', 'Жалпы')?></td>
-                            <td><?=t::w('Average check', 'Орташа чек')?></td>
-                            <? foreach ($k_cols as $ck => $cn): ?><td><?=$cn?></td><? endforeach ?>
+                        <tr class="kf_g">
+                            <td rowspan="2"><b><?=t::w('Format', 'Формат')?></b></td>
+                            <td rowspan="2"><?=t::w('Qty', 'Саны')?></td>
+                            <td rowspan="2"><?=t::w('Average check', 'Орташа чек')?></td>
+                            <td rowspan="2"><?=t::w('Total', 'Жалпы')?></td>
+                            <td colspan="4" class="kf_s kf_h"><?=t::w('Prepayment', 'Предоплата')?></td>
+                            <td colspan="4" class="kf_s kf_h"><?=t::w('Additional payment', 'Доплата')?></td>
+                            <td rowspan="2" class="kf_s"><?=t::w('Courier salary', 'Курьер жалақысы')?></td>
+                        </tr>
+                        <tr class="kf_sub">
+                            <? foreach (['pp', 'dp'] as $kg): foreach ($k_pay as $pk => $pn): ?><td class="<?=($pk == 'cash' ? 'kf_s' : '')?>"><?=$pn?></td><? endforeach; endforeach ?>
                         </tr>
                         <? foreach ($k_rows as $key => $row): $r = $k_sum[$key]; ?>
                         <tr class="<?=($key=='all'?'k_row_all':'')?> <?=($key=='otk'?'k_row_otk':'')?> <?=(!$r['number']?'k_row_zero':'')?>">
                             <td><?=$row['name']?></td>
                             <td><?=$r['number']?></td>
+                            <td class="fr_price"><?=$r['srd']?></td>
                             <td>
                                 <div class="fr_price"><?=$r['total']?></div>
                                 <? if ($key == 'otk' && $r['kept']): ?><div class="k_cr_sub"><span class="k_cr_c"><?=t::w('Kept', 'Бізде қалды')?> <?=number_format($r['kept'], 0, '', ' ')?></span></div><? endif ?>
                             </td>
-                            <td class="fr_price"><?=$r['srd']?></td>
-                            <? foreach ($k_cols as $ck => $cn): ?><td class="fr_price"><?=$r[$ck]?></td><? endforeach ?>
+                            <? foreach (['pp', 'dp'] as $kg): foreach ($k_pay as $pk => $pn): ?><td class="fr_price<?=($pk == 'cash' ? ' kf_s' : '')?>"><?=intval(@$r[$kg.'_'.$pk])?></td><? endforeach; endforeach ?>
+                            <td class="fr_price kf_s"><?=$r['pay_delivery']?></td>
                         </tr>
                         <? endforeach ?>
                     </thead>

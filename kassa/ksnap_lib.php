@@ -20,13 +20,25 @@
 		// Формат кестесінің жолдары (kassa/index.php-дегідей)
 		public static $f_keys = ['all', 'yo', 'dl', 'cf', 'sv', 'otk'];
 		// сақталатын сандар
-		public static $nums = ['number', 'total', 'kept', 'refused', 'pay_cash', 'pay_qr', 'pay_transfer', 'pay_prepay', 'pay_red', 'pay_delivery', 'c_cash', 'c_kaspi', 'c_none', 'expenses', 'cash', 'kaspi'];
+		public static $nums = ['number', 'total', 'kept', 'refused', 'pay_cash', 'pay_qr', 'pay_transfer', 'pay_prepay', 'pay_red', 'pay_delivery', 'c_cash', 'c_kaspi', 'c_none', 'expenses', 'cash', 'kaspi',
+			'pp_cash', 'pp_qr', 'pp_tr', 'pp_red', 'dp_cash', 'dp_qr', 'dp_tr', 'dp_red'];
+		// Формат кестесі (2026-11-26): Предоплата (pp_) және Доплата (dp_) — Нал / QR / Аударым / RED бойынша. ksnap::split()
+		public static $splits = ['pp_cash', 'pp_qr', 'pp_tr', 'pp_red', 'dp_cash', 'dp_qr', 'dp_tr', 'dp_red'];
 
 		public static function ready() {
 			if (self::$ready === null) {
 				$t = self::T;
 				$ex = db::query("SHOW TABLES LIKE '$t'");
-				if ($ex && mysqli_num_rows($ex)) return self::$ready = true;
+				if ($ex && mysqli_num_rows($ex)) {
+					// 2026-11-26: Предоплата / Доплата бағандары жоқ болса өзі қосылады (_sql/kassa_split_20261126.sql)
+					$c = db::query("SHOW COLUMNS FROM `$t` LIKE 'pp_cash'");
+					if ($c && !mysqli_num_rows($c)) {
+						$add = [];
+						foreach (self::$splits as $n) $add[] = "ADD COLUMN `$n` bigint NOT NULL DEFAULT 0";
+						if (!db::query("ALTER TABLE `$t` ".implode(', ', $add))) return self::$ready = false;
+					}
+					return self::$ready = true;
+				}
 				$ok = db::query("CREATE TABLE IF NOT EXISTS `$t` (
 					`id` int unsigned NOT NULL AUTO_INCREMENT,
 					`company_id` int NOT NULL,
@@ -51,6 +63,8 @@
 					`expenses` bigint NOT NULL DEFAULT 0,
 					`cash` bigint NOT NULL DEFAULT 0,
 					`kaspi` bigint NOT NULL DEFAULT 0,
+					`pp_cash` bigint NOT NULL DEFAULT 0, `pp_qr` bigint NOT NULL DEFAULT 0, `pp_tr` bigint NOT NULL DEFAULT 0, `pp_red` bigint NOT NULL DEFAULT 0,
+					`dp_cash` bigint NOT NULL DEFAULT 0, `dp_qr` bigint NOT NULL DEFAULT 0, `dp_tr` bigint NOT NULL DEFAULT 0, `dp_red` bigint NOT NULL DEFAULT 0,
 					`auto` tinyint NOT NULL DEFAULT 0 COMMENT '1 = 06:00-де өзі сақталды',
 					`ins_dt` datetime NOT NULL,
 					PRIMARY KEY (`id`),
@@ -67,6 +81,48 @@
 		public static function next($day, $n = 1) { return date('Y-m-d', strtotime("$day +$n day")); }
 
 		private static function zero() { return array_fill_keys(self::$nums, 0); }
+
+		// Бір тапсырыстың ақшасы: Предоплата (pp_) және Доплата (dp_) — Нал / QR / Аударым / RED.
+		// - Түскен ақша: pay_cash, pay_qr, pay_transfer (бәрі қосылса = total). RED тапсырыстың толық сомасы pay_qr-да тұрады
+		//   (pay_red — тек +% үстеме), сондықтан RED сомасы QR-дан алынып, RED бағанына көшеді (екі рет саналмайды).
+		// - Предоплата: pay_prepay, түрі prepay_method (cash / qr / transfer / red / mix). Ескі тапсырыс (prepay_method бос):
+		//   Жеткізу мен Өзімен — предоплата = pay_qr (бұрынғы ереже), Кафе мен Сервис — бәрі орнында төленген (доплата).
+		// - Доплата = түскен ақша − предоплата (әр бағанда). Сонда pp + dp = pay_cash + pay_qr + pay_transfer.
+		public static function split($o) {
+			$cash = max(0, intval($o['pay_cash'])); $qr = max(0, intval($o['pay_qr'])); $tr = max(0, intval(@$o['pay_transfer'])); $red = 0;
+			$m = (string)@$o['prepay_method']; $pp = intval(@$o['pay_prepay']);
+			if (intval(@$o['pay_red']) > 0 || $m == 'red') {
+				$red = min($qr, ($m == 'red' && $pp > 0) ? $pp : intval($o['total']));
+				$qr -= $red;
+			}
+			if ($m === '') { $m = 'qr'; $pp = in_array((int)$o['order_type'], [1, 2]) ? $qr : 0; }
+			$have = ['cash' => $cash, 'qr' => $qr, 'tr' => $tr, 'red' => $red];
+			$pre = ['cash' => 0, 'qr' => 0, 'tr' => 0, 'red' => 0];
+			$ord = ['cash' => ['cash'], 'qr' => ['qr'], 'transfer' => ['tr'], 'red' => ['red']];
+			foreach (isset($ord[$m]) ? $ord[$m] : ['qr', 'tr', 'red', 'cash'] as $k) { // mix: QR, аударым, RED, қалғаны қолма-қол
+				if ($pp <= 0) break;
+				$pre[$k] = min($pp, $have[$k]); $pp -= $pre[$k];
+			}
+			$r = [];
+			foreach ($have as $k => $v) { $r['pp_'.$k] = $pre[$k]; $r['dp_'.$k] = $v - $pre[$k]; }
+			return $r;
+		}
+
+		// Ескі сақталған күндерде (2026-11-26-ға дейін) Предоплата / Доплата жоқ: сондай күндердің Формат жолдарына
+		// тек осы сандар тапсырыстардан тірі есептеліп қойылады (суреттің басқа сандары өзгермейді). $days: agg(..., 'day') нәтижесі.
+		public static function fill_split(&$days, $cmp, $br) {
+			$miss = [];
+			foreach ($days as $day => $d) {
+				$s = 0; $n = 0;
+				foreach (self::$f_keys as $k) { foreach (self::$splits as $f) $s += intval(@$d['f'][$k][$f]); $n += intval(@$d['f'][$k]['number']); }
+				if (!$s && $n) $miss[] = $day;
+			}
+			if (!$miss) return;
+			sort($miss);
+			$live = self::calc($cmp, $br, $miss[0], self::next(end($miss)));
+			foreach ($miss as $day) foreach (self::$f_keys as $k) foreach (self::$splits as $f)
+				$days[$day]['f'][$k][$f] = isset($live[$day]) ? intval($live[$day]['f'][$k][$f]) : 0;
+		}
 
 
 		// ---------- Есептеу (тапсырыстардан, бір сұраныспен бүкіл кезең) ----------
@@ -106,6 +162,7 @@
 							if (intval(@$o['pay_red']) > 0) $r['pay_red'] += (@$o['prepay_method'] == 'red' && intval(@$o['pay_prepay']) > 0) ? intval($o['pay_prepay']) : intval($o['total']);
 							$r['pay_prepay'] += intval(@$o['pay_prepay']);
 							$r['pay_delivery'] += intval($o['pay_delivery']);
+							foreach (self::split($o) as $sk => $sv) $r[$sk] += $sv;
 						}
 						$kp = $st == 5 ? 0 : intval($o['kept_sum']);
 						$r['total'] += $kp; $r['kept'] += $kp;
@@ -119,6 +176,7 @@
 						if (intval(@$o['pay_red']) > 0) $r['pay_red'] += (@$o['prepay_method'] == 'red' && intval(@$o['pay_prepay']) > 0) ? intval($o['pay_prepay']) : intval($o['total']);
 						$r['pay_prepay'] += intval(@$o['pay_prepay']);
 						$r['pay_delivery'] += intval($o['pay_delivery']);
+						foreach (self::split($o) as $sk => $sv) $r[$sk] += $sv;
 					}
 					unset($r);
 				}

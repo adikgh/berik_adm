@@ -67,3 +67,10 @@ table{
 
 /* Курьерлер кестесі: әр баған бөлек, арасында тік сызық (2026-11-26) */
 .k_cr_tb td + td{ border-left: 1px solid #e6e8e4; }
+
+
+/* Формат кестесі: Предоплата / Доплата топтары, топ арасында тік сызық (2026-11-26) */
+.k_fmt_tb .kf_s{ border-left: 1px solid #e3e6e2; }
+.k_fmt_tb .kf_g td, .k_fmt_tb .kf_sub td{ height: 34px; }
+.k_fmt_tb .kf_h{ text-align: center; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8a908c; }
+.k_fmt_tb .kf_sub td{ font-size: 12px; font-weight: 600; color: #8a908c; }
