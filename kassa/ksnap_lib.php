@@ -98,7 +98,15 @@
 				foreach ($keys as $k) {
 					$r = &$out[$day]['f'][$k];
 					if (in_array($st, [5, 6, 10])) { // отказ: тек бізде қалған ақша (kept_sum)
-						if ($k == 'otk') { $r['number']++; $r['refused'] += intval($o['total']); }
+						if ($k == 'otk') { // отказ жолы: тапсырыс сомасы мен төлем түрлері (түсімге қосылмайды, тек ақпарат)
+							$r['number']++; $r['refused'] += intval($o['total']);
+							$r['pay_qr'] += intval($o['pay_qr']);
+							$r['pay_cash'] += intval($o['pay_cash']);
+							$r['pay_transfer'] += intval(@$o['pay_transfer']);
+							if (intval(@$o['pay_red']) > 0) $r['pay_red'] += (@$o['prepay_method'] == 'red' && intval(@$o['pay_prepay']) > 0) ? intval($o['pay_prepay']) : intval($o['total']);
+							$r['pay_prepay'] += intval(@$o['pay_prepay']);
+							$r['pay_delivery'] += intval($o['pay_delivery']);
+						}
 						$kp = $st == 5 ? 0 : intval($o['kept_sum']);
 						$r['total'] += $kp; $r['kept'] += $kp;
 					} else {

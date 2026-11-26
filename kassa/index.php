@@ -87,9 +87,28 @@
 		foreach (['all', 'otk'] as $kk) if ($k_chk[$kk]['number'] != $k_d['f'][$kk]['number'] || $k_chk[$kk]['total'] != $k_d['f'][$kk]['total']) $k_changed = true;
 	}
 
+	// Отказ жолы: ескі сақталған есептерде төлем бағандары жазылмаған — сондай болса тапсырыстардан тірі есептейміз
+	$k_otk = $k_d['f']['otk'];
+	$k_otk_pay = 0;
+	foreach ($k_cols as $ck => $cn) $k_otk_pay += intval($k_otk[$ck]);
+	if ($k_otk['refused'] > 0 && !$k_otk_pay) {
+		foreach ($k_cols as $ck => $cn) $k_otk[$ck] = 0;
+		$q = db::query("select * from retail_orders where ins_dt >= '$start_cdate' and ins_dt < '$end_cdate' and company_id = '$company' and number is not null and order_status in (5, 6, 10) $br_cond");
+		while ($q && $o = mysqli_fetch_assoc($q)) {
+			$k_otk['pay_qr'] += intval($o['pay_qr']);
+			$k_otk['pay_cash'] += intval($o['pay_cash']);
+			$k_otk['pay_transfer'] += intval(@$o['pay_transfer']);
+			if (intval(@$o['pay_red']) > 0) $k_otk['pay_red'] += (@$o['prepay_method'] == 'red' && intval(@$o['pay_prepay']) > 0) ? intval($o['pay_prepay']) : intval($o['total']);
+			$k_otk['pay_prepay'] += intval(@$o['pay_prepay']);
+			$k_otk['pay_delivery'] += intval($o['pay_delivery']);
+		}
+	}
+	$k_d['f']['otk'] = $k_otk;
+
 	$k_sum = [];
 	foreach ($k_rows as $key => $row) {
 		$r = $k_d['f'][$key];
+		if ($key == 'otk') $r['total'] = intval($r['refused']); // отказ: тапсырыстардың толық сомасы (түсімге кірмейді)
 		$r['srd'] = $r['number'] ? intval($r['total'] / $r['number']) : 0;
 		$k_sum[$key] = $r;
 	}
@@ -195,7 +214,10 @@
                         <tr class="<?=($key=='all'?'k_row_all':'')?> <?=($key=='otk'?'k_row_otk':'')?> <?=(!$r['number']?'k_row_zero':'')?>">
                             <td><?=$row['name']?></td>
                             <td><?=$r['number']?></td>
-                            <td class="fr_price"><?=$r['total']?></td>
+                            <td>
+                                <div class="fr_price"><?=$r['total']?></div>
+                                <? if ($key == 'otk' && $r['kept']): ?><div class="k_cr_sub"><span class="k_cr_c"><?=t::w('Kept', 'Бізде қалды')?> <?=number_format($r['kept'], 0, '', ' ')?></span></div><? endif ?>
+                            </td>
                             <td class="fr_price"><?=$r['srd']?></td>
                             <? foreach ($k_cols as $ck => $cn): ?><td class="fr_price"><?=$r[$ck]?></td><? endforeach ?>
                         </tr>
