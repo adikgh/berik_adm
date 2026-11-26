@@ -24,6 +24,21 @@
 	elseif ($f_staff == 'soboi') $where .= " and order_type = 2";
 	elseif ($f_staff) $where .= " and сourier_id = '".intval($f_staff)."'";
 
+	// Күдікті өзгерістер: заказ ашылғаннан $sus_h сағат өткен соң құрамы (items) не сомасы (total) өзгерген. Төлем түрінің ауысуы есептелмейді.
+	$or_lg_on = (bool)mysqli_num_rows(db::query("SHOW TABLES LIKE 'retail_orders_log'"));
+	$f_sus = intval(@$_GET['sus']); if (!in_array($f_sus, [1, 2])) $f_sus = 0;
+	$sus_h = $f_sus ?: 1;
+	$sus_ids = []; $sus_log = [];
+	if ($or_lg_on) {
+		$sus_where = preg_replace('/\b(ins_dt|company_id|order_status|order_type|branch_id|сourier_id|ubd)\b/u', 'o.$1', $where);
+		$sus_q = db::query("select l.order_id, l.field, l.old_value, l.new_value, l.ins_dt from retail_orders_log l join retail_orders o on o.id = l.order_id
+			where $sus_where and l.field in ('items', 'total')
+			and l.ins_dt > coalesce((select min(c.ins_dt) from retail_orders_log c where c.order_id = l.order_id and c.field = 'created'), o.ins_dt) + interval $sus_h hour
+			order by l.id asc");
+		while ($sus_q && $sl = mysqli_fetch_assoc($sus_q)) { $sus_ids[(int)$sl['order_id']] = 1; $sus_log[(int)$sl['order_id']][] = $sl; }
+		if ($f_sus) $where .= " and id in (".($sus_ids ? implode(',', array_keys($sus_ids)) : '0').")";
+	}
+
 	// ұрылмаған (нөмірі жоқ) заказдар ең басында тұрады
 	$orders = db::query("select * from retail_orders where $where order by (number is null) desc, number desc, id desc");
 
@@ -50,7 +65,6 @@
 	$st_all = []; $q_st = db::query("select * from retail_orders_status order by number asc"); while ($r_st = mysqli_fetch_assoc($q_st)) $st_all[] = $r_st;
 	$o_couriers = []; $ocq = db::query("select * from company_staff where positions_id = 6 and company_id = '$company'");
 	while ($oc = mysqli_fetch_assoc($ocq)) { $ocu = fun::user($oc['user_id']); $o_couriers[] = ['id' => $oc['user_id'], 'name' => (string)@$ocu['name'], 'phone' => (string)@$ocu['phone']]; }
-	$or_lg_on = (bool)mysqli_num_rows(db::query("SHOW TABLES LIKE 'retail_orders_log'"));
 
 	$allorder = ['count' => 0, 'total' => 0, 'pay_qr' => 0, 'pay_cash' => 0, 'pay_transfer' => 0, 'pay_delivery' => 0, 'pay_red' => 0, 'pay_prepay' => 0, 'promo' => 0];
 	require_once "../config/promo.php";
@@ -150,6 +164,14 @@
 										<div class="uc_uil2_mi1"><?=t::w('Service:', 'Сервис:')?></div>
 										<div class="uc_uil2_mi2"><?=htmlspecialchars($service)?></div>
 									</div>
+								</div>
+								<? endif ?>
+								<? if (!empty($sus_log[(int)$buy_d['id']])): // күдікті өзгеріс: не, қашан өзгерді ?>
+								<div class="uc_uil2_raz or_sus">
+									<div class="or_sus_h"><i class="far fa-exclamation-triangle"></i> <?=t::w('Changed later', 'Кейін өзгертілген')?> (<?=$sus_h?> <?=t::w('h+', 'сағ+')?>)</div>
+									<? foreach ($sus_log[(int)$buy_d['id']] as $sl): ?>
+									<div class="or_sus_i"><span><?=date('d.m H:i', strtotime($sl['ins_dt']))?></span> <b><?=($sl['field'] == 'total' ? t::w('Sum', 'Сома') : t::w('Items', 'Құрамы'))?>:</b> <?=htmlspecialchars((string)$sl['old_value'])?> → <?=htmlspecialchars((string)$sl['new_value'])?></div>
+									<? endforeach ?>
 								</div>
 								<? endif ?>
 								<div class="uc_uil2_raz or_items">
@@ -335,6 +357,21 @@
 						<? endwhile ?>
 					</select>
 				</div>
+				<? if ($or_lg_on): // Күдікті: 1 / 2 сағаттан кейін құрамы не сомасы өзгерген заказдар ?>
+				<div class="k_br or_fsus">
+					<? foreach ([1, 2] as $sh): ?>
+						<a class="k_br_i <?=($f_sus == $sh ? 'k_br_act' : '')?>" href="?<?=htmlspecialchars(http_build_query(array_merge($_GET, ['sus' => ($f_sus == $sh ? 0 : $sh)])))?>" title="<?=t::w('Items or sum changed after', 'Құрамы не сомасы кейін өзгерген')?> <?=$sh?> <?=t::w('h', 'сағ')?>"><i class="far fa-exclamation-triangle"></i><span><?=t::w('Changed', 'Өзгертілген')?> <?=$sh?> <?=t::w('h+', 'сағ+')?></span><?=($sh == $sus_h && $sus_ids ? ' <b>'.count($sus_ids).'</b>' : '')?></a>
+					<? endforeach ?>
+				</div>
+				<style>
+					.or_fsus .k_br_i i { color: #d9534f; }
+					.or_fsus .k_br_i b { margin-left: 4px; color: #d9534f; }
+					.or_sus { background: #fdecea; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; font-size: 13px; color: #8a1f17; }
+					.or_sus_h { font-weight: 600; margin-bottom: 4px; }
+					.or_sus_i { line-height: 1.4; word-break: break-word; }
+					.or_sus_i span { color: #a5524b; }
+				</style>
+				<? endif ?>
 			</div>
 
 			<div class="or_sum">
