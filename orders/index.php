@@ -24,19 +24,25 @@
 	elseif ($f_staff == 'soboi') $where .= " and order_type = 2";
 	elseif ($f_staff) $where .= " and сourier_id = '".intval($f_staff)."'";
 
-	// Күдікті өзгерістер: заказ ашылғаннан $sus_h сағат өткен соң құрамы (items) не сомасы (total) өзгерген. Төлем түрінің ауысуы есептелмейді.
+	// Өзгертілген заказдар (retail_orders_log): құрамы (items) не сомасы (total) жасалғаннан кейін өзгерген. Төлем түрінің ауысуы есептелмейді.
+	// ?sus=all — барлығы, ?sus=1 — заказ ашылғаннан 1 сағаттан кейін өзгергендер
 	$or_lg_on = (bool)mysqli_num_rows(db::query("SHOW TABLES LIKE 'retail_orders_log'"));
-	$f_sus = intval(@$_GET['sus']); if (!in_array($f_sus, [1, 2])) $f_sus = 0;
-	$sus_h = $f_sus ?: 1;
-	$sus_ids = []; $sus_log = [];
+	$f_sus = (string)@$_GET['sus']; if (!in_array($f_sus, ['all', '1'], true)) $f_sus = '';
+	$sus_all = []; $sus_late = []; $sus_log = [];
 	if ($or_lg_on) {
 		$sus_where = preg_replace('/\b(ins_dt|company_id|order_status|order_type|branch_id|сourier_id|ubd)\b/u', 'o.$1', $where);
-		$sus_q = db::query("select l.order_id, l.field, l.old_value, l.new_value, l.ins_dt from retail_orders_log l join retail_orders o on o.id = l.order_id
-			where $sus_where and l.field in ('items', 'total')
-			and l.ins_dt > coalesce((select min(c.ins_dt) from retail_orders_log c where c.order_id = l.order_id and c.field = 'created'), o.ins_dt) + interval $sus_h hour
-			order by l.id asc");
-		while ($sus_q && $sl = mysqli_fetch_assoc($sus_q)) { $sus_ids[(int)$sl['order_id']] = 1; $sus_log[(int)$sl['order_id']][] = $sl; }
-		if ($f_sus) $where .= " and id in (".($sus_ids ? implode(',', array_keys($sus_ids)) : '0').")";
+		$sus_q = db::query("select t.*, timestampdiff(second, t.c_dt, t.ins_dt) as dl from (
+			select l.order_id, l.field, l.old_value, l.new_value, l.ins_dt,
+				coalesce((select min(c.ins_dt) from retail_orders_log c where c.order_id = l.order_id and c.field = 'created'), o.ins_dt) as c_dt
+			from retail_orders_log l join retail_orders o on o.id = l.order_id
+			where $sus_where and l.field in ('items', 'total') and l.old_value is not null
+		) t where t.ins_dt > t.c_dt order by t.ins_dt asc");
+		while ($sus_q && $sl = mysqli_fetch_assoc($sus_q)) {
+			$so = (int)$sl['order_id']; $sl['late'] = (int)$sl['dl'] >= 3600;
+			$sus_all[$so] = 1; if ($sl['late']) $sus_late[$so] = 1; $sus_log[$so][] = $sl;
+		}
+		$sus_f_ids = $f_sus === 'all' ? $sus_all : ($f_sus === '1' ? $sus_late : null);
+		if ($sus_f_ids !== null) $where .= " and id in (".($sus_f_ids ? implode(',', array_keys($sus_f_ids)) : '0').")";
 	}
 
 	// ұрылмаған (нөмірі жоқ) заказдар ең басында тұрады
@@ -166,11 +172,11 @@
 									</div>
 								</div>
 								<? endif ?>
-								<? if (!empty($sus_log[(int)$buy_d['id']])): // күдікті өзгеріс: не, қашан өзгерді ?>
-								<div class="uc_uil2_raz or_sus">
-									<div class="or_sus_h"><i class="far fa-exclamation-triangle"></i> <?=t::w('Changed later', 'Кейін өзгертілген')?> (<?=$sus_h?> <?=t::w('h+', 'сағ+')?>)</div>
+								<? if (!empty($sus_log[(int)$buy_d['id']])): // өзгертілген: не, қашан өзгерді (1 сағаттан кейінгісі қызыл) ?>
+								<div class="uc_uil2_raz or_sus<?=(!empty($sus_late[(int)$buy_d['id']]) ? ' or_sus_late' : '')?>">
+									<div class="or_sus_h"><i class="far fa-exclamation-triangle"></i> <?=t::w('Changed', 'Өзгертілген')?></div>
 									<? foreach ($sus_log[(int)$buy_d['id']] as $sl): ?>
-									<div class="or_sus_i"><span><?=date('d.m H:i', strtotime($sl['ins_dt']))?></span> <b><?=($sl['field'] == 'total' ? t::w('Sum', 'Сома') : t::w('Items', 'Құрамы'))?>:</b> <?=htmlspecialchars((string)$sl['old_value'])?> → <?=htmlspecialchars((string)$sl['new_value'])?></div>
+									<div class="or_sus_i<?=($sl['late'] ? ' or_sus_il' : '')?>"><span><?=date('d.m H:i', strtotime($sl['ins_dt']))?><?=($sl['late'] ? ' · '.t::w('after 1h', '1 сағаттан соң') : '')?></span> <b><?=($sl['field'] == 'total' ? t::w('Sum', 'Сома') : t::w('Items', 'Құрамы'))?>:</b> <?=htmlspecialchars((string)$sl['old_value'])?> → <?=htmlspecialchars((string)$sl['new_value'])?></div>
 									<? endforeach ?>
 								</div>
 								<? endif ?>
@@ -359,17 +365,19 @@
 				</div>
 				<? if ($or_lg_on): // Күдікті: 1 / 2 сағаттан кейін құрамы не сомасы өзгерген заказдар ?>
 				<div class="k_br or_fsus">
-					<? foreach ([1, 2] as $sh): ?>
-						<a class="k_br_i <?=($f_sus == $sh ? 'k_br_act' : '')?>" href="?<?=htmlspecialchars(http_build_query(array_merge($_GET, ['sus' => ($f_sus == $sh ? 0 : $sh)])))?>" title="<?=t::w('Items or sum changed after', 'Құрамы не сомасы кейін өзгерген')?> <?=$sh?> <?=t::w('h', 'сағ')?>"><i class="far fa-exclamation-triangle"></i><span><?=t::w('Changed', 'Өзгертілген')?> <?=$sh?> <?=t::w('h+', 'сағ+')?></span><?=($sh == $sus_h && $sus_ids ? ' <b>'.count($sus_ids).'</b>' : '')?></a>
+					<? foreach (['all' => [t::w('Changed', 'Өзгертілген'), $sus_all], '1' => [t::w('After 1 hour', '1 сағаттан соң'), $sus_late]] as $sk => $sv): ?>
+						<a class="k_br_i <?=($f_sus === (string)$sk ? 'k_br_act' : '')?>" href="?<?=htmlspecialchars(http_build_query(array_merge($_GET, ['sus' => ($f_sus === (string)$sk ? '' : $sk)])))?>" title="<?=t::w('Items or sum changed', 'Құрамы не сомасы өзгерген')?>"><i class="far fa-exclamation-triangle"></i><span><?=$sv[0]?></span><?=($sv[1] ? ' <b>'.count($sv[1]).'</b>' : '')?></a>
 					<? endforeach ?>
 				</div>
 				<style>
 					.or_fsus .k_br_i i { color: #d9534f; }
 					.or_fsus .k_br_i b { margin-left: 4px; color: #d9534f; }
-					.or_sus { background: #fdecea; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; font-size: 13px; color: #8a1f17; }
+					.or_sus { background: #f5f5f5; color: #444; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; font-size: 13px; }
+					.or_sus_late { background: #fdecea; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; font-size: 13px; color: #8a1f17; }
 					.or_sus_h { font-weight: 600; margin-bottom: 4px; }
 					.or_sus_i { line-height: 1.4; word-break: break-word; }
-					.or_sus_i span { color: #a5524b; }
+					.or_sus_i span { opacity: .7; }
+					.or_sus_il { color: #c0392b; font-weight: 600; }
 				</style>
 				<? endif ?>
 			</div>
