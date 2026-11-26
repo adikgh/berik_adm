@@ -54,7 +54,7 @@
 			}
 
 			$rc = fun::report_сourier($cashbox_id, $uid);
-			$r['expenses'] = intval(@$rc['expenses']);
+			$r['expenses'] = 0; // Шығын бағаны алынды (2026-11-26): Kaspi = кассаға − қолма-қол
 			$r['cash'] = intval(@$rc['cash']);
 			$r['to_cashbox'] = $r['pay_cash'] - $r['salary'];
 			$r['kaspi'] = $r['to_cashbox'] - $r['expenses'] - $r['cash'];
@@ -69,7 +69,7 @@
 			// қайта сақтау: шығын/қолма-қол бұрынғы есептен алынады (касса жолы нөлденген)
 			$old = self::get($cmp, $uid, $day);
 			if ($old) {
-				$r['expenses'] = intval($old['expenses']); $r['cash'] = intval($old['cash']);
+				$r['expenses'] = 0; $r['cash'] = intval($old['cash']);
 				$r['kaspi'] = $r['to_cashbox'] - $r['expenses'] - $r['cash'];
 			}
 			if (!$r['orders'] && !$r['expenses'] && !$r['cash']) return false;
@@ -103,7 +103,6 @@
 			$s .= "<b>Қолма-қол:</b> " . tgr_money($r['pay_cash']) . "\n<b>Kaspi (алдын ала):</b> " . tgr_money($r['pay_qr']) . "\n";
 			if ((int)$r['c_kaspi']) $s .= "<b>Курьер Kaspi-ге алды:</b> " . tgr_money($r['c_kaspi']) . "\n";
 			$s .= "<b>Жеткізу ақысы:</b> " . tgr_money($r['salary']) . "\n";
-			if ((int)$r['expenses']) $s .= "<b>Шығын:</b> " . tgr_money($r['expenses']) . "\n";
 			if ((int)$r['cash']) $s .= "<b>Қолма-қол тапсырды:</b> " . tgr_money($r['cash']) . "\n";
 			$s .= "\n<b>Кассаға:</b> " . tgr_money($kb) . ($kb < 0 ? " ⚠️ <i>курьерге біз " . tgr_money(-$kb) . " қарызбыз</i>" : '') . "\n";
 			if ((int)$r['kaspi']) $s .= "<b>Kaspi-мен кассаға:</b> " . tgr_money($r['kaspi']) . "\n";
@@ -126,7 +125,7 @@
 			$s = self::get($cmp, $uid, $day);
 			if (!$s) return false;
 			if ($cashbox_id && ($s['expenses'] || $s['cash'])) {
-				$e = intval($s['expenses']); $c = intval($s['cash']);
+				$e = 0; $c = intval($s['cash']); // шығын енді жоқ
 				$ex = db::query("select id from report_сourier where report_id = '$cashbox_id' and сourier_id = '$uid' limit 1");
 				if (mysqli_num_rows($ex)) db::query("UPDATE report_сourier SET expenses = '$e', cash = '$c' WHERE report_id = '$cashbox_id' and сourier_id = '$uid'");
 				else db::query("INSERT INTO report_сourier (сourier_id, report_id, expenses, cash) VALUES ('$uid', '$cashbox_id', '$e', '$c')");

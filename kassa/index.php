@@ -238,7 +238,7 @@
 
 			<div class="table4">
 
-				<table>
+				<table class="k_cr_tb"><!-- курьерлер: әр баған тік сызықпен бөлінген (kassa.css) -->
 
                     <tbody>
                         <? foreach ($k_cour as $staff_id => $staff_nm): ?>
@@ -247,7 +247,7 @@
                             <? $c_list = @$k_clist[$staff_id] ?: []; ?>
                             <? $cd_s = @$cd_map[$staff_id]; ?>
                             <? $c_box = $cr['pay_cash'] - $cr['pay_delivery']; // кассаға ?>
-                            <? $c_kaspi = $c_box - $cr['expenses'] - $cr['cash']; ?>
+                            <? $c_kaspi = $c_box - $cr['cash']; // Kaspi = кассаға − қолма-қол (Шығын бағаны алынды, 2026-11-26) ?>
                             <?
                                 $onw['number'] += $cr['number'];
                                 $onw['total'] += $cr['total'];
@@ -255,7 +255,6 @@
                                 $onw['pay_transfer'] += intval(@$cr['pay_transfer']);
                                 $onw['pay_cash'] += $cr['pay_cash'];
                                 $onw['pay_delivery'] += $cr['pay_delivery'];
-                                $onw['rask'] += $cr['expenses'];
                                 $onw['cash'] += $cr['cash'];
                                 $onw['kaspi'] += $c_kaspi;
                             ?>
@@ -264,8 +263,7 @@
                                 <td><? if ($has_cpay && $c_list): ?><div class="k_cr_tg" data-id="<?=$staff_id?>"><i class="fal fa-angle-down"></i> <?=$staff_name?></div><? else: ?><?=$staff_name?><? endif ?></td>
                                 <td><?=$cr['number']?></td>
                                 <td class="fr_price"><?=$cr['total']?></td>
-                                <td class="fr_price"><?=$cr['pay_qr']?></td>
-                                <td class="fr_price"><?=intval(@$cr['pay_transfer'])?></td>
+                                <td class="fr_price"><?=$cr['pay_qr'] + intval(@$cr['pay_transfer'])?></td><? // Предоплата = QR + аударым ?>
                                 <td>
                                     <div class="fr_price"><?=$cr['pay_cash']?></div>
                                     <? if ($has_cpay && $cr['pay_cash']): ?>
@@ -278,15 +276,11 @@
                                 </td>
                                 <td class="fr_price"><?=$cr['pay_delivery']?></td>
                                 <td class="fr_price btype_start" data-rask="0" data-start="<?=$c_box?>"><?=$c_box?></td>
-                                <? if ($k_is_today): // бүгін: шығын мен қолма-қолды енгізуге болады ?>
-                                <td class="">
-							        <input type="tel" data-id="<?=$cashbox_id?>" data-user-id="<?=$staff_id?>" class="form_txt fr_price btype_rask" <?=($cd_s?'disabled':'')?> placeholder="0" data-val="<?=$cr['expenses']?>" value="<?=($cr['expenses']?:'')?>">
-                                </td>
+                                <? if ($k_is_today): // бүгін: қолма-қолды енгізуге болады ?>
                                 <td class="">
 							        <input type="tel" data-id="<?=$cashbox_id?>" data-user-id="<?=$staff_id?>" class="form_txt fr_price btype_cash" <?=($cd_s?'disabled':'')?> placeholder="0" data-val="<?=$cr['cash']?>" value="<?=($cr['cash']?:'')?>">
                                 </td>
                                 <? else: // өткен күн / апта / ай / жыл: сақталған есептен ?>
-                                <td class="fr_price"><?=$cr['expenses']?></td>
                                 <td class="fr_price"><?=$cr['cash']?></td>
                                 <? endif ?>
                                 <td class="fr_price btype_kaspi"><?=$c_kaspi?></td>
@@ -309,7 +303,7 @@
                             </tr>
                             <? if ($has_cpay && $c_list): ?>
                                 <tr class="k_cr_det" data-id="<?=$staff_id?>">
-                                    <td colspan="12">
+                                    <td colspan="10">
                                         <div class="k_cr_list">
                                             <? foreach ($c_list as $co): ?>
                                                 <div class="k_cr_o">
@@ -330,13 +324,11 @@
                             <td><b><?=t::w('Courier', 'Курьер')?></b></td>
                             <td><?=t::w('Qty', 'Саны')?></td>
                             <td><?=t::w('Total', 'Жалпы')?></td>
-                            <td><?=t::w('Prepaid QR', 'Алдын ала (QR)')?></td>
-                            <td><?=t::w('Prepaid transfer', 'Аударым')?></td>
+                            <td><?=t::w('Prepayment', 'Предоплата')?></td>
                             <td><?=t::w('Courier collected', 'Курьер алды')?></td>
                             <td><?=t::w('Salary', 'Жалақы')?></td>
                             <td><?=t::w('To cashbox', 'Кассаға')?></td>
-                            <td><?=t::w('Expenses', 'Шығын')?></td>
-                            <td><?=t::w('Cash', 'Қолма-қол')?></td>
+                            <td><?=t::w('Cash (nal)', 'Қолма-қол (нал)')?></td>
                             <td><?=t::w('Kaspi', 'Kaspi')?></td>
                             <td><?=t::w('Report', 'Есеп')?></td>
                         </tr>
@@ -344,12 +336,10 @@
                             <td><?=t::w('All', 'Барлығы')?></td>
                             <td><?=$onw['number']?></td>
                             <td class="fr_price"><?=$onw['total']?></td>
-                            <td class="fr_price"><?=$onw['pay_qr']?></td>
-                            <td class="fr_price"><?=$onw['pay_transfer']?></td>
+                            <td class="fr_price"><?=$onw['pay_qr'] + $onw['pay_transfer']?></td>
                             <td class="fr_price"><?=$onw['pay_cash']?></td>
                             <td class="fr_price"><?=$onw['pay_delivery']?></td>
                             <td class="fr_price"><?=$onw['pay_cash'] - $onw['pay_delivery']?></td>
-                            <td class="fr_price"><?=$onw['rask']?></td>
                             <td class="fr_price"><?=$onw['cash']?></td>
                             <td class="fr_price"><?=$onw['kaspi']?></td>
                             <td class="cd_cell">

@@ -160,14 +160,14 @@
 				}
 			}
 			foreach ($exp as $day => $list) foreach ($list as $uid => $ec) {
-				if (!$ec[0] && !$ec[1]) continue;
+				if (!$ec[1]) continue;
 				if (!isset($out[$day])) $out[$day] = self::empty_day();
 				if (!isset($out[$day]['c'][$uid])) $out[$day]['c'][$uid] = self::zero();
-				$out[$day]['c'][$uid]['expenses'] = $ec[0];
+				$out[$day]['c'][$uid]['expenses'] = 0; // Шығын бағаны алынды (2026-11-26), ескі сақталған шығын есепке алынбайды
 				$out[$day]['c'][$uid]['cash'] = $ec[1];
 			}
 
-			// Kaspi = кассаға - шығын - қолма-қол; курьер аттары
+			// Kaspi = кассаға - қолма-қол; курьер аттары
 			$ids = [];
 			foreach ($out as $day => $d) foreach ($d['c'] as $uid => $r) {
 				$out[$day]['c'][$uid]['kaspi'] = $r['pay_cash'] - $r['pay_delivery'] - $r['expenses'] - $r['cash'];

@@ -34,8 +34,8 @@ $(document).ready(function() {
     $('html').on('input', '.btype_cash', function () {
         btn = $(this)
         btype_start = Number(btn.parent().siblings('.btype_start').attr('data-start'))
-        btype_rask = Number(btn.parent().siblings('td').children('.btype_rask').attr('data-val'))
-        btype_cash = Number(btn.attr('data-val'))
+        btype_rask = 0 // Шығын бағаны алынды (2026-11-26): Kaspi = кассаға − қолма-қол
+        btype_cash = Number(btn.attr('data-val')) || 0
 
         $(this).parent().siblings('.btype_kaspi').html((btype_start - btype_cash - btype_rask) + ' тг')
 

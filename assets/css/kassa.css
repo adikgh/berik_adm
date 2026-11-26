@@ -63,3 +63,7 @@ table{
 .uc_ui69 > div{
    margin-right: 20px;
 }
+
+
+/* Курьерлер кестесі: әр баған бөлек, арасында тік сызық (2026-11-26) */
+.k_cr_tb td + td{ border-left: 1px solid #e6e8e4; }
