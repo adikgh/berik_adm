@@ -1,5 +1,9 @@
 <?
 
+    // Раздача — осы админ сайтының алиасы (dev сияқты, бірақ бөлек папкасыз): хост dist.* / dst.* / dstb.* болса
+    // core.php Раздача режимін қосады: тек [1,2,3,8] лауазымдар, тек рұқсат етілген беттер (config/dist.php).
+    $dist = (bool)preg_match('~^(dist|dst|dstb)\.~i', (string)@$_SERVER['HTTP_HOST']);
+
     // setting
     $ver = 4.009;
 

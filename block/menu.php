@@ -41,7 +41,21 @@
 					<div class="mp_top">
 						<div class="mp_topc">
 
-							<? if ($user_right['positions_id'] == 3): ?>
+							<? if (!empty($dist)): // Раздача хосты (config/dist.php): тапсырыс түрлері + Касса. Телефонда алғашқы 3-еуі төменде, қалғаны «Тағы» ішінде ?>
+								<? $dm_cd = fun::company($company);
+									$dm_types = [
+										'delivery' => ['new', 'car', 'fa-car', 'Delivery', 'Жеткізу'],
+										'yourself' => ['myself', 'user', 'fa-walking', 'Pickup', 'Өзімен'],
+										'service' => ['service', 'service', 'fa-backpack', 'Service', 'Сервис'],
+										'coffee' => ['coffee', 'coffee', 'fa-utensils', 'Cafe', 'Кафе'],
+									];
+									$dm_q = db::query("select nms from retail_orders_type order by number asc");
+									while ($dm_t = mysqli_fetch_assoc($dm_q)): $dm = @$dm_types[$dm_t['nms']]; if (!$dm || empty($dm_cd[$dm_t['nms']])) continue; ?>
+									<a class="mp_topi <?=(@$dist_menu == $dm[1] ? 'mp_topi_act' : '')?>" href="/orders/dist/?sort=<?=$dm[0]?>"><i class="fal <?=$dm[2]?>"></i><span><?=t::w($dm[3], $dm[4])?></span></a>
+								<? endwhile ?>
+								<a class="mp_topi <?=($menu_name=='kassa'?'mp_topi_act':'')?>" href="/kassa/?time=<?=$time_sort?>"><i class="fal fa-cash-register"></i><span><?=t::w('Cashbox', 'Касса')?></span></a>
+								<a class="mp_topi <?=(@$dist_menu == 'none' ? 'mp_topi_act' : '')?>" href="/orders/dist/?sort=none"><i class="fal fa-ban"></i><span><?=t::w('Refusals', 'Бас тарту')?></span></a>
+							<? elseif ($user_right['positions_id'] == 3): ?>
 								<a class="mp_topi <?=($menu_name=='kassa'?'mp_topi_act':'')?>" href="/kassa/?time=<?=$time_sort?>"><i class="fal fa-cash-register"></i><span><?=t::w('Cashbox', 'Касса')?></span></a>
 							<? else: ?>
 								<? // Аналитика беттері арасында ауысқанда таңдалған күн мен кезең (Күн/Апта/Ай/Жыл) сақталады
@@ -173,6 +187,17 @@
 								</div>
 							</div>
 							<div class="acc_list">
+								<? if (!empty($dist)): // Раздача хосты: тек Оплата, Аккаунт, Шығу (басқа беттер config/dist.php-да жабық) ?>
+									<a class="menu_ci" href="/pay/">
+										<div class="menu_cin"><i class="fal fa-wallet"></i></div>
+										<div class="menu_cih"><?=t::w('Plan payment', 'Оплата')?></div>
+									</a>
+								<? else: ?>
+								<!-- Раздача экраны (курьерге бөлу): Раздача хостында басты бет, админде осы жерден -->
+								<a class="menu_ci" href="/orders/dist/">
+									<div class="menu_cin"><i class="fal fa-motorcycle"></i></div>
+									<div class="menu_cih"><?=t::w('Dispatch', 'Раздача')?></div>
+								</a>
 								<? if (@$user_right['positions_id'] != 3): // Компания баптаулары: company/index.php ?>
 									<a class="menu_ci" href="/company/">
 										<div class="menu_cin"><i class="fal fa-cog"></i></div>
@@ -218,6 +243,7 @@
 									<div class="menu_cin"><i class="fal fa-desktop"></i></div>
 									<div class="menu_cih"><?=t::w('Cash desk app', 'Касса программасы')?></div>
 								</a>
+								<? endif // Раздача хосты ?>
 								<a class="menu_ci ac_open" href="/acc/">
 									<div class="menu_cin"><i class="fal fa-user"></i></div>
 									<div class="menu_cih"><?=t::w('Account', 'Аккаунт')?></div>

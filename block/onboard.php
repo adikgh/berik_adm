@@ -1,5 +1,5 @@
 <? // «Жұмысты бастау» виджеті: оң жақ төменгі бұрышта (config/onboard.php). Footer-ден қосылады.
-	if (!empty($user_id) && !empty($site_set['menu']) && @$menu_name != 'start') {
+	if (!empty($user_id) && !empty($site_set['menu']) && @$menu_name != 'start' && empty($dist)) { // Раздача хостында жоқ
 		require_once __DIR__.'/../config/onboard.php';
 		if (onboard::show(@$company, @$user_right)) {
 			$ob_s = onboard::steps($company, $user_id);

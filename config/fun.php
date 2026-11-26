@@ -168,6 +168,15 @@
 
 
 
+		// филиал, компания (Раздача экраны, API)
+		public static function branch($id) {
+			$sql = db::query("select * from company_branch where id = '".(int)$id."'");
+			if (mysqli_num_rows($sql)) return mysqli_fetch_array($sql); else return 0;
+		}
+		public static function company($id) {
+			return mysqli_fetch_array(db::query("select * from company where id = '".(int)$id."'"));
+		}
+
 		// user
 		public static function user($id) {
 			$sql = db::query("select * from user where id = '$id'");

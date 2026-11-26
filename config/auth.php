@@ -38,7 +38,7 @@ function auth_key() {
 	static $k = null;
 	if ($k !== null) return $k;
 	require_once __DIR__ . '/sys_set.php';
-	$name = 'auth_key_adm';
+	$name = !empty($GLOBALS['dist']) ? 'auth_key_dlv' : 'auth_key_adm'; // Раздача хосты: бұрынғы (dlv) кілт, кірген адамдар шықпайды
 	$v = sys_set($name);
 	if (strlen($v) < 32) { $f = __DIR__ . '/auth_key.php'; $v = is_file($f) ? (string)include $f : ''; }
 	if (strlen($v) < 32 && strlen($v = sys_set_all(true)[$name] ?? '') < 32) {
