@@ -41,7 +41,14 @@
 					<div class="mp_top">
 						<div class="mp_topc">
 
-							<? if (!empty($dist)): // Раздача хосты (config/dist.php): тапсырыс түрлері + Касса. Телефонда алғашқы 3-еуі төменде, қалғаны «Тағы» ішінде ?>
+							<? if (@$alias == 'ktc'): // Кухня хосты (config/alias.php): Кезекте, Дайын, Стоп-лист, Накладной, Ревизия. Телефонда алғашқы 3-еуі төменде, қалғаны «Тағы» ішінде
+									$km = @$menu_name == 'kitchen' ? (@$_GET['sort'] == 'ready' ? 'ready' : 'queue') : (@$menu_name == 'waybill' && strpos((string)@$_SERVER['SCRIPT_NAME'], 'revision') !== false ? 'revision' : (@$menu_name == 'products' ? 'stop' : @$menu_name)); ?>
+								<a class="mp_topi <?=($km == 'queue' ? 'mp_topi_act' : '')?>" href="/orders/kitchen/"><i class="fal fa-fire"></i><span><?=t::w('In queue', 'Кезекте')?></span></a>
+								<a class="mp_topi <?=($km == 'ready' ? 'mp_topi_act' : '')?>" href="/orders/kitchen/?sort=ready"><i class="fal fa-check-circle"></i><span><?=t::w('Ready', 'Дайын')?></span></a>
+								<a class="mp_topi <?=($km == 'stop' ? 'mp_topi_act' : '')?>" href="/products/stop/"><i class="fal fa-ban"></i><span><?=t::w('Stop list', 'Стоп-лист')?></span></a>
+								<a class="mp_topi <?=($km == 'waybill' ? 'mp_topi_act' : '')?>" href="/waybill/"><i class="fal fa-file-invoice"></i><span><?=t::w('Waybills', 'Накладной')?></span></a>
+								<a class="mp_topi <?=($km == 'revision' ? 'mp_topi_act' : '')?>" href="/waybill/revision.php"><i class="fal fa-clipboard-list-check"></i><span><?=t::w('Revision', 'Ревизия')?></span></a>
+							<? elseif (!empty($dist)): // Раздача хосты (config/alias.php): тапсырыс түрлері + Касса. Телефонда алғашқы 3-еуі төменде, қалғаны «Тағы» ішінде ?>
 								<? $dm_cd = fun::company($company);
 									$dm_types = [
 										'delivery' => ['new', 'car', 'fa-car', 'Delivery', 'Жеткізу'],
@@ -187,7 +194,7 @@
 								</div>
 							</div>
 							<div class="acc_list">
-								<? if (!empty($dist)): // Раздача хосты: тек Оплата, Аккаунт, Шығу (басқа беттер config/dist.php-да жабық) ?>
+								<? if (!empty($alias)): // Раздача / Кухня хосты: тек Оплата, Аккаунт, Шығу (басқа беттер config/alias.php-да жабық) ?>
 									<a class="menu_ci" href="/pay/">
 										<div class="menu_cin"><i class="fal fa-wallet"></i></div>
 										<div class="menu_cih"><?=t::w('Plan payment', 'Оплата')?></div>
@@ -197,6 +204,11 @@
 								<a class="menu_ci" href="/orders/dist/">
 									<div class="menu_cin"><i class="fal fa-motorcycle"></i></div>
 									<div class="menu_cih"><?=t::w('Dispatch', 'Раздача')?></div>
+								</a>
+								<!-- Кухня экраны: Кухня хостында басты бет, админде осы жерден -->
+								<a class="menu_ci" href="/orders/kitchen/">
+									<div class="menu_cin"><i class="fal fa-fire"></i></div>
+									<div class="menu_cih"><?=t::w('Kitchen', 'Кухня')?></div>
 								</a>
 								<? if (@$user_right['positions_id'] != 3): // Компания баптаулары: company/index.php ?>
 									<a class="menu_ci" href="/company/">
@@ -243,7 +255,7 @@
 									<div class="menu_cin"><i class="fal fa-desktop"></i></div>
 									<div class="menu_cih"><?=t::w('Cash desk app', 'Касса программасы')?></div>
 								</a>
-								<? endif // Раздача хосты ?>
+								<? endif // Раздача / Кухня хосты ?>
 								<a class="menu_ci ac_open" href="/acc/">
 									<div class="menu_cin"><i class="fal fa-user"></i></div>
 									<div class="menu_cih"><?=t::w('Account', 'Аккаунт')?></div>

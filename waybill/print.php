@@ -1,7 +1,7 @@
 <? include "../config/core.php";
 	include "lib.php";
 
-	if (!$user_id || @$user_right['positions_id'] == 3) { header('location: /'); exit; }
+	if (!$user_id || @$user_right['positions_id'] == 3 && empty($ktc)) { header('location: /'); exit; }
 
 	wb::install();
 	$cmp = (int)$company;

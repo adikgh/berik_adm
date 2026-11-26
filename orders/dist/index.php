@@ -1,5 +1,5 @@
 <? // Раздача экраны: тапсырыстарды курьерге бөлу, Өзімен/Сервис/Кафе тапсырыстарын беру.
-	// Админде де ашылады (/orders/dist/), Раздача хостында (dist.* / dstb.*) — басты бет (config/dist.php).
+	// Админде де ашылады (/orders/dist/), Раздача хостында (dist.* / dstb.*) — басты бет (config/alias.php).
 	// orders/dist/item.php осыны $item_id-мен шақырады.
 	if (!isset($item_id)) include "../../config/core.php";
 

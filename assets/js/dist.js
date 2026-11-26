@@ -1,6 +1,6 @@
 // Раздача экраны (orders/dist/): курьер таңдау, Столда / Берілді, статус тарихы. Сұраулар: /orders/dist/get.php
 ;(function () {
-	var U = '/orders/dist/get.php?'
+	var U = window.DSP_GET || '/orders/dist/get.php?' // Кухня экраны өз адресін береді (orders/kitchen/)
 	var post = function (a, data, ok) {
 		var f = new FormData(); for (var k in data) f.append(k, data[k])
 		fetch(U + a, { method: 'POST', body: f, credentials: 'same-origin' }).then(function (r) { return r.text() }).then(ok).catch(function () { ok('') })

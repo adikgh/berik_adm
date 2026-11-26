@@ -1,10 +1,11 @@
+<? // Кухня хостында (config/alias.php) тек Накладнойлар мен Ревизия ?>
 <div class="wb_bar">
 	<div class="wb_tabs">
 		<a class="wb_tab <?=($wb_tab == 'list' ? 'wb_tab_act' : '')?>" href="/waybill/"><i class="fal fa-file-invoice"></i> Накладнойлар</a>
-		<a class="wb_tab <?=($wb_tab == 'group' ? 'wb_tab_act' : '')?>" href="/waybill/group.php"><i class="fal fa-layer-group"></i> Топтап</a>
-		<a class="wb_tab <?=($wb_tab == 'prices' ? 'wb_tab_act' : '')?>" href="/waybill/prices.php"><i class="fal fa-chart-line"></i> Бағалар</a>
-		<a class="wb_tab <?=($wb_tab == 'suppliers' ? 'wb_tab_act' : '')?>" href="/waybill/suppliers.php"><i class="fal fa-truck"></i> Жеткізушілер</a>
-		<a class="wb_tab <?=($wb_tab == 'stock' ? 'wb_tab_act' : '')?>" href="/waybill/stock.php"><i class="fal fa-boxes-alt"></i> Шикізат қалдығы</a>
+		<? if (empty($ktc)): ?>		<a class="wb_tab <?=($wb_tab == 'group' ? 'wb_tab_act' : '')?>" href="/waybill/group.php"><i class="fal fa-layer-group"></i> Топтап</a><? endif ?>
+		<? if (empty($ktc)): ?>		<a class="wb_tab <?=($wb_tab == 'prices' ? 'wb_tab_act' : '')?>" href="/waybill/prices.php"><i class="fal fa-chart-line"></i> Бағалар</a><? endif ?>
+		<? if (empty($ktc)): ?>		<a class="wb_tab <?=($wb_tab == 'suppliers' ? 'wb_tab_act' : '')?>" href="/waybill/suppliers.php"><i class="fal fa-truck"></i> Жеткізушілер</a><? endif ?>
+		<? if (empty($ktc)): ?>		<a class="wb_tab <?=($wb_tab == 'stock' ? 'wb_tab_act' : '')?>" href="/waybill/stock.php"><i class="fal fa-boxes-alt"></i> Шикізат қалдығы</a><? endif ?>
 		<a class="wb_tab <?=($wb_tab == 'revision' ? 'wb_tab_act' : '')?>" href="/waybill/revision.php"><i class="fal fa-clipboard-list-check"></i> Ревизия</a>
 	</div>
 	<div class="wb_bar_btns">

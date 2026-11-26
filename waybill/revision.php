@@ -2,7 +2,7 @@
 	include "lib.php";
 
 	if (!$user_id) { header('location: /'); exit; }
-	if (@$user_right['positions_id'] == 3) { header('location: /kassa/'); exit; }
+	if (@$user_right['positions_id'] == 3 && empty($ktc)) { header('location: /kassa/'); exit; }
 
 	// Ревизия: санап шыққан қалдықты жазу. «Аяқтау» басылғанда айырмасы қалдыққа түзету болып жазылады.
 	wb::install();
@@ -165,7 +165,7 @@
 					<div class="wb_actions">
 						<input type="text" name="comment" class="wb_inp" value="<?=wb::h($rv['comment'])?>" placeholder="Түсініктеме" style="width:220px">
 						<button class="wb_btn wb_btn_light" name="save" value="1"><i class="fal fa-save"></i> Сақтау</button>
-						<button class="wb_btn wb_btn_green" name="finish" value="1" data-ask="Ревизияны аяқтайсыз ба?<br>Саналған шикізаттың қалдығы осы санға теңеледі."><i class="fal fa-check"></i> Аяқтау</button>
+						<? if (empty($ktc)): // Кухняда ревизияны аяқтау (қалдықты теңестіру) жоқ — админде ?><button class="wb_btn wb_btn_green" name="finish" value="1" data-ask="Ревизияны аяқтайсыз ба?<br>Саналған шикізаттың қалдығы осы санға теңеледі."><i class="fal fa-check"></i> Аяқтау</button><? endif ?>
 						<button class="wb_btn wb_btn_red" name="delete" value="1" data-ask="Ревизия жобасы өшірілсін бе?" data-ask-danger><i class="fal fa-trash"></i></button>
 					</div>
 				<? endif ?>

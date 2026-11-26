@@ -18,7 +18,7 @@
 
 
 	// Кіру: пароль → WhatsApp коды, парольді ұмыттым (config/auth.php)
-	auth_routes($dist ? DIST_POS : [1, 2, 3], $dist ? 'dist' : 'admin'); // Раздача хосты: config/dist.php
+	auth_routes($alias_cfg ? $alias_cfg['pos'] : [1, 2, 3], $alias_cfg ? $alias_cfg['site'] : 'admin'); // Раздача / Кухня хосты: config/alias.php
 
 
 

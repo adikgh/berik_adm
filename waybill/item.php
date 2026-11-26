@@ -2,7 +2,7 @@
 	include "lib.php";
 
 	if (!$user_id) { header('location: /'); exit; }
-	if (@$user_right['positions_id'] == 3) { header('location: /kassa/'); exit; }
+	if (@$user_right['positions_id'] == 3 && empty($ktc)) { header('location: /kassa/'); exit; }
 
 	wb::install();
 	$cmp = (int)$company;
@@ -191,7 +191,7 @@
 		<!-- Батырмалар -->
 		<div class="wb_actions">
 			<? if (!$posted): ?>
-				<div class="wb_btn wb_btn_green wb_save" data-post="1"><i class="fal fa-check-double"></i> Қабылдау (қалдыққа қосу)</div>
+				<? if (empty($ktc)): // Кухня хостында тек жоба: қабылдауды админ жасайды (config/alias.php) ?><div class="wb_btn wb_btn_green wb_save" data-post="1"><i class="fal fa-check-double"></i> Қабылдау (қалдыққа қосу)</div><? endif ?>
 				<div class="wb_btn wb_save" data-post="0"><i class="fal fa-save"></i> Жоба ретінде сақтау</div>
 				<? if ($w['id']): ?>
 					<a class="wb_btn wb_btn_light" target="_blank" href="/waybill/print.php?id=<?=$w['id']?>"><i class="fal fa-print"></i> Басып шығару</a>
@@ -199,8 +199,10 @@
 				<? endif ?>
 			<? else: ?>
 				<a class="wb_btn" target="_blank" href="/waybill/print.php?id=<?=$w['id']?>"><i class="fal fa-print"></i> Басып шығару</a>
+				<? if (empty($ktc)): ?>
 				<div class="wb_btn wb_btn_light wb_unpost"><i class="fal fa-undo"></i> Қабылдауды болдырмау</div>
 				<div class="wb_small">Өзгерту үшін алдымен қабылдауды болдырмаңыз, қалдық қайта азаяды.</div>
+				<? endif ?>
 			<? endif ?>
 		</div>
 	</div>

@@ -2,7 +2,7 @@
 	include "lib.php";
 
 	if (!$user_id) { header('location: /'); exit; }
-	if (@$user_right['positions_id'] == 3) { header('location: /kassa/'); exit; }
+	if (@$user_right['positions_id'] == 3 && empty($ktc)) { header('location: /kassa/'); exit; }
 
 	wb::install();
 	$cmp = (int)$company;

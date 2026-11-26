@@ -4,7 +4,7 @@
 	header('Content-Type: application/json; charset=utf-8');
 	function out($ok, $data = []) { exit(json_encode(array_merge(['ok' => $ok], $data), JSON_UNESCAPED_UNICODE)); }
 
-	if (!$user_id || @$user_right['positions_id'] == 3) out(false, ['msg' => 'Кіру рұқсаты жоқ']);
+	if (!$user_id || @$user_right['positions_id'] == 3 && empty($ktc)) out(false, ['msg' => 'Кіру рұқсаты жоқ']);
 	wb::install();
 	$cmp = (int)$company;
 	$now = date('Y-m-d H:i:s');

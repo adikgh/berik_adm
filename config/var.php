@@ -1,8 +1,9 @@
 <?
 
-    // Раздача — осы админ сайтының алиасы (dev сияқты, бірақ бөлек папкасыз): хост dist.* / dst.* / dstb.* болса
-    // core.php Раздача режимін қосады: тек [1,2,3,8] лауазымдар, тек рұқсат етілген беттер (config/dist.php).
-    $dist = (bool)preg_match('~^(dist|dst|dstb)\.~i', (string)@$_SERVER['HTTP_HOST']);
+    // Раздача мен Кухня — осы админ сайтының алиастары (dev сияқты, бірақ бөлек папкасыз). Хост бойынша core.php
+    // сол режимді қосады: лауазымдар, тариф модулі, рұқсат етілген беттер (config/alias.php).
+    $dist = (bool)preg_match('~^(dist|dst|dstb)\.~i', (string)@$_SERVER['HTTP_HOST']); // Раздача: dist.berik.c, dstb.gprog.kz
+    $ktc = (bool)preg_match('~^(ktc|ktch|ktcb)\.~i', (string)@$_SERVER['HTTP_HOST']);  // Кухня: ktc.berik.c, ktcb.gprog.kz
 
     // setting
     $ver = 4.009;

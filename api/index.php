@@ -1,6 +1,6 @@
 <?php
 // Раздача мобильді программасының API-і (Flutter: iOS + Android).
-// Орны: админ сайты (adm.berik.c/api/index.php), тек Раздача хостында ашылады (dist.berik.c / dstb.gprog.kz, config/dist.php). Сұрау: /api/?a=<әрекет>, жауап JSON.
+// Орны: админ сайты (adm.berik.c/api/index.php), тек Раздача хостында ашылады (dist.berik.c / dstb.gprog.kz, config/alias.php). Сұрау: /api/?a=<әрекет>, жауап JSON.
 // Кіру: a=login (phone, password) → token. Қалған сұрауларда: Authorization: Bearer <token>.
 // Тіл: X-Lang тақырыбы (kz, ru, en, uz, ky). Базаға жаңа кесте керек емес.
 

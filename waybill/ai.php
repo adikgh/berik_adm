@@ -9,7 +9,7 @@
 	header('Content-Type: application/json; charset=utf-8');
 	$out = function ($a) { echo json_encode($a, JSON_UNESCAPED_UNICODE); exit(); };
 
-	if (!$user_id || @$user_right['positions_id'] == 3) $out(['ok' => 0, 'msg' => 'Кіру рұқсаты жоқ']);
+	if (!$user_id || @$user_right['positions_id'] == 3 && empty($ktc)) $out(['ok' => 0, 'msg' => 'Кіру рұқсаты жоқ']);
 	if (!claude::ready()) $out(['ok' => 0, 'msg' => 'Claude қосылмаған: config/ai.php ішіне ANTHROPIC_API_KEY жазыңыз']);
 	@set_time_limit(300);
 

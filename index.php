@@ -2,7 +2,7 @@
 
 	// Кірген адам бірден Аналитикаға (Статистика) барады.
 	// Кассир (рөл 3) үшін /stats/ өзі /kassa/-ға жібереді.
-	$sign_home = $dist ? DIST_HOME : '/stats/'; // Раздача хосты: Раздача экраны (config/dist.php)
+	$sign_home = $alias_cfg ? $alias_cfg['home'] : '/stats/'; // Раздача / Кухня хосты: өз басты беті (config/alias.php)
 	if ($user_id) { header('location: '.$sign_home); exit(); }
 
 
@@ -22,7 +22,7 @@
 			<div class="lg_side">
 				<div class="lg_brand">
 					<span class="lg_logo"><img src="/assets/img/logo/berik-icon.svg" alt="BERIK POS" width="44" height="44"></span>
-					<span class="lg_name"><span>BERIK <b>POS</b></span><small><?=$dist ? t::w('Dispatch', 'Раздача') : 'Admin'?></small></span>
+					<span class="lg_name"><span>BERIK <b>POS</b></span><small><?=$alias_cfg ? t::w($alias_cfg['name'][0], $alias_cfg['name'][1]) : 'Admin'?></small></span>
 				</div>
 				<div class="lg_side_t">
 					<h2 class="lg_slogan">Кәсібіңізді бір жерден басқарыңыз</h2>
@@ -39,7 +39,7 @@
 			<div class="lg_main">
 				<div class="usign_c">
 					<div class="lg_head">
-						<span class="lg_badge"><i class="far fa-shield-check"></i> <?=$dist ? t::w('Dispatch', 'Раздача') : 'Админ'?></span>
+						<span class="lg_badge"><i class="far fa-shield-check"></i> <?=$alias_cfg ? t::w($alias_cfg['name'][0], $alias_cfg['name'][1]) : 'Админ'?></span>
 						<h1 class="lg_h">Жүйеге кіру</h1>
 						<p class="lg_p">Телефон нөміріңіз бен парольді жазыңыз</p>
 					</div>

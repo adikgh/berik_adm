@@ -92,11 +92,9 @@
       }
    } elseif (!$company && $my_companies) $company = (int)key($my_companies);
 
-   // Раздача хосты (dist.* / dstb.*): тек 1,2,3,8 лауазымдар және тек Раздача беттері (config/dist.php)
-   if ($dist) {
-      require_once __DIR__.'/dist.php';
-      dist_gate();
-   }
+   // Раздача / Кухня хосты: тек сол лауазымдар мен беттер, тариф модулі (config/alias.php)
+   require_once __DIR__.'/alias.php';
+   alias_gate();
 
    // тариф: модульдер, лимиттер, жазылым мерзімі (config/plan.php). Әзірге тек ескерту жолағы.
    require_once __DIR__.'/plan.php';
