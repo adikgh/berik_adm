@@ -200,16 +200,6 @@
 										<div class="menu_cih"><?=t::w('Plan payment', 'Оплата')?></div>
 									</a>
 								<? else: ?>
-								<!-- Раздача экраны (курьерге бөлу): Раздача хостында басты бет, админде осы жерден -->
-								<a class="menu_ci" href="/orders/dist/">
-									<div class="menu_cin"><i class="fal fa-motorcycle"></i></div>
-									<div class="menu_cih"><?=t::w('Dispatch', 'Раздача')?></div>
-								</a>
-								<!-- Кухня экраны: Кухня хостында басты бет, админде осы жерден -->
-								<a class="menu_ci" href="/orders/kitchen/">
-									<div class="menu_cin"><i class="fal fa-fire"></i></div>
-									<div class="menu_cih"><?=t::w('Kitchen', 'Кухня')?></div>
-								</a>
 								<? if (@$user_right['positions_id'] != 3): // Компания баптаулары: company/index.php ?>
 									<a class="menu_ci" href="/company/">
 										<div class="menu_cin"><i class="fal fa-cog"></i></div>

@@ -35,7 +35,16 @@ if ($alias_cfg && !defined('PLAN_SITE')) define('PLAN_SITE', $alias_cfg['plan'])
 // core.php шақырады (компания анықталғаннан кейін)
 function alias_gate() {
 	global $alias, $alias_cfg, $core, $user, $user_id, $user_right, $my_companies, $company;
-	if (!$alias_cfg) return;
+	if (!$alias_cfg) {
+		// Негізгі админ хосты: Раздача мен Кухня экрандары тек өз хостында ашылады
+		$self = '/' . ltrim(str_replace('\\', '/', (string)@$_SERVER['SCRIPT_NAME']), '/');
+		if (preg_match('~^/orders/(dist|kitchen)/~', $self)) {
+			if (!empty($_POST) || basename($self) == 'get.php') { http_response_code(403); exit('none'); }
+			header('location: /stats/');
+			exit();
+		}
+		return;
+	}
 
 	// лауазым
 	if ($user_id && (!$user_right || !in_array((int)$user_right['positions_id'], $alias_cfg['pos'], true))) {
